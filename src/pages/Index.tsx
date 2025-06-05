@@ -20,6 +20,7 @@ const Index = () => {
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<'color' | 'number'>('color');
   const [selectedBetValue, setSelectedBetValue] = useState<string | number>('');
+  const [isBettingClosed, setIsBettingClosed] = useState(false);
   const [gameRecords, setGameRecords] = useState([
     { period: '20240105001', number: 7, color: ['green'] },
     { period: '20240105002', number: 0, color: ['violet', 'red'] },
@@ -38,6 +39,12 @@ const Index = () => {
       setUserBalance(userData.balance || 1000);
     }
   }, []);
+
+  const getNumberColor = (num: number): string[] => {
+    if (num === 0) return ["violet", "red"];
+    if (num === 5) return ["violet", "green"];
+    return num % 2 === 0 ? ["red"] : ["green"];
+  };
 
   const handleLogin = (mobile: string) => {
     // Simulate successful login
@@ -66,12 +73,28 @@ const Index = () => {
   };
 
   const handleColorSelect = (color: string) => {
+    if (isBettingClosed) {
+      toast({
+        title: "Betting Closed",
+        description: "Please wait for the next round to place bets.",
+        variant: "destructive"
+      });
+      return;
+    }
     setSelectedBetType('color');
     setSelectedBetValue(color);
     setShowBetPopup(true);
   };
 
   const handleNumberSelect = (number: number) => {
+    if (isBettingClosed) {
+      toast({
+        title: "Betting Closed",
+        description: "Please wait for the next round to place bets.",
+        variant: "destructive"
+      });
+      return;
+    }
     setSelectedBetType('number');
     setSelectedBetValue(number);
     setShowBetPopup(true);
@@ -87,22 +110,27 @@ const Index = () => {
     });
   };
 
-  const handleRoundComplete = (newPeriod: string) => {
-    // Generate random result for demo
-    const winningNumber = Math.floor(Math.random() * 10);
-    const getNumberColor = (num: number): string[] => {
-      if (num === 0) return ["violet", "red"];
-      if (num === 5) return ["violet", "green"];
-      return num % 2 === 0 ? ["red"] : ["green"];
-    };
-
+  const handleRoundComplete = (newPeriod: string, winningNumber: number) => {
     const newRecord = {
       period: newPeriod,
       number: winningNumber,
       color: getNumberColor(winningNumber)
     };
 
-    setGameRecords(prev => [newRecord, ...prev.slice(0, 9)]);
+    // Add new record to the top of the list
+    setGameRecords(prev => [newRecord, ...prev]);
+    
+    toast({
+      title: "Round Complete!",
+      description: `Winning number: ${winningNumber}`,
+    });
+  };
+
+  const handleBettingStateChange = (isClosed: boolean) => {
+    setIsBettingClosed(isClosed);
+    if (isClosed && showBetPopup) {
+      setShowBetPopup(false);
+    }
   };
 
   const handleRecharge = () => {
@@ -181,11 +209,20 @@ const Index = () => {
               onTabChange={setActiveGameTab}
             />
 
-            <CountdownTimer onRoundComplete={handleRoundComplete} />
+            <CountdownTimer 
+              onRoundComplete={handleRoundComplete}
+              onBettingStateChange={handleBettingStateChange}
+            />
 
-            <ColorButtons onColorSelect={handleColorSelect} />
+            <ColorButtons 
+              onColorSelect={handleColorSelect}
+              disabled={isBettingClosed}
+            />
 
-            <NumberGrid onNumberSelect={handleNumberSelect} />
+            <NumberGrid 
+              onNumberSelect={handleNumberSelect}
+              disabled={isBettingClosed}
+            />
 
             <ParityRecord records={gameRecords} />
           </>
@@ -221,6 +258,7 @@ const Index = () => {
         selectedValue={selectedBetValue}
         userBalance={userBalance}
         onConfirmBet={handleConfirmBet}
+        disabled={isBettingClosed}
       />
 
       <BottomNavigation

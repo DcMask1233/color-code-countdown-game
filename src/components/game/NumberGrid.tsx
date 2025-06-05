@@ -1,13 +1,18 @@
 
 interface NumberGridProps {
   onNumberSelect: (number: number) => void;
+  disabled?: boolean;
 }
 
-export const NumberGrid = ({ onNumberSelect }: NumberGridProps) => {
+export const NumberGrid = ({ onNumberSelect, disabled = false }: NumberGridProps) => {
   const getNumberColor = (num: number): string => {
-    if (num === 0) return "bg-gradient-to-r from-violet-500 to-red-500";
-    if (num === 5) return "bg-gradient-to-r from-violet-500 to-green-500";
-    return num % 2 === 0 ? "bg-red-500" : "bg-green-500";
+    if (disabled) {
+      return "bg-gray-300 text-gray-500 cursor-not-allowed opacity-50";
+    }
+    
+    if (num === 0) return "bg-gradient-to-r from-violet-500 to-red-500 hover:opacity-90";
+    if (num === 5) return "bg-gradient-to-r from-violet-500 to-green-500 hover:opacity-90";
+    return num % 2 === 0 ? "bg-red-500 hover:opacity-90" : "bg-green-500 hover:opacity-90";
   };
 
   return (
@@ -16,8 +21,9 @@ export const NumberGrid = ({ onNumberSelect }: NumberGridProps) => {
         {[0, 1, 2, 3, 4].map((num) => (
           <button
             key={num}
-            onClick={() => onNumberSelect(num)}
-            className={`${getNumberColor(num)} text-white font-bold text-lg py-4 rounded-lg shadow-sm hover:opacity-90 transition-opacity`}
+            onClick={() => !disabled && onNumberSelect(num)}
+            disabled={disabled}
+            className={`${getNumberColor(num)} text-white font-bold text-lg py-4 rounded-lg shadow-sm transition-all`}
           >
             {num}
           </button>
@@ -27,8 +33,9 @@ export const NumberGrid = ({ onNumberSelect }: NumberGridProps) => {
         {[5, 6, 7, 8, 9].map((num) => (
           <button
             key={num}
-            onClick={() => onNumberSelect(num)}
-            className={`${getNumberColor(num)} text-white font-bold text-lg py-4 rounded-lg shadow-sm hover:opacity-90 transition-opacity`}
+            onClick={() => !disabled && onNumberSelect(num)}
+            disabled={disabled}
+            className={`${getNumberColor(num)} text-white font-bold text-lg py-4 rounded-lg shadow-sm transition-all`}
           >
             {num}
           </button>

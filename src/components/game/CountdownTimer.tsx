@@ -2,12 +2,14 @@
 import { useState, useEffect } from "react";
 
 interface CountdownTimerProps {
-  onRoundComplete: (newPeriod: string) => void;
+  onRoundComplete: (newPeriod: string, winningNumber: number) => void;
+  onBettingStateChange: (isBettingClosed: boolean) => void;
 }
 
-export const CountdownTimer = ({ onRoundComplete }: CountdownTimerProps) => {
+export const CountdownTimer = ({ onRoundComplete, onBettingStateChange }: CountdownTimerProps) => {
   const [timeLeft, setTimeLeft] = useState(60);
   const [currentPeriod, setCurrentPeriod] = useState("");
+  const [isBettingClosed, setIsBettingClosed] = useState(false);
 
   const generatePeriod = () => {
     const now = new Date();
@@ -25,6 +27,10 @@ export const CountdownTimer = ({ onRoundComplete }: CountdownTimerProps) => {
     return `${year}${month}${day}${roundNumber}`;
   };
 
+  const generateWinningNumber = () => {
+    return Math.floor(Math.random() * 10);
+  };
+
   useEffect(() => {
     // Initialize period
     setCurrentPeriod(generatePeriod());
@@ -37,15 +43,23 @@ export const CountdownTimer = ({ onRoundComplete }: CountdownTimerProps) => {
       
       setTimeLeft(remaining);
       
+      // Check if betting should be closed (last 10 seconds)
+      const shouldCloseBetting = remaining <= 10;
+      if (shouldCloseBetting !== isBettingClosed) {
+        setIsBettingClosed(shouldCloseBetting);
+        onBettingStateChange(shouldCloseBetting);
+      }
+      
       if (remaining === 60) {
         const newPeriod = generatePeriod();
+        const winningNumber = generateWinningNumber();
         setCurrentPeriod(newPeriod);
-        onRoundComplete(newPeriod);
+        onRoundComplete(newPeriod, winningNumber);
       }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [onRoundComplete]);
+  }, [onRoundComplete, onBettingStateChange, isBettingClosed]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -61,7 +75,15 @@ export const CountdownTimer = ({ onRoundComplete }: CountdownTimerProps) => {
       </div>
       <div className="flex justify-between items-center">
         <span className="text-sm text-gray-600">Count Down</span>
-        <span className="text-lg font-bold text-red-500">{formatTime(timeLeft)}</span>
+        <span 
+          className={`text-lg font-bold transition-all duration-300 ${
+            isBettingClosed 
+              ? 'text-black opacity-50 blur-[1px]' 
+              : 'text-black'
+          }`}
+        >
+          {formatTime(timeLeft)}
+        </span>
       </div>
     </div>
   );

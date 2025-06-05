@@ -37,6 +37,9 @@ export const ParityRecord = ({ records }: ParityRecordProps) => {
     );
   };
 
+  // Show only the latest 10 records
+  const displayRecords = records.slice(0, 10);
+
   return (
     <div className="bg-white rounded-lg shadow-sm mb-4">
       <div className="p-4 border-b">
@@ -53,7 +56,7 @@ export const ParityRecord = ({ records }: ParityRecordProps) => {
             </tr>
           </thead>
           <tbody>
-            {records.slice(0, 8).map((record, index) => (
+            {displayRecords.map((record, index) => (
               <tr key={record.period} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                 <td className="px-4 py-3 text-sm text-gray-900">
                   {record.period.slice(-6)}
