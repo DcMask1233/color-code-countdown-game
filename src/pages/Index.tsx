@@ -1,10 +1,13 @@
-
 import { useState, useEffect } from "react";
 import { LoginModal } from "@/components/auth/LoginModal";
-import { GameBoard } from "@/components/game/GameBoard";
-import { UserProfile } from "@/components/user/UserProfile";
-import { GameHistory } from "@/components/game/GameHistory";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CountdownTimer } from "@/components/game/CountdownTimer";
+import { GameTabs } from "@/components/game/GameTabs";
+import { ColorButtons } from "@/components/game/ColorButtons";
+import { NumberGrid } from "@/components/game/NumberGrid";
+import { BetPopup } from "@/components/game/BetPopup";
+import { ParityRecord } from "@/components/game/ParityRecord";
+import { Header } from "@/components/layout/Header";
+import { BottomNavigation } from "@/components/layout/BottomNavigation";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,7 +15,18 @@ const Index = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [userBalance, setUserBalance] = useState(1000);
-  const [gameHistory, setGameHistory] = useState([]);
+  const [activeGameTab, setActiveGameTab] = useState('parity');
+  const [activeBottomTab, setActiveBottomTab] = useState('home');
+  const [showBetPopup, setShowBetPopup] = useState(false);
+  const [selectedBetType, setSelectedBetType] = useState<'color' | 'number'>('color');
+  const [selectedBetValue, setSelectedBetValue] = useState<string | number>('');
+  const [gameRecords, setGameRecords] = useState([
+    { period: '20240105001', number: 7, color: ['green'] },
+    { period: '20240105002', number: 0, color: ['violet', 'red'] },
+    { period: '20240105003', number: 5, color: ['violet', 'green'] },
+    { period: '20240105004', number: 8, color: ['red'] },
+    { period: '20240105005', number: 3, color: ['green'] },
+  ]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -22,7 +36,6 @@ const Index = () => {
       setIsLoggedIn(true);
       const userData = JSON.parse(savedUser);
       setUserBalance(userData.balance || 1000);
-      setGameHistory(userData.history || []);
     }
   }, []);
 
@@ -31,7 +44,6 @@ const Index = () => {
     const userData = {
       mobile,
       balance: userBalance,
-      history: gameHistory,
       loginTime: new Date().toISOString()
     };
     localStorage.setItem('colorGameUser', JSON.stringify(userData));
@@ -47,31 +59,71 @@ const Index = () => {
     localStorage.removeItem('colorGameUser');
     setIsLoggedIn(false);
     setUserBalance(1000);
-    setGameHistory([]);
     toast({
       title: "Logged Out",
       description: "You have been successfully logged out",
     });
   };
 
-  const updateBalance = (amount: number) => {
-    const newBalance = userBalance + amount;
-    setUserBalance(newBalance);
-    
-    // Update localStorage
-    const savedUser = JSON.parse(localStorage.getItem('colorGameUser') || '{}');
-    savedUser.balance = newBalance;
-    localStorage.setItem('colorGameUser', JSON.stringify(savedUser));
+  const handleColorSelect = (color: string) => {
+    setSelectedBetType('color');
+    setSelectedBetValue(color);
+    setShowBetPopup(true);
   };
 
-  const addGameResult = (result: any) => {
-    const newHistory = [result, ...gameHistory].slice(0, 50); // Keep last 50 games
-    setGameHistory(newHistory);
+  const handleNumberSelect = (number: number) => {
+    setSelectedBetType('number');
+    setSelectedBetValue(number);
+    setShowBetPopup(true);
+  };
+
+  const handleConfirmBet = (amount: number) => {
+    // Deduct bet amount
+    setUserBalance(prev => prev - amount);
     
-    // Update localStorage
-    const savedUser = JSON.parse(localStorage.getItem('colorGameUser') || '{}');
-    savedUser.history = newHistory;
-    localStorage.setItem('colorGameUser', JSON.stringify(savedUser));
+    toast({
+      title: "Bet Placed!",
+      description: `₹${amount} bet placed on ${selectedBetType}: ${selectedBetValue}`,
+    });
+  };
+
+  const handleRoundComplete = (newPeriod: string) => {
+    // Generate random result for demo
+    const winningNumber = Math.floor(Math.random() * 10);
+    const getNumberColor = (num: number): string[] => {
+      if (num === 0) return ["violet", "red"];
+      if (num === 5) return ["violet", "green"];
+      return num % 2 === 0 ? ["red"] : ["green"];
+    };
+
+    const newRecord = {
+      period: newPeriod,
+      number: winningNumber,
+      color: getNumberColor(winningNumber)
+    };
+
+    setGameRecords(prev => [newRecord, ...prev.slice(0, 9)]);
+  };
+
+  const handleRecharge = () => {
+    toast({
+      title: "Recharge",
+      description: "Recharge functionality coming soon!",
+    });
+  };
+
+  const handleReadRules = () => {
+    toast({
+      title: "Rules",
+      description: "Game rules will be displayed here!",
+    });
+  };
+
+  const handleRefresh = () => {
+    toast({
+      title: "Refreshed",
+      description: "Game data refreshed!",
+    });
   };
 
   if (!isLoggedIn) {
@@ -113,47 +165,68 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-      <div className="container mx-auto px-4 py-6 max-w-md">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-white">Color Game</h1>
-          <Button 
-            onClick={handleLogout}
-            variant="outline" 
-            size="sm"
-            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-          >
-            Logout
-          </Button>
-        </div>
+    <div className="min-h-screen bg-gray-100 pb-20">
+      <Header
+        balance={userBalance}
+        onRecharge={handleRecharge}
+        onReadRules={handleReadRules}
+        onRefresh={handleRefresh}
+      />
 
-        <Tabs defaultValue="game" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 bg-white/10 backdrop-blur-md">
-            <TabsTrigger value="game" className="text-white data-[state=active]:bg-white/20">Game</TabsTrigger>
-            <TabsTrigger value="profile" className="text-white data-[state=active]:bg-white/20">Profile</TabsTrigger>
-            <TabsTrigger value="history" className="text-white data-[state=active]:bg-white/20">History</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="game">
-            <GameBoard 
-              userBalance={userBalance}
-              onBalanceUpdate={updateBalance}
-              onGameResult={addGameResult}
+      <div className="container mx-auto px-4 py-4 max-w-md">
+        {activeBottomTab === 'home' && (
+          <>
+            <GameTabs
+              activeTab={activeGameTab}
+              onTabChange={setActiveGameTab}
             />
-          </TabsContent>
 
-          <TabsContent value="profile">
-            <UserProfile 
-              balance={userBalance}
-              onBalanceUpdate={updateBalance}
-            />
-          </TabsContent>
+            <CountdownTimer onRoundComplete={handleRoundComplete} />
 
-          <TabsContent value="history">
-            <GameHistory history={gameHistory} />
-          </TabsContent>
-        </Tabs>
+            <ColorButtons onColorSelect={handleColorSelect} />
+
+            <NumberGrid onNumberSelect={handleNumberSelect} />
+
+            <ParityRecord records={gameRecords} />
+          </>
+        )}
+
+        {activeBottomTab === 'my' && (
+          <div className="bg-white rounded-lg p-6 shadow-sm">
+            <h2 className="text-xl font-bold mb-4">My Profile</h2>
+            <div className="space-y-4">
+              <div className="flex justify-between">
+                <span>Balance:</span>
+                <span className="font-semibold">₹{userBalance}</span>
+              </div>
+              <Button onClick={handleLogout} variant="outline" className="w-full">
+                Logout
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {(activeBottomTab === 'search' || activeBottomTab === 'newgame' || activeBottomTab === 'win') && (
+          <div className="bg-white rounded-lg p-6 shadow-sm text-center">
+            <h2 className="text-xl font-bold mb-4 capitalize">{activeBottomTab}</h2>
+            <p className="text-gray-600">This section is coming soon!</p>
+          </div>
+        )}
       </div>
+
+      <BetPopup
+        isOpen={showBetPopup}
+        onClose={() => setShowBetPopup(false)}
+        selectedType={selectedBetType}
+        selectedValue={selectedBetValue}
+        userBalance={userBalance}
+        onConfirmBet={handleConfirmBet}
+      />
+
+      <BottomNavigation
+        activeTab={activeBottomTab}
+        onTabChange={setActiveBottomTab}
+      />
     </div>
   );
 };
