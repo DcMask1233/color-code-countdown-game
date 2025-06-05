@@ -1,11 +1,11 @@
 
 import { useState } from "react";
-import { Header } from "@/components/layout/Header";
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 import { BetPopup } from "@/components/game/BetPopup";
 import { GameSection } from "@/components/game/GameSection";
 import { ProfileSection } from "@/components/user/ProfileSection";
 import { PlaceholderSection } from "@/components/layout/PlaceholderSection";
+import { HomeSection } from "@/components/layout/HomeSection";
 import { useToast } from "@/hooks/use-toast";
 
 interface GameRecord {
@@ -16,6 +16,7 @@ interface GameRecord {
 
 interface MainGameProps {
   userBalance: number;
+  userId: string;
   onBalanceUpdate: (amount: number) => void;
   onLogout: () => void;
   gameRecords: GameRecord[];
@@ -24,6 +25,7 @@ interface MainGameProps {
 
 export const MainGame = ({
   userBalance,
+  userId,
   onBalanceUpdate,
   onLogout,
   gameRecords,
@@ -31,6 +33,7 @@ export const MainGame = ({
 }: MainGameProps) => {
   const [activeGameTab, setActiveGameTab] = useState('parity');
   const [activeBottomTab, setActiveBottomTab] = useState('home');
+  const [selectedGameMode, setSelectedGameMode] = useState<string | null>(null);
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<'color' | 'number'>('color');
   const [selectedBetValue, setSelectedBetValue] = useState<string | number>('');
@@ -41,6 +44,14 @@ export const MainGame = ({
     if (num === 0) return ["violet", "red"];
     if (num === 5) return ["violet", "green"];
     return num % 2 === 0 ? ["red"] : ["green"];
+  };
+
+  const handleGameSelect = (gameMode: string) => {
+    setSelectedGameMode(gameMode);
+  };
+
+  const handleBackToHome = () => {
+    setSelectedGameMode(null);
   };
 
   const handleColorSelect = (color: string) => {
@@ -110,10 +121,10 @@ export const MainGame = ({
     });
   };
 
-  const handleReadRules = () => {
+  const handleWithdraw = () => {
     toast({
-      title: "Rules",
-      description: "Game rules will be displayed here!",
+      title: "Withdraw",
+      description: "Withdraw functionality coming soon!",
     });
   };
 
@@ -124,40 +135,73 @@ export const MainGame = ({
     });
   };
 
-  return (
-    <div className="min-h-screen bg-gray-100 pb-20">
-      <Header
-        balance={userBalance}
-        onRecharge={handleRecharge}
-        onReadRules={handleReadRules}
-        onRefresh={handleRefresh}
-      />
-
-      <div className="container mx-auto px-4 py-4 max-w-md">
-        {activeBottomTab === 'home' && (
-          <GameSection
-            activeGameTab={activeGameTab}
-            onGameTabChange={setActiveGameTab}
-            onRoundComplete={handleRoundComplete}
-            onBettingStateChange={handleBettingStateChange}
-            onColorSelect={handleColorSelect}
-            onNumberSelect={handleNumberSelect}
-            isBettingClosed={isBettingClosed}
-            gameRecords={gameRecords}
+  const renderContent = () => {
+    if (activeBottomTab === 'home') {
+      if (selectedGameMode === null) {
+        return (
+          <HomeSection
+            balance={userBalance}
+            userId={userId}
+            onRecharge={handleRecharge}
+            onWithdraw={handleWithdraw}
+            onRefresh={handleRefresh}
+            onGameSelect={handleGameSelect}
           />
-        )}
+        );
+      } else {
+        return (
+          <div className="min-h-screen bg-gray-100">
+            <div className="bg-[#1e99eb] text-white p-4">
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={handleBackToHome}
+                  className="text-white hover:bg-blue-600 rounded p-1"
+                >
+                  ←
+                </button>
+                <h1 className="text-lg font-semibold">
+                  {selectedGameMode === 'wingo-1min' ? 'WinGo (1min)' : 'WinGo (5min)'}
+                </h1>
+              </div>
+            </div>
+            <div className="container mx-auto px-4 py-4 max-w-md">
+              <GameSection
+                activeGameTab={activeGameTab}
+                onGameTabChange={setActiveGameTab}
+                onRoundComplete={handleRoundComplete}
+                onBettingStateChange={handleBettingStateChange}
+                onColorSelect={handleColorSelect}
+                onNumberSelect={handleNumberSelect}
+                isBettingClosed={isBettingClosed}
+                gameRecords={gameRecords}
+              />
+            </div>
+          </div>
+        );
+      }
+    }
 
-        {activeBottomTab === 'my' && (
+    if (activeBottomTab === 'my') {
+      return (
+        <div className="container mx-auto px-4 py-4 max-w-md">
           <ProfileSection
             userBalance={userBalance}
             onLogout={onLogout}
           />
-        )}
+        </div>
+      );
+    }
 
-        {(activeBottomTab === 'search' || activeBottomTab === 'newgame' || activeBottomTab === 'win') && (
-          <PlaceholderSection title={activeBottomTab} />
-        )}
+    return (
+      <div className="container mx-auto px-4 py-4 max-w-md">
+        <PlaceholderSection title={activeBottomTab} />
       </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 pb-20">
+      {renderContent()}
 
       <BetPopup
         isOpen={showBetPopup}

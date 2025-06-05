@@ -10,10 +10,15 @@ interface GameRecord {
   color: string[];
 }
 
+const generateUserId = (): string => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
 const Index = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [userBalance, setUserBalance] = useState(1000);
+  const [userId, setUserId] = useState('');
   const [gameRecords, setGameRecords] = useState<GameRecord[]>([
     { period: '20240105001', number: 7, color: ['green'] },
     { period: '20240105002', number: 0, color: ['violet', 'red'] },
@@ -30,18 +35,24 @@ const Index = () => {
       setIsLoggedIn(true);
       const userData = JSON.parse(savedUser);
       setUserBalance(userData.balance || 1000);
+      setUserId(userData.userId || generateUserId());
     }
   }, []);
 
   const handleLogin = (mobile: string) => {
+    // Generate unique user ID for new user
+    const newUserId = generateUserId();
+    
     // Simulate successful login
     const userData = {
       mobile,
       balance: userBalance,
+      userId: newUserId,
       loginTime: new Date().toISOString()
     };
     localStorage.setItem('colorGameUser', JSON.stringify(userData));
     setIsLoggedIn(true);
+    setUserId(newUserId);
     setShowLoginModal(false);
     toast({
       title: "Login Successful!",
@@ -53,6 +64,7 @@ const Index = () => {
     localStorage.removeItem('colorGameUser');
     setIsLoggedIn(false);
     setUserBalance(1000);
+    setUserId('');
     toast({
       title: "Logged Out",
       description: "You have been successfully logged out",
@@ -60,7 +72,16 @@ const Index = () => {
   };
 
   const handleBalanceUpdate = (amount: number) => {
-    setUserBalance(prev => prev + amount);
+    const newBalance = userBalance + amount;
+    setUserBalance(newBalance);
+    
+    // Update localStorage
+    const savedUser = localStorage.getItem('colorGameUser');
+    if (savedUser) {
+      const userData = JSON.parse(savedUser);
+      userData.balance = newBalance;
+      localStorage.setItem('colorGameUser', JSON.stringify(userData));
+    }
   };
 
   if (!isLoggedIn) {
@@ -77,6 +98,7 @@ const Index = () => {
   return (
     <MainGame
       userBalance={userBalance}
+      userId={userId}
       onBalanceUpdate={handleBalanceUpdate}
       onLogout={handleLogout}
       gameRecords={gameRecords}
