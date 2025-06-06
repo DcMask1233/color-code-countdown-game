@@ -4,8 +4,9 @@ import { BottomNavigation } from "@/components/layout/BottomNavigation";
 import { BetPopup } from "@/components/game/BetPopup";
 import { GameSection } from "@/components/game/GameSection";
 import { ProfileSection } from "@/components/user/ProfileSection";
-import { PlaceholderSection } from "@/components/layout/PlaceholderSection";
 import { HomeSection } from "@/components/layout/HomeSection";
+import { WalletSection } from "@/components/wallet/WalletSection";
+import { PromotionSection } from "@/components/layout/PromotionSection";
 import { useToast } from "@/hooks/use-toast";
 
 interface GameRecord {
@@ -21,6 +22,10 @@ interface MainGameProps {
   onLogout: () => void;
   gameRecords: GameRecord[];
   onGameRecordsUpdate: (records: GameRecord[]) => void;
+  totalBetAmount: number;
+  totalDepositAmount: number;
+  totalWithdrawAmount: number;
+  onStatsUpdate: (type: 'bet' | 'deposit' | 'withdraw', amount: number) => void;
 }
 
 export const MainGame = ({
@@ -29,7 +34,11 @@ export const MainGame = ({
   onBalanceUpdate,
   onLogout,
   gameRecords,
-  onGameRecordsUpdate
+  onGameRecordsUpdate,
+  totalBetAmount,
+  totalDepositAmount,
+  totalWithdrawAmount,
+  onStatsUpdate
 }: MainGameProps) => {
   const [activeGameTab, setActiveGameTab] = useState('parity');
   const [activeBottomTab, setActiveBottomTab] = useState('home');
@@ -52,6 +61,7 @@ export const MainGame = ({
 
   const handleBackToHome = () => {
     setSelectedGameMode(null);
+    setActiveBottomTab('home');
   };
 
   const handleColorSelect = (color: string) => {
@@ -84,6 +94,7 @@ export const MainGame = ({
 
   const handleConfirmBet = (amount: number) => {
     onBalanceUpdate(-amount);
+    onStatsUpdate('bet', amount);
     
     toast({
       title: "Bet Placed!",
@@ -135,6 +146,19 @@ export const MainGame = ({
     });
   };
 
+  const getGameModeTitle = (mode: string) => {
+    switch (mode) {
+      case 'wingo-1min':
+        return 'WinGo (1min)';
+      case 'wingo-3min':
+        return 'WinGo (3min)';
+      case 'wingo-5min':
+        return 'WinGo (5min)';
+      default:
+        return 'WinGo';
+    }
+  };
+
   const renderContent = () => {
     if (activeBottomTab === 'home') {
       if (selectedGameMode === null) {
@@ -160,7 +184,7 @@ export const MainGame = ({
                   ←
                 </button>
                 <h1 className="text-lg font-semibold">
-                  {selectedGameMode === 'wingo-1min' ? 'WinGo (1min)' : 'WinGo (5min)'}
+                  {getGameModeTitle(selectedGameMode)}
                 </h1>
               </div>
             </div>
@@ -174,11 +198,32 @@ export const MainGame = ({
                 onNumberSelect={handleNumberSelect}
                 isBettingClosed={isBettingClosed}
                 gameRecords={gameRecords}
+                gameMode={selectedGameMode}
               />
             </div>
           </div>
         );
       }
+    }
+
+    if (activeBottomTab === 'wallet') {
+      return (
+        <WalletSection
+          userBalance={userBalance}
+          totalBetAmount={totalBetAmount}
+          totalDepositAmount={totalDepositAmount}
+          totalWithdrawAmount={totalWithdrawAmount}
+          onBack={handleBackToHome}
+          onDeposit={() => toast({ title: "Deposit", description: "Deposit functionality coming soon!" })}
+          onWithdraw={() => toast({ title: "Withdraw", description: "Withdraw functionality coming soon!" })}
+          onDepositHistory={() => toast({ title: "Deposit History", description: "History functionality coming soon!" })}
+          onWithdrawHistory={() => toast({ title: "Withdrawal History", description: "History functionality coming soon!" })}
+        />
+      );
+    }
+
+    if (activeBottomTab === 'promotion') {
+      return <PromotionSection />;
     }
 
     if (activeBottomTab === 'my') {
@@ -194,7 +239,10 @@ export const MainGame = ({
 
     return (
       <div className="container mx-auto px-4 py-4 max-w-md">
-        <PlaceholderSection title={activeBottomTab} />
+        <div className="text-center py-20">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Coming Soon</h1>
+          <p className="text-gray-600">This feature is under development.</p>
+        </div>
       </div>
     );
   };

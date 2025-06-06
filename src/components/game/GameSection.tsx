@@ -20,6 +20,7 @@ interface GameSectionProps {
   onNumberSelect: (number: number) => void;
   isBettingClosed: boolean;
   gameRecords: GameRecord[];
+  gameMode?: string;
 }
 
 export const GameSection = ({
@@ -30,7 +31,8 @@ export const GameSection = ({
   onColorSelect,
   onNumberSelect,
   isBettingClosed,
-  gameRecords
+  gameRecords,
+  gameMode
 }: GameSectionProps) => {
   return (
     <>
@@ -42,6 +44,7 @@ export const GameSection = ({
       <CountdownTimer 
         onRoundComplete={onRoundComplete}
         onBettingStateChange={onBettingStateChange}
+        gameMode={gameMode}
       />
 
       <ColorButtons 

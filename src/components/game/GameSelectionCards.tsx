@@ -14,6 +14,12 @@ export const GameSelectionCards = ({ onGameSelect }: GameSelectionCardsProps) =>
       icon: Crown
     },
     {
+      id: 'wingo-3min',
+      title: 'WinGo',
+      subtitle: '3min',
+      icon: Crown
+    },
+    {
       id: 'wingo-5min',
       title: 'WinGo',
       subtitle: '5min',
