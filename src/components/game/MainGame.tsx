@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 import { BetPopup } from "@/components/game/BetPopup";
 import { GameSection } from "@/components/game/GameSection";
-import { ProfileSection } from "@/components/user/ProfileSection";
+import { MySection } from "@/components/user/MySection";
 import { HomeSection } from "@/components/layout/HomeSection";
 import { WalletSection } from "@/components/wallet/WalletSection";
 import { PromotionSection } from "@/components/layout/PromotionSection";
@@ -159,6 +158,10 @@ export const MainGame = ({
     }
   };
 
+  const handleNavigateToPromotion = () => {
+    setActiveBottomTab('promotion');
+  };
+
   const renderContent = () => {
     if (activeBottomTab === 'home') {
       if (selectedGameMode === null) {
@@ -227,13 +230,19 @@ export const MainGame = ({
     }
 
     if (activeBottomTab === 'my') {
+      // Get mobile number from localStorage
+      const savedUser = localStorage.getItem('colorGameUser');
+      const mobile = savedUser ? JSON.parse(savedUser).mobile : undefined;
+      
       return (
-        <div className="container mx-auto px-4 py-4 max-w-md">
-          <ProfileSection
-            userBalance={userBalance}
-            onLogout={onLogout}
-          />
-        </div>
+        <MySection
+          userBalance={userBalance}
+          userId={userId}
+          mobile={mobile}
+          onLogout={onLogout}
+          onNavigateToPromotion={handleNavigateToPromotion}
+          gameRecords={gameRecords}
+        />
       );
     }
 
