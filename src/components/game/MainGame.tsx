@@ -35,23 +35,12 @@ export const MainGame = ({
   onStatsUpdate
 }: MainGameProps) => {
   const {
-    activeGameTab,
     activeBottomTab,
     selectedGameMode,
-    showBetPopup,
-    selectedBetType,
-    selectedBetValue,
-    isBettingClosed,
-    setActiveGameTab,
     setActiveBottomTab,
-    setShowBetPopup,
     handleGameSelect,
     handleBackToHome,
-    handleColorSelect,
-    handleNumberSelect,
-    handleConfirmBet,
     handleRoundComplete,
-    handleBettingStateChange,
     handleNavigateToPromotion
   } = useMainGameLogic({
     userBalance,
@@ -66,26 +55,17 @@ export const MainGame = ({
       <MainGameContent
         activeBottomTab={activeBottomTab}
         selectedGameMode={selectedGameMode}
-        activeGameTab={activeGameTab}
-        showBetPopup={showBetPopup}
-        selectedBetType={selectedBetType}
-        selectedBetValue={selectedBetValue}
-        isBettingClosed={isBettingClosed}
         userBalance={userBalance}
         userId={userId}
         totalBetAmount={totalBetAmount}
         totalDepositAmount={totalDepositAmount}
         totalWithdrawAmount={totalWithdrawAmount}
         gameRecords={gameRecords}
-        onGameTabChange={setActiveGameTab}
         onGameSelect={handleGameSelect}
         onBackToHome={handleBackToHome}
-        onBetPopupClose={() => setShowBetPopup(false)}
         onRoundComplete={handleRoundComplete}
-        onBettingStateChange={handleBettingStateChange}
-        onColorSelect={handleColorSelect}
-        onNumberSelect={handleNumberSelect}
-        onConfirmBet={handleConfirmBet}
+        onBalanceUpdate={onBalanceUpdate}
+        onGameRecordsUpdate={onGameRecordsUpdate}
         onNavigateToPromotion={handleNavigateToPromotion}
         onLogout={onLogout}
       />

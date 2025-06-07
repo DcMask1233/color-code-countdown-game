@@ -1,9 +1,8 @@
-
 import { HomeSection } from "@/components/layout/HomeSection";
 import { WalletSection } from "@/components/wallet/WalletSection";
 import { PromotionSection } from "@/components/layout/PromotionSection";
 import { MySection } from "@/components/user/MySection";
-import { GameContainer } from "@/components/game/GameContainer";
+import { UniversalGameContainer } from "@/components/game/UniversalGameContainer";
 import { useToast } from "@/hooks/use-toast";
 
 interface GameRecord {
@@ -15,26 +14,17 @@ interface GameRecord {
 interface MainGameContentProps {
   activeBottomTab: string;
   selectedGameMode: string | null;
-  activeGameTab: string;
-  showBetPopup: boolean;
-  selectedBetType: 'color' | 'number';
-  selectedBetValue: string | number;
-  isBettingClosed: boolean;
   userBalance: number;
   userId: string;
   totalBetAmount: number;
   totalDepositAmount: number;
   totalWithdrawAmount: number;
   gameRecords: GameRecord[];
-  onGameTabChange: (tab: string) => void;
   onGameSelect: (gameMode: string) => void;
   onBackToHome: () => void;
-  onBetPopupClose: () => void;
-  onRoundComplete: (newPeriod: string, winningNumber: number) => void;
-  onBettingStateChange: (isClosed: boolean) => void;
-  onColorSelect: (color: string) => void;
-  onNumberSelect: (number: number) => void;
-  onConfirmBet: (amount: number) => void;
+  onRoundComplete: (newPeriod: string, winningNumber: number, gameType: string) => void;
+  onBalanceUpdate: (amount: number) => void;
+  onGameRecordsUpdate: (records: GameRecord[]) => void;
   onNavigateToPromotion: () => void;
   onLogout: () => void;
 }
@@ -42,26 +32,17 @@ interface MainGameContentProps {
 export const MainGameContent = ({
   activeBottomTab,
   selectedGameMode,
-  activeGameTab,
-  showBetPopup,
-  selectedBetType,
-  selectedBetValue,
-  isBettingClosed,
   userBalance,
   userId,
   totalBetAmount,
   totalDepositAmount,
   totalWithdrawAmount,
   gameRecords,
-  onGameTabChange,
   onGameSelect,
   onBackToHome,
-  onBetPopupClose,
   onRoundComplete,
-  onBettingStateChange,
-  onColorSelect,
-  onNumberSelect,
-  onConfirmBet,
+  onBalanceUpdate,
+  onGameRecordsUpdate,
   onNavigateToPromotion,
   onLogout
 }: MainGameContentProps) => {
@@ -88,6 +69,25 @@ export const MainGameContent = ({
     });
   };
 
+  const getNumberColor = (num: number): string[] => {
+    if (num === 0) return ["violet", "red"];
+    if (num === 5) return ["violet", "green"];
+    return num % 2 === 0 ? ["red"] : ["green"];
+  };
+
+  const handleRoundCompleteWithRecords = (newPeriod: string, winningNumber: number, gameType: string) => {
+    const newRecord = {
+      period: newPeriod,
+      number: winningNumber,
+      color: getNumberColor(winningNumber)
+    };
+
+    const updatedRecords = [newRecord, ...gameRecords].slice(0, 10);
+    onGameRecordsUpdate(updatedRecords);
+    
+    onRoundComplete(newPeriod, winningNumber, gameType);
+  };
+
   if (activeBottomTab === 'home') {
     if (selectedGameMode === null) {
       return (
@@ -102,23 +102,14 @@ export const MainGameContent = ({
       );
     } else {
       return (
-        <GameContainer
-          activeGameTab={activeGameTab}
-          selectedGameMode={selectedGameMode}
-          showBetPopup={showBetPopup}
-          selectedBetType={selectedBetType}
-          selectedBetValue={selectedBetValue}
-          isBettingClosed={isBettingClosed}
+        <UniversalGameContainer
+          gameMode={selectedGameMode}
           userBalance={userBalance}
           gameRecords={gameRecords}
-          onGameTabChange={onGameTabChange}
           onBackToHome={onBackToHome}
-          onBetPopupClose={onBetPopupClose}
-          onRoundComplete={onRoundComplete}
-          onBettingStateChange={onBettingStateChange}
-          onColorSelect={onColorSelect}
-          onNumberSelect={onNumberSelect}
-          onConfirmBet={onConfirmBet}
+          onRoundComplete={handleRoundCompleteWithRecords}
+          onBalanceUpdate={onBalanceUpdate}
+          onGameRecordsUpdate={onGameRecordsUpdate}
         />
       );
     }
