@@ -1,4 +1,6 @@
 
+import { ColorButtons } from "@/components/game/ColorButtons";
+import { NumberGrid } from "@/components/game/NumberGrid";
 import { BetPopup } from "@/components/game/BetPopup";
 import { ParityRecord } from "@/components/game/ParityRecord";
 import { useState } from "react";
@@ -14,7 +16,7 @@ interface SapreGameProps {
   currentPeriod: string;
   isBettingClosed: boolean;
   gameRecords: GameRecord[];
-  onPlaceBet: (betType: 'even-odd', betValue: string, amount: number) => boolean;
+  onPlaceBet: (betType: 'color' | 'number', betValue: string | number, amount: number) => boolean;
   userBalance: number;
   formatTime: (seconds: number) => string;
 }
@@ -29,15 +31,23 @@ export const SapreGame = ({
   formatTime
 }: SapreGameProps) => {
   const [showBetPopup, setShowBetPopup] = useState(false);
-  const [selectedBetValue, setSelectedBetValue] = useState<string>('');
+  const [selectedBetType, setSelectedBetType] = useState<'color' | 'number'>('color');
+  const [selectedBetValue, setSelectedBetValue] = useState<string | number>('');
 
-  const handleEvenOddSelect = (type: string) => {
-    setSelectedBetValue(type);
+  const handleColorSelect = (color: string) => {
+    setSelectedBetType('color');
+    setSelectedBetValue(color);
+    setShowBetPopup(true);
+  };
+
+  const handleNumberSelect = (number: number) => {
+    setSelectedBetType('number');
+    setSelectedBetValue(number);
     setShowBetPopup(true);
   };
 
   const handleConfirmBet = (amount: number) => {
-    const success = onPlaceBet('even-odd', selectedBetValue, amount);
+    const success = onPlaceBet(selectedBetType, selectedBetValue, amount);
     if (success) {
       setShowBetPopup(false);
     }
@@ -64,37 +74,22 @@ export const SapreGame = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        <button
-          onClick={() => !isBettingClosed && handleEvenOddSelect('even')}
-          disabled={isBettingClosed}
-          className={`font-semibold py-8 rounded-lg shadow-sm transition-all ${
-            isBettingClosed 
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50' 
-              : 'bg-blue-500 hover:bg-blue-600 text-white'
-          }`}
-        >
-          Even
-        </button>
-        <button
-          onClick={() => !isBettingClosed && handleEvenOddSelect('odd')}
-          disabled={isBettingClosed}
-          className={`font-semibold py-8 rounded-lg shadow-sm transition-all ${
-            isBettingClosed 
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50' 
-              : 'bg-orange-500 hover:bg-orange-600 text-white'
-          }`}
-        >
-          Odd
-        </button>
-      </div>
+      <ColorButtons 
+        onColorSelect={handleColorSelect}
+        disabled={isBettingClosed}
+      />
+
+      <NumberGrid 
+        onNumberSelect={handleNumberSelect}
+        disabled={isBettingClosed}
+      />
 
       <ParityRecord records={gameRecords} />
 
       <BetPopup
         isOpen={showBetPopup}
         onClose={() => setShowBetPopup(false)}
-        selectedType={'color' as any}
+        selectedType={selectedBetType}
         selectedValue={selectedBetValue}
         userBalance={userBalance}
         onConfirmBet={handleConfirmBet}

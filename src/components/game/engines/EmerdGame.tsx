@@ -1,4 +1,6 @@
 
+import { ColorButtons } from "@/components/game/ColorButtons";
+import { NumberGrid } from "@/components/game/NumberGrid";
 import { BetPopup } from "@/components/game/BetPopup";
 import { ParityRecord } from "@/components/game/ParityRecord";
 import { useState } from "react";
@@ -14,7 +16,7 @@ interface EmerdGameProps {
   currentPeriod: string;
   isBettingClosed: boolean;
   gameRecords: GameRecord[];
-  onPlaceBet: (betType: 'single-digit', betValue: number, amount: number) => boolean;
+  onPlaceBet: (betType: 'color' | 'number', betValue: string | number, amount: number) => boolean;
   userBalance: number;
   formatTime: (seconds: number) => string;
 }
@@ -29,15 +31,23 @@ export const EmerdGame = ({
   formatTime
 }: EmerdGameProps) => {
   const [showBetPopup, setShowBetPopup] = useState(false);
-  const [selectedBetValue, setSelectedBetValue] = useState<number>(0);
+  const [selectedBetType, setSelectedBetType] = useState<'color' | 'number'>('color');
+  const [selectedBetValue, setSelectedBetValue] = useState<string | number>('');
+
+  const handleColorSelect = (color: string) => {
+    setSelectedBetType('color');
+    setSelectedBetValue(color);
+    setShowBetPopup(true);
+  };
 
   const handleNumberSelect = (number: number) => {
+    setSelectedBetType('number');
     setSelectedBetValue(number);
     setShowBetPopup(true);
   };
 
   const handleConfirmBet = (amount: number) => {
-    const success = onPlaceBet('single-digit', selectedBetValue, amount);
+    const success = onPlaceBet(selectedBetType, selectedBetValue, amount);
     if (success) {
       setShowBetPopup(false);
     }
@@ -64,29 +74,22 @@ export const EmerdGame = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-5 gap-2 mb-4">
-        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((number) => (
-          <button
-            key={number}
-            onClick={() => !isBettingClosed && handleNumberSelect(number)}
-            disabled={isBettingClosed}
-            className={`h-16 font-bold text-lg rounded-lg shadow-sm transition-all ${
-              isBettingClosed 
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50' 
-                : 'bg-indigo-500 hover:bg-indigo-600 text-white'
-            }`}
-          >
-            {number}
-          </button>
-        ))}
-      </div>
+      <ColorButtons 
+        onColorSelect={handleColorSelect}
+        disabled={isBettingClosed}
+      />
+
+      <NumberGrid 
+        onNumberSelect={handleNumberSelect}
+        disabled={isBettingClosed}
+      />
 
       <ParityRecord records={gameRecords} />
 
       <BetPopup
         isOpen={showBetPopup}
         onClose={() => setShowBetPopup(false)}
-        selectedType={'number' as any}
+        selectedType={selectedBetType}
         selectedValue={selectedBetValue}
         userBalance={userBalance}
         onConfirmBet={handleConfirmBet}

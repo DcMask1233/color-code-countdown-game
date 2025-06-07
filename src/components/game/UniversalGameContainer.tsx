@@ -11,6 +11,7 @@ interface GameRecord {
   period: string;
   number: number;
   color: string[];
+  gameInstance?: string;
 }
 
 interface UniversalGameContainerProps {
@@ -61,18 +62,36 @@ export const UniversalGameContainer = ({
   };
 
   const duration = getDuration();
+  const gameInstance = `${duration === 60 ? '1min' : duration === 180 ? '3min' : '5min'}-${selectedGameType?.toLowerCase()}`;
 
   const gameEngine = UniversalGameEngine({
     gameName: selectedGameType || 'parity',
     duration,
     gameMode,
     onRoundComplete: (newPeriod, winningNumber, gameType) => {
+      // Create new record with game instance identifier
+      const newRecord = {
+        period: newPeriod,
+        number: winningNumber,
+        color: getNumberColor(winningNumber),
+        gameInstance
+      };
+
+      // Update records and call parent callback
+      const updatedRecords = [newRecord, ...gameRecords].slice(0, 50); // Keep last 50 records
+      onGameRecordsUpdate(updatedRecords);
       onRoundComplete(newPeriod, winningNumber, gameType);
     },
     onBettingStateChange: () => {},
     onBalanceUpdate,
     userBalance
   });
+
+  const getNumberColor = (num: number): string[] => {
+    if (num === 0) return ["violet", "red"];
+    if (num === 5) return ["violet", "green"];
+    return num % 2 === 0 ? ["red"] : ["green"];
+  };
 
   const handleGameTypeSelect = (gameType: string) => {
     setSelectedGameType(gameType);
@@ -86,48 +105,31 @@ export const UniversalGameContainer = ({
     return <GameTypeSelector onGameTypeSelect={handleGameTypeSelect} duration={duration} />;
   }
 
+  // Filter records for this specific game instance
+  const filteredRecords = gameRecords.filter(record => 
+    record.gameInstance === gameInstance
+  );
+
   const renderGameComponent = () => {
     const commonProps = {
       timeLeft: gameEngine.timeLeft,
       currentPeriod: gameEngine.currentPeriod,
       isBettingClosed: gameEngine.isBettingClosed,
-      gameRecords: gameRecords.filter(record => 
-        record.period.includes(selectedGameType) && 
-        record.period.includes(duration.toString())
-      ),
+      gameRecords: filteredRecords,
       userBalance,
-      formatTime: gameEngine.formatTime
+      formatTime: gameEngine.formatTime,
+      onPlaceBet: gameEngine.placeBet
     };
 
     switch (selectedGameType) {
       case 'parity':
-        return (
-          <ParityGame
-            {...commonProps}
-            onPlaceBet={gameEngine.placeBet}
-          />
-        );
+        return <ParityGame {...commonProps} />;
       case 'sapre':
-        return (
-          <SapreGame
-            {...commonProps}
-            onPlaceBet={gameEngine.placeBet}
-          />
-        );
+        return <SapreGame {...commonProps} />;
       case 'bcone':
-        return (
-          <BconeGame
-            {...commonProps}
-            onPlaceBet={gameEngine.placeBet}
-          />
-        );
+        return <BconeGame {...commonProps} />;
       case 'emerd':
-        return (
-          <EmerdGame
-            {...commonProps}
-            onPlaceBet={gameEngine.placeBet}
-          />
-        );
+        return <EmerdGame {...commonProps} />;
       default:
         return null;
     }
