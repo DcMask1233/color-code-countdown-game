@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { LoginScreen } from "@/components/auth/LoginScreen";
+import { useNavigate } from "react-router-dom";
 import { MainGame } from "@/components/game/MainGame";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,7 +16,6 @@ const generateUserId = (): string => {
 
 const Index = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
   const [userBalance, setUserBalance] = useState(1000);
   const [userId, setUserId] = useState('');
   const [totalBetAmount, setTotalBetAmount] = useState(0);
@@ -30,6 +29,7 @@ const Index = () => {
     { period: '20240105005', number: 3, color: ['green'] },
   ]);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const savedUser = localStorage.getItem('colorGameUser');
@@ -41,30 +41,11 @@ const Index = () => {
       setTotalBetAmount(userData.totalBetAmount || 0);
       setTotalDepositAmount(userData.totalDepositAmount || 0);
       setTotalWithdrawAmount(userData.totalWithdrawAmount || 0);
+    } else {
+      // Redirect to login if not authenticated
+      navigate('/login');
     }
-  }, []);
-
-  const handleLogin = (mobile: string) => {
-    const newUserId = generateUserId();
-    
-    const userData = {
-      mobile,
-      balance: userBalance,
-      userId: newUserId,
-      totalBetAmount: 0,
-      totalDepositAmount: 0,
-      totalWithdrawAmount: 0,
-      loginTime: new Date().toISOString()
-    };
-    localStorage.setItem('colorGameUser', JSON.stringify(userData));
-    setIsLoggedIn(true);
-    setUserId(newUserId);
-    setShowLoginModal(false);
-    toast({
-      title: "Login Successful!",
-      description: "Welcome to Color Prediction Game",
-    });
-  };
+  }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem('colorGameUser');
@@ -78,6 +59,7 @@ const Index = () => {
       title: "Logged Out",
       description: "You have been successfully logged out",
     });
+    navigate('/login');
   };
 
   const handleBalanceUpdate = (amount: number) => {
@@ -122,15 +104,9 @@ const Index = () => {
     }
   };
 
+  // Show loading or nothing while checking authentication
   if (!isLoggedIn) {
-    return (
-      <LoginScreen
-        showLoginModal={showLoginModal}
-        onShowLoginModal={() => setShowLoginModal(true)}
-        onCloseLoginModal={() => setShowLoginModal(false)}
-        onLogin={handleLogin}
-      />
-    );
+    return null;
   }
 
   return (
