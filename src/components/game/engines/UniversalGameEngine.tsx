@@ -11,12 +11,23 @@ interface GameRecord {
 }
 
 interface ActiveBet {
-  gameInstance: string; // e.g., "1min-parity"
+  gameInstance: string;
   period: string;
   betType: 'color' | 'number';
   betValue: string | number;
   amount: number;
-  netAmount: number; // amount after service fee
+  netAmount: number;
+}
+
+interface UserBet {
+  period: string;
+  betType: 'color' | 'number';
+  betValue: string | number;
+  amount: number;
+  result?: 'win' | 'lose';
+  payout?: number;
+  timestamp: Date;
+  gameInstance: string;
 }
 
 interface UniversalGameEngineProps {
@@ -42,6 +53,7 @@ export const UniversalGameEngine = ({
   const [currentPeriod, setCurrentPeriod] = useState("");
   const [isBettingClosed, setIsBettingClosed] = useState(false);
   const [activeBets, setActiveBets] = useState<ActiveBet[]>([]);
+  const [userBets, setUserBets] = useState<UserBet[]>([]);
   const { toast } = useToast();
 
   const gameInstance = `${duration === 60 ? '1min' : duration === 180 ? '3min' : '5min'}-${gameName.toLowerCase()}`;
@@ -54,7 +66,6 @@ export const UniversalGameEngine = ({
     const month = String(istTime.getMonth() + 1).padStart(2, '0');
     const day = String(istTime.getDate()).padStart(2, '0');
     
-    // Calculate round number for the day (resets daily)
     const startOfDay = new Date(istTime);
     startOfDay.setHours(0, 0, 0, 0);
     const secondsSinceStartOfDay = Math.floor((istTime.getTime() - startOfDay.getTime()) / 1000);
@@ -80,18 +91,17 @@ export const UniversalGameEngine = ({
       
       if (winningColors.includes(betColor)) {
         if (betColor === 'violet') {
-          return bet.netAmount * 4.5; // ₹441 for ₹98 bet
+          return bet.netAmount * 4.5;
         } else {
-          // Special case for number 5
           if (winningNumber === 5 && (betColor === 'green' || betColor === 'red')) {
-            return bet.netAmount * 1.5; // ₹147 for ₹98 bet
+            return bet.netAmount * 1.5;
           }
-          return bet.netAmount * 2; // ₹196 for ₹98 bet
+          return bet.netAmount * 2;
         }
       }
     } else if (bet.betType === 'number') {
       if (winningNumber === bet.betValue) {
-        return bet.netAmount * 9; // ₹882 for ₹98 bet
+        return bet.netAmount * 9;
       }
     }
     
@@ -104,8 +114,25 @@ export const UniversalGameEngine = ({
     );
     let totalWinnings = 0;
 
+    // Process each bet and update user bet history
     periodBets.forEach(bet => {
       const payout = calculatePayout(bet, winningNumber);
+      const result = payout > 0 ? 'win' : 'lose';
+      
+      // Add to user bet history
+      const userBet: UserBet = {
+        period: bet.period,
+        betType: bet.betType,
+        betValue: bet.betValue,
+        amount: bet.amount,
+        result,
+        payout: result === 'win' ? payout : 0,
+        timestamp: new Date(),
+        gameInstance: bet.gameInstance
+      };
+      
+      setUserBets(prev => [userBet, ...prev].slice(0, 50)); // Keep last 50 bets
+      
       if (payout > 0) {
         totalWinnings += payout;
         toast({
@@ -119,7 +146,6 @@ export const UniversalGameEngine = ({
       onBalanceUpdate(totalWinnings);
     }
 
-    // Remove processed bets for this game instance
     setActiveBets(prev => prev.filter(bet => 
       !(bet.period === period && bet.gameInstance === gameInstance)
     ));
@@ -144,7 +170,6 @@ export const UniversalGameEngine = ({
       return false;
     }
 
-    // Deduct ₹2 service fee
     const netAmount = amount - 2;
     if (netAmount <= 0) {
       toast({
@@ -176,8 +201,7 @@ export const UniversalGameEngine = ({
   };
 
   const getBettingCloseTime = () => {
-    // Fix betting close times according to specifications
-    return duration === 60 ? 10 : 30; // 10s for 1min, 30s for 3min/5min
+    return duration === 60 ? 10 : 30;
   };
 
   useEffect(() => {
@@ -203,7 +227,6 @@ export const UniversalGameEngine = ({
         const newPeriod = generatePeriod();
         const winningNumber = generateWinningNumber();
         
-        // Process bets before updating period
         processBets(winningNumber, currentPeriod);
         
         setCurrentPeriod(newPeriod);
@@ -220,11 +243,16 @@ export const UniversalGameEngine = ({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const getGameUserBets = () => {
+    return userBets.filter(bet => bet.gameInstance === gameInstance);
+  };
+
   return {
     timeLeft,
     currentPeriod,
     isBettingClosed,
     activeBets: activeBets.filter(bet => bet.gameInstance === gameInstance),
+    userBets: getGameUserBets(),
     placeBet,
     formatTime,
     gameInstance

@@ -1,7 +1,7 @@
 
 import { ColorButtons } from "@/components/game/ColorButtons";
 import { NumberGrid } from "@/components/game/NumberGrid";
-import { ParityRecord } from "@/components/game/ParityRecord";
+import { GameRecord } from "@/components/game/GameRecord";
 import { BetPopup } from "@/components/game/BetPopup";
 import { useState } from "react";
 
@@ -11,11 +11,22 @@ interface GameRecord {
   color: string[];
 }
 
+interface UserBet {
+  period: string;
+  betType: 'color' | 'number';
+  betValue: string | number;
+  amount: number;
+  result?: 'win' | 'lose';
+  payout?: number;
+  timestamp: Date;
+}
+
 interface ParityGameProps {
   timeLeft: number;
   currentPeriod: string;
   isBettingClosed: boolean;
   gameRecords: GameRecord[];
+  userBets: UserBet[];
   onPlaceBet: (betType: 'color' | 'number', betValue: string | number, amount: number) => boolean;
   userBalance: number;
   formatTime: (seconds: number) => string;
@@ -26,6 +37,7 @@ export const ParityGame = ({
   currentPeriod,
   isBettingClosed,
   gameRecords,
+  userBets,
   onPlaceBet,
   userBalance,
   formatTime
@@ -84,7 +96,11 @@ export const ParityGame = ({
         disabled={isBettingClosed}
       />
 
-      <ParityRecord records={gameRecords} />
+      <GameRecord 
+        records={gameRecords} 
+        userBets={userBets}
+        gameType="parity"
+      />
 
       <BetPopup
         isOpen={showBetPopup}
