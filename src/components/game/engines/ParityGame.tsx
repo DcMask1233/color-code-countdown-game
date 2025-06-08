@@ -1,5 +1,4 @@
 
-import { GameTabs } from "@/components/game/GameTabs";
 import { ColorButtons } from "@/components/game/ColorButtons";
 import { NumberGrid } from "@/components/game/NumberGrid";
 import { ParityRecord } from "@/components/game/ParityRecord";
@@ -31,7 +30,6 @@ export const ParityGame = ({
   userBalance,
   formatTime
 }: ParityGameProps) => {
-  const [activeGameTab, setActiveGameTab] = useState('parity');
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<'color' | 'number'>('color');
   const [selectedBetValue, setSelectedBetValue] = useState<string | number>('');
@@ -57,11 +55,6 @@ export const ParityGame = ({
 
   return (
     <>
-      <GameTabs
-        activeTab={activeGameTab}
-        onTabChange={setActiveGameTab}
-      />
-
       <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm text-gray-600">Period</span>

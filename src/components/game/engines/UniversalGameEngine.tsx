@@ -176,6 +176,7 @@ export const UniversalGameEngine = ({
   };
 
   const getBettingCloseTime = () => {
+    // Fix betting close times according to specifications
     return duration === 60 ? 10 : 30; // 10s for 1min, 30s for 3min/5min
   };
 
