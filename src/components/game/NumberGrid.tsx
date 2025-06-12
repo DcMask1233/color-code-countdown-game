@@ -16,7 +16,7 @@ export const NumberGrid = ({ onNumberSelect, disabled = false }: NumberGridProps
   };
 
   const renderNumberButton = (num: number) => {
-    const baseClasses = `${getNumberColor(num)} text-white font-bold text-base py-2 rounded shadow-sm transition-all relative`;
+    const baseClasses = `${getNumberColor(num)} text-white font-bold text-sm py-2 px-3 rounded transition-all relative`;
     
     if ((num === 0 || num === 5) && !disabled) {
       return (
@@ -27,8 +27,14 @@ export const NumberGrid = ({ onNumberSelect, disabled = false }: NumberGridProps
           className={baseClasses}
         >
           <div className="absolute inset-0 flex">
-            <div className={`w-1/2 ${num === 0 ? 'bg-violet-500' : 'bg-violet-500'} clip-diagonal-left`}></div>
-            <div className={`w-1/2 ${num === 0 ? 'bg-red-500' : 'bg-green-500'} clip-diagonal-right`}></div>
+            <div 
+              className={`w-1/2 ${num === 0 ? 'bg-violet-500' : 'bg-violet-500'}`}
+              style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}
+            ></div>
+            <div 
+              className={`w-1/2 ${num === 0 ? 'bg-red-500' : 'bg-green-500'}`}
+              style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 100%)' }}
+            ></div>
           </div>
           <span className="relative z-10">{num}</span>
         </button>
@@ -48,19 +54,11 @@ export const NumberGrid = ({ onNumberSelect, disabled = false }: NumberGridProps
   };
 
   return (
-    <div className="mb-4 px-4">
-      <style jsx>{`
-        .clip-diagonal-left {
-          clip-path: polygon(0 0, 100% 0, 0 100%);
-        }
-        .clip-diagonal-right {
-          clip-path: polygon(100% 0, 100% 100%, 0 100%);
-        }
-      `}</style>
-      <div className="grid grid-cols-5 gap-2">
+    <div className="mb-3 px-4">
+      <div className="grid grid-cols-5 gap-1.5">
         {[0, 1, 2, 3, 4].map((num) => renderNumberButton(num))}
       </div>
-      <div className="grid grid-cols-5 gap-2 mt-2">
+      <div className="grid grid-cols-5 gap-1.5 mt-1.5">
         {[5, 6, 7, 8, 9].map((num) => renderNumberButton(num))}
       </div>
     </div>
