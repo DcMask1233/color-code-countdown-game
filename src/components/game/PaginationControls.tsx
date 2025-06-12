@@ -32,24 +32,24 @@ export const PaginationControls = ({
 
   if (totalPages <= 1) {
     return (
-      <div className="p-3 border-t bg-gray-50 text-center">
+      <div className="p-4 border-t bg-gray-50 text-center">
         <span className="text-sm text-gray-500">
-          {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems}
+          Showing {Math.min(totalItems, 10)} of {totalItems} records
         </span>
       </div>
     );
   }
 
   return (
-    <>
-      <div className="p-3 border-t bg-gray-50 flex items-center justify-center gap-4">
+    <div className="border-t bg-gray-50">
+      <div className="p-4 flex items-center justify-center gap-4">
         <button
           onClick={prevPage}
           disabled={currentPage === 0}
-          className={`flex items-center gap-1 px-3 py-1 rounded ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
             currentPage === 0 
-              ? 'text-gray-400 cursor-not-allowed' 
-              : 'text-blue-600 hover:bg-blue-50'
+              ? 'text-gray-400 cursor-not-allowed bg-gray-100' 
+              : 'text-blue-600 hover:bg-blue-50 bg-white border border-gray-300'
           }`}
         >
           <ChevronLeft className="w-4 h-4" />
@@ -57,31 +57,18 @@ export const PaginationControls = ({
         </button>
         
         <div className="flex items-center gap-2">
-          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-            const pageNum = Math.max(0, Math.min(totalPages - 5, currentPage - 2)) + i;
-            return (
-              <button
-                key={pageNum}
-                onClick={() => onPageChange(pageNum)}
-                className={`w-8 h-8 rounded ${
-                  currentPage === pageNum
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                {pageNum + 1}
-              </button>
-            );
-          })}
+          <span className="text-sm font-medium text-gray-700">
+            Page {currentPage + 1} of {totalPages}
+          </span>
         </div>
         
         <button
           onClick={nextPage}
           disabled={currentPage === totalPages - 1}
-          className={`flex items-center gap-1 px-3 py-1 rounded ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
             currentPage === totalPages - 1 
-              ? 'text-gray-400 cursor-not-allowed' 
-              : 'text-blue-600 hover:bg-blue-50'
+              ? 'text-gray-400 cursor-not-allowed bg-gray-100' 
+              : 'text-blue-600 hover:bg-blue-50 bg-white border border-gray-300'
           }`}
         >
           Next
@@ -89,11 +76,11 @@ export const PaginationControls = ({
         </button>
       </div>
       
-      <div className="p-3 border-t bg-gray-50 text-center">
-        <span className="text-sm text-gray-500">
-          {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems}
+      <div className="px-4 pb-4 text-center">
+        <span className="text-xs text-gray-500">
+          Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} records
         </span>
       </div>
-    </>
+    </div>
   );
 };
