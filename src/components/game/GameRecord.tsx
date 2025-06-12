@@ -1,6 +1,6 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
 interface GameRecord {
@@ -28,12 +28,14 @@ interface GameRecordProps {
 
 export const GameRecord = ({ records, userBets, gameType }: GameRecordProps) => {
   const [expandedBet, setExpandedBet] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  const recordsPerPage = 10;
 
-  const getColorDot = (colors: string[]) => {
+  const getColorBubble = (colors: string[]) => {
     if (colors.length === 1) {
       return (
         <div 
-          className={`w-4 h-4 rounded-full ${
+          className={`w-5 h-5 rounded-full border-2 border-white shadow-sm ${
             colors[0] === 'green' ? 'bg-green-500' : 
             colors[0] === 'red' ? 'bg-red-500' : 'bg-violet-500'
           }`}
@@ -41,12 +43,13 @@ export const GameRecord = ({ records, userBets, gameType }: GameRecordProps) => 
       );
     }
     
+    // For numbers 0 and 5 that have dual colors
     return (
       <div className="flex gap-1">
         {colors.map((color, index) => (
           <div 
             key={index}
-            className={`w-3 h-3 rounded-full ${
+            className={`w-4 h-4 rounded-full border border-white shadow-sm ${
               color === 'green' ? 'bg-green-500' : 
               color === 'red' ? 'bg-red-500' : 'bg-violet-500'
             }`}
@@ -56,26 +59,34 @@ export const GameRecord = ({ records, userBets, gameType }: GameRecordProps) => 
     );
   };
 
-  const generatePrice = (period: string) => {
-    // Generate a consistent price based on period
-    const hash = period.split('').reduce((a, b) => {
-      a = ((a << 5) - a) + b.charCodeAt(0);
-      return a & a;
-    }, 0);
-    return Math.abs(hash % 50000) + 10000;
-  };
-
   const toggleBetExpansion = (index: number) => {
     setExpandedBet(expandedBet === index ? null : index);
   };
 
-  // Show only the latest 10 records
-  const displayRecords = records.slice(0, 10);
+  // Pagination logic for records
+  const totalPages = Math.ceil(records.length / recordsPerPage);
+  const startIndex = currentPage * recordsPerPage;
+  const endIndex = startIndex + recordsPerPage;
+  const displayRecords = records.slice(startIndex, endIndex);
+
+  const nextPage = () => {
+    if (currentPage < totalPages - 1) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const prevPage = () => {
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  // Show only the latest 5 user bets
   const displayUserBets = userBets.slice(0, 5);
 
   return (
     <div className="space-y-4">
-      {/* Past 10 Records Section */}
+      {/* Past Records Section with Pagination */}
       <div className="bg-white rounded-lg shadow-sm">
         <div className="p-4 border-b flex items-center justify-center gap-2">
           <div className="w-6 h-6 bg-gray-600 rounded flex items-center justify-center">
@@ -89,7 +100,6 @@ export const GameRecord = ({ records, userBets, gameType }: GameRecordProps) => 
             <TableHeader>
               <TableRow className="bg-gray-50">
                 <TableHead className="text-center text-xs font-medium text-gray-500 uppercase">Period</TableHead>
-                <TableHead className="text-center text-xs font-medium text-gray-500 uppercase">Price</TableHead>
                 <TableHead className="text-center text-xs font-medium text-gray-500 uppercase">Number</TableHead>
                 <TableHead className="text-center text-xs font-medium text-gray-500 uppercase">Result</TableHead>
               </TableRow>
@@ -100,11 +110,8 @@ export const GameRecord = ({ records, userBets, gameType }: GameRecordProps) => 
                   <TableCell className="text-center text-sm text-gray-900 py-3">
                     {record.period.slice(-10)}
                   </TableCell>
-                  <TableCell className="text-center text-sm text-gray-900 py-3">
-                    {record.price || generatePrice(record.period)}
-                  </TableCell>
                   <TableCell className="text-center text-sm py-3">
-                    <span className={`font-semibold ${
+                    <span className={`font-bold text-lg ${
                       record.number % 2 === 0 ? 'text-red-500' : 'text-green-500'
                     }`}>
                       {record.number}
@@ -112,7 +119,7 @@ export const GameRecord = ({ records, userBets, gameType }: GameRecordProps) => 
                   </TableCell>
                   <TableCell className="text-center py-3">
                     <div className="flex justify-center">
-                      {getColorDot(record.color)}
+                      {getColorBubble(record.color)}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -121,8 +128,60 @@ export const GameRecord = ({ records, userBets, gameType }: GameRecordProps) => 
           </Table>
         </div>
         
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="p-3 border-t bg-gray-50 flex items-center justify-center gap-4">
+            <button
+              onClick={prevPage}
+              disabled={currentPage === 0}
+              className={`flex items-center gap-1 px-3 py-1 rounded ${
+                currentPage === 0 
+                  ? 'text-gray-400 cursor-not-allowed' 
+                  : 'text-blue-600 hover:bg-blue-50'
+              }`}
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Prev
+            </button>
+            
+            <div className="flex items-center gap-2">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                const pageNum = Math.max(0, Math.min(totalPages - 5, currentPage - 2)) + i;
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`w-8 h-8 rounded ${
+                      currentPage === pageNum
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    {pageNum + 1}
+                  </button>
+                );
+              })}
+            </div>
+            
+            <button
+              onClick={nextPage}
+              disabled={currentPage === totalPages - 1}
+              className={`flex items-center gap-1 px-3 py-1 rounded ${
+                currentPage === totalPages - 1 
+                  ? 'text-gray-400 cursor-not-allowed' 
+                  : 'text-blue-600 hover:bg-blue-50'
+              }`}
+            >
+              Next
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+        
         <div className="p-3 border-t bg-gray-50 text-center">
-          <span className="text-sm text-gray-500">1-10 of {displayRecords.length}</span>
+          <span className="text-sm text-gray-500">
+            {startIndex + 1}-{Math.min(endIndex, records.length)} of {records.length}
+          </span>
         </div>
       </div>
 
