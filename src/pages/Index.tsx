@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MainGame } from "@/components/game/MainGame";
+import { AutoResultGenerator } from "@/components/game/AutoResultGenerator";
 import { useToast } from "@/hooks/use-toast";
 
 interface GameRecord {
@@ -110,18 +111,21 @@ const Index = () => {
   }
 
   return (
-    <MainGame
-      userBalance={userBalance}
-      userId={userId}
-      onBalanceUpdate={handleBalanceUpdate}
-      onLogout={handleLogout}
-      gameRecords={gameRecords}
-      onGameRecordsUpdate={setGameRecords}
-      totalBetAmount={totalBetAmount}
-      totalDepositAmount={totalDepositAmount}
-      totalWithdrawAmount={totalWithdrawAmount}
-      onStatsUpdate={handleStatsUpdate}
-    />
+    <>
+      <AutoResultGenerator />
+      <MainGame
+        userBalance={userBalance}
+        userId={userId}
+        onBalanceUpdate={handleBalanceUpdate}
+        onLogout={handleLogout}
+        gameRecords={gameRecords}
+        onGameRecordsUpdate={setGameRecords}
+        totalBetAmount={totalBetAmount}
+        totalDepositAmount={totalDepositAmount}
+        totalWithdrawAmount={totalWithdrawAmount}
+        onStatsUpdate={handleStatsUpdate}
+      />
+    </>
   );
 };
 

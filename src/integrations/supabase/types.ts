@@ -9,13 +9,61 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      game_results: {
+        Row: {
+          created_at: string
+          duration: number
+          game_type: string
+          id: string
+          number: number
+          period: string
+          result_color: string[]
+        }
+        Insert: {
+          created_at?: string
+          duration: number
+          game_type: string
+          id?: string
+          number: number
+          period: string
+          result_color: string[]
+        }
+        Update: {
+          created_at?: string
+          duration?: number
+          game_type?: string
+          id?: string
+          number?: number
+          period?: string
+          result_color?: string[]
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_period: {
+        Args: { game_duration: number }
+        Returns: string
+      }
+      generate_winning_number: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      get_result_colors: {
+        Args: { winning_number: number }
+        Returns: string[]
+      }
+      insert_game_result: {
+        Args: { p_game_type: string; p_duration: number }
+        Returns: {
+          period: string
+          number: number
+          result_color: string[]
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

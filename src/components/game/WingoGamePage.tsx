@@ -155,11 +155,6 @@ export const WingoGamePage = ({
     userBalance
   });
 
-  const getFilteredRecords = (tabName: string) => {
-    const gameInstance = `${durationLabel}-${tabName}`;
-    return gameRecords.filter(record => record.gameInstance === gameInstance);
-  };
-
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="bg-[#1e99eb] text-white p-4">
@@ -190,11 +185,11 @@ export const WingoGamePage = ({
               timeLeft={parityEngine.timeLeft}
               currentPeriod={parityEngine.currentPeriod}
               isBettingClosed={parityEngine.isBettingClosed}
-              gameRecords={getFilteredRecords('parity')}
               userBets={parityEngine.userBets}
               userBalance={userBalance}
               formatTime={parityEngine.formatTime}
               onPlaceBet={parityEngine.placeBet}
+              duration={duration}
             />
           </TabsContent>
           
@@ -203,11 +198,11 @@ export const WingoGamePage = ({
               timeLeft={sapreEngine.timeLeft}
               currentPeriod={sapreEngine.currentPeriod}
               isBettingClosed={sapreEngine.isBettingClosed}
-              gameRecords={getFilteredRecords('sapre')}
               userBets={sapreEngine.userBets}
               userBalance={userBalance}
               formatTime={sapreEngine.formatTime}
               onPlaceBet={sapreEngine.placeBet}
+              duration={duration}
             />
           </TabsContent>
           
@@ -216,11 +211,11 @@ export const WingoGamePage = ({
               timeLeft={bconeEngine.timeLeft}
               currentPeriod={bconeEngine.currentPeriod}
               isBettingClosed={bconeEngine.isBettingClosed}
-              gameRecords={getFilteredRecords('bcone')}
               userBets={bconeEngine.userBets}
               userBalance={userBalance}
               formatTime={bconeEngine.formatTime}
               onPlaceBet={bconeEngine.placeBet}
+              duration={duration}
             />
           </TabsContent>
           
@@ -229,11 +224,11 @@ export const WingoGamePage = ({
               timeLeft={emerdEngine.timeLeft}
               currentPeriod={emerdEngine.currentPeriod}
               isBettingClosed={emerdEngine.isBettingClosed}
-              gameRecords={getFilteredRecords('emerd')}
               userBets={emerdEngine.userBets}
               userBalance={userBalance}
               formatTime={emerdEngine.formatTime}
               onPlaceBet={emerdEngine.placeBet}
+              duration={duration}
             />
           </TabsContent>
         </Tabs>

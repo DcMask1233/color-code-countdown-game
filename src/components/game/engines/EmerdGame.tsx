@@ -5,12 +5,6 @@ import { BetPopup } from "@/components/game/BetPopup";
 import { GameRecord } from "@/components/game/GameRecord";
 import { useState } from "react";
 
-interface GameRecord {
-  period: string;
-  number: number;
-  color: string[];
-}
-
 interface UserBet {
   period: string;
   betType: 'color' | 'number';
@@ -25,22 +19,22 @@ interface EmerdGameProps {
   timeLeft: number;
   currentPeriod: string;
   isBettingClosed: boolean;
-  gameRecords: GameRecord[];
   userBets: UserBet[];
   onPlaceBet: (betType: 'color' | 'number', betValue: string | number, amount: number) => boolean;
   userBalance: number;
   formatTime: (seconds: number) => string;
+  duration: number;
 }
 
 export const EmerdGame = ({
   timeLeft,
   currentPeriod,
   isBettingClosed,
-  gameRecords,
   userBets,
   onPlaceBet,
   userBalance,
-  formatTime
+  formatTime,
+  duration
 }: EmerdGameProps) => {
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<'color' | 'number'>('color');
@@ -97,9 +91,9 @@ export const EmerdGame = ({
       />
 
       <GameRecord 
-        records={gameRecords} 
         userBets={userBets}
         gameType="emerd"
+        duration={duration}
       />
 
       <BetPopup

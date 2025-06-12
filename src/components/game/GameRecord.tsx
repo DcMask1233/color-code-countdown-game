@@ -1,13 +1,6 @@
 
-import { RecordTable } from "./RecordTable";
+import { GameResultsTable } from "./GameResultsTable";
 import { UserBetsSection } from "./UserBetsSection";
-
-interface GameRecord {
-  period: string;
-  number: number;
-  color: string[];
-  price?: number;
-}
 
 interface UserBet {
   period: string;
@@ -20,15 +13,15 @@ interface UserBet {
 }
 
 interface GameRecordProps {
-  records: GameRecord[];
   userBets: UserBet[];
   gameType: string;
+  duration: number;
 }
 
-export const GameRecord = ({ records, userBets, gameType }: GameRecordProps) => {
+export const GameRecord = ({ userBets, gameType, duration }: GameRecordProps) => {
   return (
     <div className="space-y-4">
-      <RecordTable records={records} gameType={gameType} />
+      <GameResultsTable gameType={gameType} duration={duration} />
       <UserBetsSection userBets={userBets} gameType={gameType} />
     </div>
   );
