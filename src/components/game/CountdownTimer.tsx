@@ -26,18 +26,27 @@ export const CountdownTimer = ({ onRoundComplete, onBettingStateChange, gameMode
   };
 
   const generatePeriod = () => {
+    // Get current IST time (UTC + 5:30)
     const now = new Date();
     const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
     
+    // Format date as YYYYMMDD
     const year = istTime.getFullYear();
     const month = String(istTime.getMonth() + 1).padStart(2, '0');
     const day = String(istTime.getDate()).padStart(2, '0');
+    const dateStr = `${year}${month}${day}`;
     
+    // Calculate seconds since start of IST day (12:00 AM IST)
+    const startOfDay = new Date(istTime);
+    startOfDay.setHours(0, 0, 0, 0);
+    const secondsSinceStartOfDay = Math.floor((istTime.getTime() - startOfDay.getTime()) / 1000);
+    
+    // Calculate round number based on duration
     const duration = getGameDuration();
-    const totalSeconds = istTime.getHours() * 3600 + istTime.getMinutes() * 60 + istTime.getSeconds();
-    const roundNumber = String(Math.floor(totalSeconds / duration) % 1000).padStart(3, '0');
+    const roundNumber = Math.floor(secondsSinceStartOfDay / duration) + 1;
     
-    return `${year}${month}${day}${roundNumber}`;
+    // Format as YYYYMMDDRRR
+    return `${dateStr}${String(roundNumber).padStart(3, '0')}`;
   };
 
   const generateWinningNumber = () => {
@@ -51,8 +60,13 @@ export const CountdownTimer = ({ onRoundComplete, onBettingStateChange, gameMode
       const now = new Date();
       const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
       const duration = getGameDuration();
-      const totalSeconds = istTime.getHours() * 3600 + istTime.getMinutes() * 60 + istTime.getSeconds();
-      const secondsInCurrentRound = totalSeconds % duration;
+      
+      // Calculate seconds since start of IST day
+      const startOfDay = new Date(istTime);
+      startOfDay.setHours(0, 0, 0, 0);
+      const secondsSinceStartOfDay = Math.floor((istTime.getTime() - startOfDay.getTime()) / 1000);
+      
+      const secondsInCurrentRound = secondsSinceStartOfDay % duration;
       const remaining = duration - secondsInCurrentRound;
       
       setTimeLeft(remaining);

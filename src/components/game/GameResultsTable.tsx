@@ -2,7 +2,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useGameResults } from "@/hooks/useGameResults";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface GameResultsTableProps {
   gameType: string;
@@ -10,13 +10,13 @@ interface GameResultsTableProps {
 }
 
 export const GameResultsTable = ({ gameType, duration }: GameResultsTableProps) => {
-  const { results, loading, loadingMore, hasMore, loadMore } = useGameResults(gameType, duration);
+  const { results, loading, currentPage, totalPages, totalCount, goToPage, nextPage, prevPage } = useGameResults(gameType, duration);
 
-  const getColorBubbles = (number: number, resultColors: string[]) => {
+  const getColorCircles = (number: number, resultColors: string[]) => {
     if (resultColors.length === 1) {
       return (
         <div 
-          className={`w-6 h-6 rounded border-2 border-white shadow-md ${
+          className={`w-6 h-6 rounded-full shadow-md ${
             resultColors[0] === 'green' ? 'bg-green-500' : 
             resultColors[0] === 'red' ? 'bg-red-500' : 'bg-violet-500'
           }`}
@@ -24,20 +24,56 @@ export const GameResultsTable = ({ gameType, duration }: GameResultsTableProps) 
       );
     }
     
-    // For numbers 0 and 5 that have dual colors
+    // For numbers 0 and 5 that have dual colors - split circles
+    if (number === 0) {
+      return (
+        <div className="relative w-6 h-6 rounded-full overflow-hidden shadow-md">
+          <div className="absolute inset-0 bg-violet-500" style={{ clipPath: 'polygon(0% 0%, 100% 0%, 50% 100%)' }}></div>
+          <div className="absolute inset-0 bg-red-500" style={{ clipPath: 'polygon(0% 0%, 50% 100%, 0% 100%)' }}></div>
+        </div>
+      );
+    }
+    
+    if (number === 5) {
+      return (
+        <div className="relative w-6 h-6 rounded-full overflow-hidden shadow-md">
+          <div className="absolute inset-0 bg-violet-500" style={{ clipPath: 'polygon(0% 0%, 100% 0%, 50% 100%)' }}></div>
+          <div className="absolute inset-0 bg-green-500" style={{ clipPath: 'polygon(0% 0%, 50% 100%, 0% 100%)' }}></div>
+        </div>
+      );
+    }
+
     return (
-      <div className="flex gap-1">
-        {resultColors.map((color, index) => (
-          <div 
-            key={index}
-            className={`w-5 h-5 rounded border-2 border-white shadow-md ${
-              color === 'green' ? 'bg-green-500' : 
-              color === 'red' ? 'bg-red-500' : 'bg-violet-500'
-            }`}
-          />
-        ))}
-      </div>
+      <div className="w-6 h-6 rounded-full bg-gray-300 shadow-md" />
     );
+  };
+
+  const renderPaginationButtons = () => {
+    const buttons = [];
+    const maxVisibleButtons = 5;
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisibleButtons / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisibleButtons - 1);
+    
+    if (endPage - startPage < maxVisibleButtons - 1) {
+      startPage = Math.max(1, endPage - maxVisibleButtons + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      buttons.push(
+        <Button
+          key={i}
+          variant={i === currentPage ? "default" : "outline"}
+          size="sm"
+          onClick={() => goToPage(i)}
+          className="w-8 h-8 p-0"
+        >
+          {i}
+        </Button>
+      );
+    }
+    
+    return buttons;
   };
 
   if (loading) {
@@ -100,7 +136,7 @@ export const GameResultsTable = ({ gameType, duration }: GameResultsTableProps) 
                 </TableCell>
                 <TableCell className="text-center py-4 px-2">
                   <div className="flex justify-center items-center">
-                    {getColorBubbles(record.number, record.result_color)}
+                    {getColorCircles(record.number, record.result_color)}
                   </div>
                 </TableCell>
               </TableRow>
@@ -116,25 +152,47 @@ export const GameResultsTable = ({ gameType, duration }: GameResultsTableProps) 
         </Table>
       </div>
       
-      {hasMore && (
-        <div className="p-4 border-t bg-gray-50 flex justify-center">
-          <Button
-            onClick={loadMore}
-            disabled={loadingMore}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            {loadingMore && <Loader2 className="w-4 h-4 animate-spin" />}
-            {loadingMore ? 'Loading...' : 'Load More'}
-          </Button>
-        </div>
-      )}
-      
-      {!hasMore && results.length > 0 && (
-        <div className="p-4 border-t bg-gray-50 text-center">
-          <span className="text-sm text-gray-500">
-            All records loaded ({results.length} total)
-          </span>
+      {totalPages > 1 && (
+        <div className="p-4 border-t bg-gray-50">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-500">
+              Showing {((currentPage - 1) * 10) + 1}-{Math.min(currentPage * 10, totalCount)} of {totalCount} records
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={prevPage}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Prev
+              </Button>
+              
+              <div className="flex items-center gap-1">
+                {renderPaginationButtons()}
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={nextPage}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-1"
+              >
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+          
+          <div className="text-center mt-2">
+            <span className="text-xs text-gray-500">
+              Page {currentPage} of {totalPages}
+            </span>
+          </div>
         </div>
       )}
     </div>
