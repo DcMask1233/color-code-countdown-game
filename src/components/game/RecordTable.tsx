@@ -1,7 +1,8 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
-import { PaginationControls } from "./PaginationControls";
 
 interface GameRecord {
   period: string;
@@ -16,8 +17,8 @@ interface RecordTableProps {
 }
 
 export const RecordTable = ({ records, gameType }: RecordTableProps) => {
-  const [currentPage, setCurrentPage] = useState(0);
-  const recordsPerPage = 10;
+  const [displayCount, setDisplayCount] = useState(10);
+  const [loading, setLoading] = useState(false);
 
   const getCorrectColors = (number: number): string[] => {
     // Correct color mapping based on specifications
@@ -34,7 +35,7 @@ export const RecordTable = ({ records, gameType }: RecordTableProps) => {
     if (colors.length === 1) {
       return (
         <div 
-          className={`w-6 h-6 rounded-full border-2 border-white shadow-md ${
+          className={`w-6 h-6 rounded border-2 border-white shadow-md ${
             colors[0] === 'green' ? 'bg-green-500' : 
             colors[0] === 'red' ? 'bg-red-500' : 'bg-violet-500'
           }`}
@@ -48,7 +49,7 @@ export const RecordTable = ({ records, gameType }: RecordTableProps) => {
         {colors.map((color, index) => (
           <div 
             key={index}
-            className={`w-5 h-5 rounded-full border-2 border-white shadow-md ${
+            className={`w-5 h-5 rounded border-2 border-white shadow-md ${
               color === 'green' ? 'bg-green-500' : 
               color === 'red' ? 'bg-red-500' : 'bg-violet-500'
             }`}
@@ -58,12 +59,19 @@ export const RecordTable = ({ records, gameType }: RecordTableProps) => {
     );
   };
 
-  // Sort records by period in descending order (latest first) and paginate
+  const loadMore = () => {
+    setLoading(true);
+    // Simulate loading delay
+    setTimeout(() => {
+      setDisplayCount(prev => prev + 10);
+      setLoading(false);
+    }, 500);
+  };
+
+  // Sort records by period in descending order
   const sortedRecords = [...records].sort((a, b) => b.period.localeCompare(a.period));
-  const totalPages = Math.ceil(sortedRecords.length / recordsPerPage);
-  const startIndex = currentPage * recordsPerPage;
-  const endIndex = startIndex + recordsPerPage;
-  const displayRecords = sortedRecords.slice(startIndex, endIndex);
+  const displayRecords = sortedRecords.slice(0, displayCount);
+  const hasMore = displayCount < sortedRecords.length;
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -78,13 +86,13 @@ export const RecordTable = ({ records, gameType }: RecordTableProps) => {
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50 border-b border-gray-200">
-              <TableHead className="text-center text-xs font-semibold text-gray-600 uppercase tracking-wider py-3">
+              <TableHead className="text-center text-xs font-semibold text-gray-600 uppercase tracking-wider py-3 w-1/3">
                 Period
               </TableHead>
-              <TableHead className="text-center text-xs font-semibold text-gray-600 uppercase tracking-wider py-3">
+              <TableHead className="text-center text-xs font-semibold text-gray-600 uppercase tracking-wider py-3 w-1/3">
                 Number
               </TableHead>
-              <TableHead className="text-center text-xs font-semibold text-gray-600 uppercase tracking-wider py-3">
+              <TableHead className="text-center text-xs font-semibold text-gray-600 uppercase tracking-wider py-3 w-1/3">
                 Result
               </TableHead>
             </TableRow>
@@ -94,10 +102,10 @@ export const RecordTable = ({ records, gameType }: RecordTableProps) => {
               <TableRow key={record.period} className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
                 index % 2 === 0 ? 'bg-white' : 'bg-gray-25'
               }`}>
-                <TableCell className="text-center text-sm text-gray-900 py-4 font-medium">
-                  {record.period}
+                <TableCell className="text-center text-sm text-gray-900 py-4 font-medium px-2">
+                  <div className="truncate">{record.period}</div>
                 </TableCell>
-                <TableCell className="text-center py-4">
+                <TableCell className="text-center py-4 px-2">
                   <span className={`font-bold text-xl ${
                     [1, 3, 7, 9].includes(record.number) ? 'text-green-600' :
                     [2, 4, 6, 8].includes(record.number) ? 'text-red-600' :
@@ -106,7 +114,7 @@ export const RecordTable = ({ records, gameType }: RecordTableProps) => {
                     {record.number}
                   </span>
                 </TableCell>
-                <TableCell className="text-center py-4">
+                <TableCell className="text-center py-4 px-2">
                   <div className="flex justify-center items-center">
                     {getColorBubbles(record.number)}
                   </div>
@@ -124,14 +132,27 @@ export const RecordTable = ({ records, gameType }: RecordTableProps) => {
         </Table>
       </div>
       
-      <PaginationControls
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-        startIndex={startIndex}
-        endIndex={endIndex}
-        totalItems={sortedRecords.length}
-      />
+      {hasMore && (
+        <div className="p-4 border-t bg-gray-50 flex justify-center">
+          <Button
+            onClick={loadMore}
+            disabled={loading}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+            {loading ? 'Loading...' : 'Load More'}
+          </Button>
+        </div>
+      )}
+      
+      {!hasMore && displayRecords.length > 0 && (
+        <div className="p-4 border-t bg-gray-50 text-center">
+          <span className="text-sm text-gray-500">
+            All records loaded ({displayRecords.length} total)
+          </span>
+        </div>
+      )}
     </div>
   );
 };

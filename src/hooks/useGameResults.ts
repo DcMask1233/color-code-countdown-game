@@ -16,17 +16,27 @@ interface GameResult {
 export const useGameResults = (gameType: string, duration: number) => {
   const [results, setResults] = useState<GameResult[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
   const { toast } = useToast();
 
-  const fetchResults = async () => {
+  const RECORDS_PER_PAGE = 10;
+
+  const fetchResults = async (page: number = 0, reset: boolean = true) => {
     try {
+      if (page === 0) setLoading(true);
+      else setLoadingMore(true);
+
+      const offset = page * RECORDS_PER_PAGE;
+      
       const { data, error } = await supabase
         .from('game_results')
         .select('*')
         .eq('game_type', gameType)
         .eq('duration', duration)
-        .order('created_at', { ascending: false })
-        .limit(50); // Get more for pagination
+        .order('period', { ascending: false })
+        .range(offset, offset + RECORDS_PER_PAGE - 1);
 
       if (error) {
         console.error('Error fetching game results:', error);
@@ -35,18 +45,43 @@ export const useGameResults = (gameType: string, duration: number) => {
           description: "Failed to fetch game results",
           variant: "destructive"
         });
+        setHasMore(false);
       } else {
-        setResults(data || []);
+        const newResults = data || [];
+        
+        if (reset) {
+          setResults(newResults);
+        } else {
+          setResults(prev => [...prev, ...newResults]);
+        }
+        
+        // Check if there are more records
+        setHasMore(newResults.length === RECORDS_PER_PAGE);
+        setCurrentPage(page);
       }
     } catch (error) {
       console.error('Error in fetchResults:', error);
+      setHasMore(false);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
+  const loadMore = () => {
+    if (!loadingMore && hasMore) {
+      fetchResults(currentPage + 1, false);
+    }
+  };
+
+  const resetPagination = () => {
+    setCurrentPage(0);
+    setHasMore(true);
+    fetchResults(0, true);
+  };
+
   useEffect(() => {
-    fetchResults();
+    resetPagination();
 
     // Subscribe to real-time updates
     const channel = supabase
@@ -71,5 +106,12 @@ export const useGameResults = (gameType: string, duration: number) => {
     };
   }, [gameType, duration]);
 
-  return { results, loading, refetch: fetchResults };
+  return { 
+    results, 
+    loading, 
+    loadingMore,
+    hasMore,
+    loadMore,
+    refetch: () => resetPagination()
+  };
 };

@@ -1,8 +1,8 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useState } from "react";
-import { PaginationControls } from "./PaginationControls";
 import { useGameResults } from "@/hooks/useGameResults";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface GameResultsTableProps {
   gameType: string;
@@ -10,15 +10,13 @@ interface GameResultsTableProps {
 }
 
 export const GameResultsTable = ({ gameType, duration }: GameResultsTableProps) => {
-  const { results, loading } = useGameResults(gameType, duration);
-  const [currentPage, setCurrentPage] = useState(0);
-  const recordsPerPage = 10;
+  const { results, loading, loadingMore, hasMore, loadMore } = useGameResults(gameType, duration);
 
   const getColorBubbles = (number: number, resultColors: string[]) => {
     if (resultColors.length === 1) {
       return (
         <div 
-          className={`w-6 h-6 rounded-full border-2 border-white shadow-md ${
+          className={`w-6 h-6 rounded border-2 border-white shadow-md ${
             resultColors[0] === 'green' ? 'bg-green-500' : 
             resultColors[0] === 'red' ? 'bg-red-500' : 'bg-violet-500'
           }`}
@@ -32,7 +30,7 @@ export const GameResultsTable = ({ gameType, duration }: GameResultsTableProps) 
         {resultColors.map((color, index) => (
           <div 
             key={index}
-            className={`w-5 h-5 rounded-full border-2 border-white shadow-md ${
+            className={`w-5 h-5 rounded border-2 border-white shadow-md ${
               color === 'green' ? 'bg-green-500' : 
               color === 'red' ? 'bg-red-500' : 'bg-violet-500'
             }`}
@@ -52,16 +50,12 @@ export const GameResultsTable = ({ gameType, duration }: GameResultsTableProps) 
           <h3 className="font-semibold text-gray-800 capitalize">{gameType} Record</h3>
         </div>
         <div className="p-8 text-center">
+          <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
           <p className="text-gray-500">Loading results...</p>
         </div>
       </div>
     );
   }
-
-  const totalPages = Math.ceil(results.length / recordsPerPage);
-  const startIndex = currentPage * recordsPerPage;
-  const endIndex = startIndex + recordsPerPage;
-  const displayRecords = results.slice(startIndex, endIndex);
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -76,26 +70,26 @@ export const GameResultsTable = ({ gameType, duration }: GameResultsTableProps) 
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50 border-b border-gray-200">
-              <TableHead className="text-center text-xs font-semibold text-gray-600 uppercase tracking-wider py-3">
+              <TableHead className="text-center text-xs font-semibold text-gray-600 uppercase tracking-wider py-3 w-1/3">
                 Period
               </TableHead>
-              <TableHead className="text-center text-xs font-semibold text-gray-600 uppercase tracking-wider py-3">
+              <TableHead className="text-center text-xs font-semibold text-gray-600 uppercase tracking-wider py-3 w-1/3">
                 Number
               </TableHead>
-              <TableHead className="text-center text-xs font-semibold text-gray-600 uppercase tracking-wider py-3">
+              <TableHead className="text-center text-xs font-semibold text-gray-600 uppercase tracking-wider py-3 w-1/3">
                 Result
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {displayRecords.map((record, index) => (
+            {results.map((record, index) => (
               <TableRow key={record.id} className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
                 index % 2 === 0 ? 'bg-white' : 'bg-gray-25'
               }`}>
-                <TableCell className="text-center text-sm text-gray-900 py-4 font-medium">
-                  {record.period}
+                <TableCell className="text-center text-sm text-gray-900 py-4 font-medium px-2">
+                  <div className="truncate">{record.period}</div>
                 </TableCell>
-                <TableCell className="text-center py-4">
+                <TableCell className="text-center py-4 px-2">
                   <span className={`font-bold text-xl ${
                     [1, 3, 7, 9].includes(record.number) ? 'text-green-600' :
                     [2, 4, 6, 8].includes(record.number) ? 'text-red-600' :
@@ -104,14 +98,14 @@ export const GameResultsTable = ({ gameType, duration }: GameResultsTableProps) 
                     {record.number}
                   </span>
                 </TableCell>
-                <TableCell className="text-center py-4">
+                <TableCell className="text-center py-4 px-2">
                   <div className="flex justify-center items-center">
                     {getColorBubbles(record.number, record.result_color)}
                   </div>
                 </TableCell>
               </TableRow>
             ))}
-            {displayRecords.length === 0 && (
+            {results.length === 0 && (
               <TableRow>
                 <TableCell colSpan={3} className="text-center py-8 text-gray-500">
                   No records available
@@ -122,14 +116,27 @@ export const GameResultsTable = ({ gameType, duration }: GameResultsTableProps) 
         </Table>
       </div>
       
-      <PaginationControls
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-        startIndex={startIndex}
-        endIndex={endIndex}
-        totalItems={results.length}
-      />
+      {hasMore && (
+        <div className="p-4 border-t bg-gray-50 flex justify-center">
+          <Button
+            onClick={loadMore}
+            disabled={loadingMore}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            {loadingMore && <Loader2 className="w-4 h-4 animate-spin" />}
+            {loadingMore ? 'Loading...' : 'Load More'}
+          </Button>
+        </div>
+      )}
+      
+      {!hasMore && results.length > 0 && (
+        <div className="p-4 border-t bg-gray-50 text-center">
+          <span className="text-sm text-gray-500">
+            All records loaded ({results.length} total)
+          </span>
+        </div>
+      )}
     </div>
   );
 };
