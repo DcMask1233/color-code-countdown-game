@@ -1,27 +1,51 @@
 
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 
-interface GameRecord {
+interface UserBet {
   period: string;
-  number: number;
-  color: string[];
-  gameType: string;
-  duration: number;
+  betType: 'color' | 'number';
+  betValue: string | number;
+  amount: number;
+  result?: 'win' | 'lose';
+  payout?: number;
+  timestamp: Date;
+}
+
+interface GameEngineState {
+  timeLeft: number;
+  currentPeriod: string;
+  isBettingClosed: boolean;
+  userBets: UserBet[];
+  formatTime: (seconds: number) => string;
+  placeBet: (betType: 'color' | 'number', betValue: string | number, amount: number) => boolean;
 }
 
 interface Props {
   gameType: string;
   duration: number;
-  onNewResult: (result: GameRecord) => void;
+  gameMode: string;
+  onRoundComplete: (newPeriod: string, winningNumber: number, gameType: string) => void;
+  onBettingStateChange: () => void;
+  onBalanceUpdate: (amount: number) => void;
+  userBalance: number;
 }
 
-const UniversalGameEngine: React.FC<Props> = ({ gameType, duration, onNewResult }) => {
-  const [period, setPeriod] = useState<string>("");
-  const [countdown, setCountdown] = useState<number>(duration);
-  const [result, setResult] = useState<GameRecord | null>(null);
+const UniversalGameEngine = ({ 
+  gameType, 
+  duration, 
+  gameMode,
+  onRoundComplete, 
+  onBettingStateChange,
+  onBalanceUpdate,
+  userBalance 
+}: Props): GameEngineState => {
+  const [timeLeft, setTimeLeft] = useState<number>(duration);
+  const [currentPeriod, setCurrentPeriod] = useState<string>("");
+  const [isBettingClosed, setIsBettingClosed] = useState<boolean>(false);
+  const [userBets, setUserBets] = useState<UserBet[]>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Helper function to generate the current period string based on duration and gameType
+  // Generate period in YYYYMMDDRRR format
   const generatePeriod = (): string => {
     const now = new Date();
     const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000)); // Convert to IST
@@ -40,36 +64,36 @@ const UniversalGameEngine: React.FC<Props> = ({ gameType, duration, onNewResult 
     return `${yyyy}${mm}${dd}${String(roundNumber).padStart(3, "0")}`;
   };
 
-  // Helper function to generate winning number and color
-  const generateResult = (): GameRecord => {
-    const winningNumber = Math.floor(Math.random() * 10); // 0-9
-
-    // Color logic based on number
-    let color = ["red"];
-    if (winningNumber === 0) color = ["red", "violet"];
-    else if (winningNumber === 5) color = ["green", "violet"];
-    else if ([1, 3, 7, 9].includes(winningNumber)) color = ["green"];
-    else if ([2, 4, 6, 8].includes(winningNumber)) color = ["red"];
-
-    const newPeriod = generatePeriod();
-
-    return {
-      period: newPeriod,
-      number: winningNumber,
-      color,
-      gameType,
-      duration,
-    };
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Countdown timer logic
+  const placeBet = (betType: 'color' | 'number', betValue: string | number, amount: number): boolean => {
+    if (isBettingClosed || amount > userBalance) {
+      return false;
+    }
+
+    const newBet: UserBet = {
+      period: currentPeriod,
+      betType,
+      betValue,
+      amount,
+      timestamp: new Date()
+    };
+
+    setUserBets(prev => [...prev, newBet]);
+    onBalanceUpdate(-amount); // Deduct bet amount
+    return true;
+  };
+
+  const generateWinningNumber = (): number => {
+    return Math.floor(Math.random() * 10); // 0-9
+  };
+
   useEffect(() => {
-    setPeriod(generatePeriod());
-    setCountdown(duration);
-
-    if (intervalRef.current) clearInterval(intervalRef.current);
-
-    intervalRef.current = setInterval(() => {
+    const updateGame = () => {
       const now = new Date();
       const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
       
@@ -80,23 +104,39 @@ const UniversalGameEngine: React.FC<Props> = ({ gameType, duration, onNewResult 
       const remaining = duration - secondsInCurrentRound;
       
       const newPeriod = generatePeriod();
-      setCountdown(remaining);
-      setPeriod(newPeriod);
-
+      setCurrentPeriod(newPeriod);
+      setTimeLeft(remaining);
+      
+      // Close betting in last 10 seconds
+      setIsBettingClosed(remaining <= 10);
+      
       // When countdown reaches 0, generate new result
       if (remaining === duration) {
-        const newResult = generateResult();
-        setResult(newResult);
-        onNewResult(newResult);
+        const winningNumber = generateWinningNumber();
+        onRoundComplete(newPeriod, winningNumber, gameType);
       }
-    }, 1000);
+    };
+
+    // Initial setup
+    updateGame();
+
+    // Set up interval
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(updateGame, 1000);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [gameType, duration, onNewResult]);
+  }, [gameType, duration, onRoundComplete]);
 
-  return null; // This is a logic-only component
+  return {
+    timeLeft,
+    currentPeriod,
+    isBettingClosed,
+    userBets,
+    formatTime,
+    placeBet
+  };
 };
 
 export default UniversalGameEngine;

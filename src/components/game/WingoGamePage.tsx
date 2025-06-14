@@ -65,7 +65,7 @@ export const WingoGamePage = ({
 
   // Create separate game engines for each tab
   const parityEngine = UniversalGameEngine({
-    gameName: 'parity',
+    gameType: 'parity',
     duration,
     gameMode,
     onRoundComplete: (newPeriod, winningNumber, gameType) => {
@@ -85,7 +85,7 @@ export const WingoGamePage = ({
     userBalance
   });
   const sapreEngine = UniversalGameEngine({
-    gameName: 'sapre',
+    gameType: 'sapre',
     duration,
     gameMode,
     onRoundComplete: (newPeriod, winningNumber, gameType) => {
@@ -105,7 +105,7 @@ export const WingoGamePage = ({
     userBalance
   });
   const bconeEngine = UniversalGameEngine({
-    gameName: 'bcone',
+    gameType: 'bcone',
     duration,
     gameMode,
     onRoundComplete: (newPeriod, winningNumber, gameType) => {
@@ -125,7 +125,7 @@ export const WingoGamePage = ({
     userBalance
   });
   const emerdEngine = UniversalGameEngine({
-    gameName: 'emerd',
+    gameType: 'emerd',
     duration,
     gameMode,
     onRoundComplete: (newPeriod, winningNumber, gameType) => {
@@ -166,19 +166,55 @@ export const WingoGamePage = ({
           </TabsList>
           
           <TabsContent value="parity" className="mt-4">
-            <ParityGame timeLeft={parityEngine.timeLeft} currentPeriod={parityEngine.currentPeriod} isBettingClosed={parityEngine.isBettingClosed} userBets={parityEngine.userBets} userBalance={userBalance} formatTime={parityEngine.formatTime} onPlaceBet={parityEngine.placeBet} duration={duration} />
+            <ParityGame 
+              timeLeft={parityEngine.timeLeft} 
+              currentPeriod={parityEngine.currentPeriod} 
+              isBettingClosed={parityEngine.isBettingClosed} 
+              userBets={parityEngine.userBets} 
+              userBalance={userBalance} 
+              formatTime={parityEngine.formatTime} 
+              onPlaceBet={parityEngine.placeBet} 
+              duration={duration} 
+            />
           </TabsContent>
           
           <TabsContent value="sapre" className="mt-4">
-            <SapreGame timeLeft={sapreEngine.timeLeft} currentPeriod={sapreEngine.currentPeriod} isBettingClosed={sapreEngine.isBettingClosed} userBets={sapreEngine.userBets} userBalance={userBalance} formatTime={sapreEngine.formatTime} onPlaceBet={sapreEngine.placeBet} duration={duration} />
+            <SapreGame 
+              timeLeft={sapreEngine.timeLeft} 
+              currentPeriod={sapreEngine.currentPeriod} 
+              isBettingClosed={sapreEngine.isBettingClosed} 
+              userBets={sapreEngine.userBets} 
+              userBalance={userBalance} 
+              formatTime={sapreEngine.formatTime} 
+              onPlaceBet={sapreEngine.placeBet} 
+              duration={duration} 
+            />
           </TabsContent>
           
           <TabsContent value="bcone" className="mt-4">
-            <BconeGame timeLeft={bconeEngine.timeLeft} currentPeriod={bconeEngine.currentPeriod} isBettingClosed={bconeEngine.isBettingClosed} userBets={bconeEngine.userBets} userBalance={userBalance} formatTime={bconeEngine.formatTime} onPlaceBet={bconeEngine.placeBet} duration={duration} />
+            <BconeGame 
+              timeLeft={bconeEngine.timeLeft} 
+              currentPeriod={bconeEngine.currentPeriod} 
+              isBettingClosed={bconeEngine.isBettingClosed} 
+              userBets={bconeEngine.userBets} 
+              userBalance={userBalance} 
+              formatTime={bconeEngine.formatTime} 
+              onPlaceBet={bconeEngine.placeBet} 
+              duration={duration} 
+            />
           </TabsContent>
           
           <TabsContent value="emerd" className="mt-4">
-            <EmerdGame timeLeft={emerdEngine.timeLeft} currentPeriod={emerdEngine.currentPeriod} isBettingClosed={emerdEngine.isBettingClosed} userBets={emerdEngine.userBets} userBalance={userBalance} formatTime={emerdEngine.formatTime} onPlaceBet={emerdEngine.placeBet} duration={duration} />
+            <EmerdGame 
+              timeLeft={emerdEngine.timeLeft} 
+              currentPeriod={emerdEngine.currentPeriod} 
+              isBettingClosed={emerdEngine.isBettingClosed} 
+              userBets={emerdEngine.userBets} 
+              userBalance={userBalance} 
+              formatTime={emerdEngine.formatTime} 
+              onPlaceBet={emerdEngine.placeBet} 
+              duration={duration} 
+            />
           </TabsContent>
         </Tabs>
       </div>
