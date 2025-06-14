@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UniversalGameEngine } from "@/components/game/engines/UniversalGameEngine";
+import UniversalGameEngine from "@/components/game/engines/UniversalGameEngine";
 import { ParityGame } from "@/components/game/engines/ParityGame";
 import { SapreGame } from "@/components/game/engines/SapreGame";
 import { BconeGame } from "@/components/game/engines/BconeGame";
 import { EmerdGame } from "@/components/game/engines/EmerdGame";
+
 interface GameRecord {
   period: string;
   number: number;
