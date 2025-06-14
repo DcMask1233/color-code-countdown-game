@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 
 interface CountdownTimerProps {
@@ -35,14 +36,13 @@ export const CountdownTimer = ({
     const yyyy = istTime.getFullYear();
     const mm = String(istTime.getMonth() + 1).padStart(2, '0');
     const dd = String(istTime.getDate()).padStart(2, '0');
-    const dateStr = `${yyyy}${mm}${dd}`;
 
     const startOfDay = new Date(istTime);
     startOfDay.setHours(0, 0, 0, 0);
     const secondsSinceStart = Math.floor((istTime.getTime() - startOfDay.getTime()) / 1000);
     const roundNum = Math.floor(secondsSinceStart / duration) + 1;
 
-    return `${dateStr}${String(roundNum).padStart(3, '0')}`;
+    return `${yyyy}${mm}${dd}${String(roundNum).padStart(3, '0')}`;
   };
 
   const generateWinningNumber = () => Math.floor(Math.random() * 10);
@@ -101,4 +101,12 @@ export const CountdownTimer = ({
         <span className="text-sm text-gray-600 font-medium mb-1">Count Down</span>
         <span
           className={`text-2xl font-bold transition-all duration-300 ${
-            isBettingClosed ? 'text-gray-800 opacity-50 blur-[1px]' : 'text-gray-80
+            isBettingClosed ? 'text-gray-800 opacity-50 blur-[1px]' : 'text-gray-800'
+          }`}
+        >
+          {formatTime(timeLeft)}
+        </span>
+      </div>
+    </div>
+  );
+};

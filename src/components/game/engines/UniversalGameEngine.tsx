@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 
 interface GameRecord {
@@ -22,31 +23,33 @@ const UniversalGameEngine: React.FC<Props> = ({ gameType, duration, onNewResult 
 
   // Helper function to generate the current period string based on duration and gameType
   const generatePeriod = (): string => {
-    // Example: "20250614-3min-001"
     const now = new Date();
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2, "0");
-    const dd = String(now.getDate()).padStart(2, "0");
+    const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000)); // Convert to IST
+    
+    const yyyy = istTime.getFullYear();
+    const mm = String(istTime.getMonth() + 1).padStart(2, "0");
+    const dd = String(istTime.getDate()).padStart(2, "0");
 
-    // Calculate which round in the day for this duration
-    const secondsInDay = 24 * 60 * 60;
-    const durationInSeconds = duration * 60;
-    const secondsSinceMidnight =
-      now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-    const roundNumber = Math.floor(secondsSinceMidnight / durationInSeconds) + 1;
-    const roundNumberStr = String(roundNumber).padStart(3, "0");
+    // Calculate rounds since start of day in IST
+    const startOfDay = new Date(istTime);
+    startOfDay.setHours(0, 0, 0, 0);
+    const secondsSinceStart = Math.floor((istTime.getTime() - startOfDay.getTime()) / 1000);
+    const durationInSeconds = duration;
+    const roundNumber = Math.floor(secondsSinceStart / durationInSeconds) + 1;
 
-    return `${yyyy}${mm}${dd}-${gameType}-${roundNumberStr}`;
+    return `${yyyy}${mm}${dd}${String(roundNumber).padStart(3, "0")}`;
   };
 
   // Helper function to generate winning number and color
   const generateResult = (): GameRecord => {
     const winningNumber = Math.floor(Math.random() * 10); // 0-9
 
-    // Example color logic (can be customized)
+    // Color logic based on number
     let color = ["red"];
-    if (winningNumber % 2 === 0) color = ["green"];
-    else if (winningNumber === 5) color = ["yellow"];
+    if (winningNumber === 0) color = ["red", "violet"];
+    else if (winningNumber === 5) color = ["green", "violet"];
+    else if ([1, 3, 7, 9].includes(winningNumber)) color = ["green"];
+    else if ([2, 4, 6, 8].includes(winningNumber)) color = ["red"];
 
     const newPeriod = generatePeriod();
 
@@ -62,8 +65,38 @@ const UniversalGameEngine: React.FC<Props> = ({ gameType, duration, onNewResult 
   // Countdown timer logic
   useEffect(() => {
     setPeriod(generatePeriod());
-    setCountdown(duration * 60);
+    setCountdown(duration);
 
     if (intervalRef.current) clearInterval(intervalRef.current);
 
-    inter
+    intervalRef.current = setInterval(() => {
+      const now = new Date();
+      const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+      
+      const startOfDay = new Date(istTime);
+      startOfDay.setHours(0, 0, 0, 0);
+      const secondsSinceStart = Math.floor((istTime.getTime() - startOfDay.getTime()) / 1000);
+      const secondsInCurrentRound = secondsSinceStart % duration;
+      const remaining = duration - secondsInCurrentRound;
+      
+      const newPeriod = generatePeriod();
+      setCountdown(remaining);
+      setPeriod(newPeriod);
+
+      // When countdown reaches 0, generate new result
+      if (remaining === duration) {
+        const newResult = generateResult();
+        setResult(newResult);
+        onNewResult(newResult);
+      }
+    }, 1000);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [gameType, duration, onNewResult]);
+
+  return null; // This is a logic-only component
+};
+
+export default UniversalGameEngine;
