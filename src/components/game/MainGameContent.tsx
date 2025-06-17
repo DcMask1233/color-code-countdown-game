@@ -44,6 +44,7 @@ export const MainGameContent = ({
   
   if (selectedGameMode) {
     // Placeholder: Render the selected game component here
+    // You can replace this with actual game component import and rendering
     return (
       <div className="p-4">
         <button
@@ -54,6 +55,7 @@ export const MainGameContent = ({
         </button>
         <h2 className="text-xl font-bold mb-2">Playing: {selectedGameMode}</h2>
         <p>Game UI goes here...</p>
+        {/* You can place the game component, passing needed props */}
       </div>
     );
   }
@@ -144,9 +146,9 @@ export const MainGameContent = ({
       <section className="mt-6">
         <button
           onClick={onNavigateToPromotion}
-          className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-4 py-2 rounded"
+          className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition"
         >
-          Go to Promotions
+          Promotions
         </button>
       </section>
     </div>
