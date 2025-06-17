@@ -1,9 +1,4 @@
-import { HomeSection } from "@/components/layout/HomeSection";
-import { WalletSection } from "@/components/wallet/WalletSection";
-import { PromotionSection } from "@/components/layout/PromotionSection";
-import { MySection } from "@/components/user/MySection";
-import { UniversalGameContainer } from "@/components/game/UniversalGameContainer";
-import { useToast } from "@/hooks/use-toast";
+import React from "react";
 
 interface GameRecord {
   period: string;
@@ -22,7 +17,7 @@ interface MainGameContentProps {
   gameRecords: GameRecord[];
   onGameSelect: (gameMode: string) => void;
   onBackToHome: () => void;
-  onRoundComplete: (newPeriod: string, winningNumber: number, gameType: string) => void;
+  onRoundComplete: (period: string, winningNumber: number, gameType: string) => void;
   onBalanceUpdate: (amount: number) => void;
   onGameRecordsUpdate: (records: GameRecord[]) => void;
   onNavigateToPromotion: () => void;
@@ -46,117 +41,109 @@ export const MainGameContent = ({
   onNavigateToPromotion,
   onLogout
 }: MainGameContentProps) => {
-  const { toast } = useToast();
-
-  const handleRecharge = () => {
-    toast({
-      title: "Recharge",
-      description: "Recharge functionality coming soon!",
-    });
-  };
-
-  const handleWithdraw = () => {
-    toast({
-      title: "Withdraw",
-      description: "Withdraw functionality coming soon!",
-    });
-  };
-
-  const handleRefresh = () => {
-    toast({
-      title: "Refreshed",
-      description: "Game data refreshed!",
-    });
-  };
-
-  const getNumberColor = (num: number): string[] => {
-    if (num === 0) return ["violet", "red"];
-    if (num === 5) return ["violet", "green"];
-    return num % 2 === 0 ? ["red"] : ["green"];
-  };
-
-  const handleRoundCompleteWithRecords = (newPeriod: string, winningNumber: number, gameType: string) => {
-    const newRecord = {
-      period: newPeriod,
-      number: winningNumber,
-      color: getNumberColor(winningNumber)
-    };
-
-    const updatedRecords = [newRecord, ...gameRecords].slice(0, 10);
-    onGameRecordsUpdate(updatedRecords);
-    
-    onRoundComplete(newPeriod, winningNumber, gameType);
-  };
-
-  if (activeBottomTab === 'home') {
-    if (selectedGameMode === null) {
-      return (
-        <HomeSection
-          balance={userBalance}
-          userId={userId}
-          onRecharge={handleRecharge}
-          onWithdraw={handleWithdraw}
-          onRefresh={handleRefresh}
-          onGameSelect={onGameSelect}
-        />
-      );
-    } else {
-      return (
-        <UniversalGameContainer
-          gameMode={selectedGameMode}
-          userBalance={userBalance}
-          gameRecords={gameRecords}
-          onBackToHome={onBackToHome}
-          onRoundComplete={handleRoundCompleteWithRecords}
-          onBalanceUpdate={onBalanceUpdate}
-          onGameRecordsUpdate={onGameRecordsUpdate}
-        />
-      );
-    }
-  }
-
-  if (activeBottomTab === 'wallet') {
+  
+  if (selectedGameMode) {
+    // Placeholder: Render the selected game component here
+    // You can replace this with actual game component import and rendering
     return (
-      <WalletSection
-        userBalance={userBalance}
-        totalBetAmount={totalBetAmount}
-        totalDepositAmount={totalDepositAmount}
-        totalWithdrawAmount={totalWithdrawAmount}
-        onBack={onBackToHome}
-        onDeposit={() => toast({ title: "Deposit", description: "Deposit functionality coming soon!" })}
-        onWithdraw={() => toast({ title: "Withdraw", description: "Withdraw functionality coming soon!" })}
-        onDepositHistory={() => toast({ title: "Deposit History", description: "History functionality coming soon!" })}
-        onWithdrawHistory={() => toast({ title: "Withdrawal History", description: "History functionality coming soon!" })}
-      />
-    );
-  }
-
-  if (activeBottomTab === 'promotion') {
-    return <PromotionSection />;
-  }
-
-  if (activeBottomTab === 'my') {
-    const savedUser = localStorage.getItem('colorGameUser');
-    const mobile = savedUser ? JSON.parse(savedUser).mobile : undefined;
-    
-    return (
-      <MySection
-        userBalance={userBalance}
-        userId={userId}
-        mobile={mobile}
-        onLogout={onLogout}
-        onNavigateToPromotion={onNavigateToPromotion}
-        gameRecords={gameRecords}
-      />
+      <div className="p-4">
+        <button
+          className="mb-4 px-4 py-2 bg-gray-300 rounded"
+          onClick={onBackToHome}
+        >
+          ← Back to Home
+        </button>
+        <h2 className="text-xl font-bold mb-2">Playing: {selectedGameMode}</h2>
+        <p>Game UI goes here...</p>
+        {/* You can place the game component, passing needed props */}
+      </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-4 max-w-md">
-      <div className="text-center py-20">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">Coming Soon</h1>
-        <p className="text-gray-600">This feature is under development.</p>
-      </div>
-    </div>
-  );
-};
+    <div className="p-4">
+      <header className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Welcome, User #{userId}</h1>
+          <p className="text-gray-600">Balance: ${userBalance.toFixed(2)}</p>
+        </div>
+        <button
+          onClick={onLogout}
+          className="bg-red-500 text-white px-3 py-1 rounded"
+        >
+          Logout
+        </button>
+      </header>
+
+      <section className="mb-6">
+        <h2 className="text-xl font-semibold mb-2">Stats</h2>
+        <div className="flex space-x-4 text-gray-700">
+          <div>
+            <div className="font-semibold">{totalBetAmount.toFixed(2)}</div>
+            <div>Bets</div>
+          </div>
+          <div>
+            <div className="font-semibold">{totalDepositAmount.toFixed(2)}</div>
+            <div>Deposits</div>
+          </div>
+          <div>
+            <div className="font-semibold">{totalWithdrawAmount.toFixed(2)}</div>
+            <div>Withdrawals</div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mb-6">
+        <h2 className="text-xl font-semibold mb-2">Select Game</h2>
+        <div className="flex space-x-4">
+          <button
+            onClick={() => onGameSelect('bcone')}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+          >
+            Bcone Game
+          </button>
+          <button
+            onClick={() => onGameSelect('parity')}
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+          >
+            Parity Game
+          </button>
+          <button
+            onClick={() => onGameSelect('color')}
+            className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition"
+          >
+            Color Game
+          </button>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold mb-2">Recent Game Results</h2>
+        {gameRecords.length === 0 ? (
+          <p>No game results found.</p>
+        ) : (
+          <table className="w-full text-left border-collapse border border-gray-300">
+            <thead>
+              <tr>
+                <th className="border border-gray-300 px-2 py-1">Period</th>
+                <th className="border border-gray-300 px-2 py-1">Number</th>
+                <th className="border border-gray-300 px-2 py-1">Color(s)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {gameRecords.map((record) => (
+                <tr key={record.period} className="hover:bg-gray-100">
+                  <td className="border border-gray-300 px-2 py-1">{record.period}</td>
+                  <td className="border border-gray-300 px-2 py-1">{record.number}</td>
+                  <td className="border border-gray-300 px-2 py-1">{record.color.join(", ")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      <section className="mt-6">
+        <button
+          onClick={onNavigateToPromotion}
+          class
