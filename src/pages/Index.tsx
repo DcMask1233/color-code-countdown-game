@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MainGame } from "@/components/game/MainGame";
 import { AutoResultGenerator } from "@/components/game/AutoResultGenerator";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface GameRecord {
   period: string;
@@ -22,13 +22,8 @@ const Index = () => {
   const [totalBetAmount, setTotalBetAmount] = useState(0);
   const [totalDepositAmount, setTotalDepositAmount] = useState(0);
   const [totalWithdrawAmount, setTotalWithdrawAmount] = useState(0);
-  const [gameRecords, setGameRecords] = useState<GameRecord[]>([
-    { period: '20240105001', number: 7, color: ['green'] },
-    { period: '20240105002', number: 0, color: ['violet', 'red'] },
-    { period: '20240105003', number: 5, color: ['violet', 'green'] },
-    { period: '20240105004', number: 8, color: ['red'] },
-    { period: '20240105005', number: 3, color: ['green'] },
-  ]);
+  const [gameRecords, setGameRecords] = useState<GameRecord[]>([]);
+
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -48,6 +43,38 @@ const Index = () => {
     }
   }, [navigate]);
 
+  // Fetch game results from Supabase every 30 seconds
+  useEffect(() => {
+    const fetchGameResults = async () => {
+      const { data, error } = await supabase
+        .from('game_results')
+        .select('*')
+        .order('period', { ascending: false })
+        .limit(50);
+
+      if (error) {
+        console.error('Failed to fetch game results:', error);
+        return;
+      }
+
+      if (data) {
+        // Assuming data matches GameRecord interface or can be mapped accordingly
+        const mappedRecords = data.map((item: any) => ({
+          period: item.period,
+          number: item.number,
+          color: item.result_color || [], // adjust key if different
+        }));
+        setGameRecords(mappedRecords);
+      }
+    };
+
+    fetchGameResults();
+
+    const interval = setInterval(fetchGameResults, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem('colorGameUser');
     setIsLoggedIn(false);
@@ -66,7 +93,7 @@ const Index = () => {
   const handleBalanceUpdate = (amount: number) => {
     const newBalance = userBalance + amount;
     setUserBalance(newBalance);
-    
+
     const savedUser = localStorage.getItem('colorGameUser');
     if (savedUser) {
       const userData = JSON.parse(savedUser);
@@ -105,9 +132,8 @@ const Index = () => {
     }
   };
 
-  // Show loading or nothing while checking authentication
   if (!isLoggedIn) {
-    return null;
+    return null; // or a loading spinner if you want
   }
 
   return (
