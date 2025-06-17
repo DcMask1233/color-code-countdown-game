@@ -1,3 +1,4 @@
+
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 import { MainGameContent } from "@/components/game/MainGameContent";
 import { useMainGameLogic } from "@/components/game/MainGameLogic";
