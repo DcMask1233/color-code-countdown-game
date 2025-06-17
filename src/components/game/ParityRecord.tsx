@@ -1,4 +1,3 @@
-
 interface GameRecord {
   period: string;
   number: number;
@@ -37,8 +36,8 @@ export const ParityRecord = ({ records }: ParityRecordProps) => {
     );
   };
 
-  // Show only the latest 10 records
-  const displayRecords = records.slice(0, 10);
+  // Show only the latest 10 records (assuming records are oldest to newest)
+  const displayRecords = records.slice(-10).reverse();
 
   return (
     <div className="bg-white rounded-lg shadow-sm mb-4">
