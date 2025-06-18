@@ -84,23 +84,8 @@ export const MainGameContent = ({
 
     const updatedRecords = [newRecord, ...gameRecords].slice(0, 10);
     onGameRecordsUpdate(updatedRecords);
-    
     onRoundComplete(newPeriod, winningNumber, gameType);
   };
-
-  // ✅ MOCK DATA FOR TESTING PURPOSE
-  const testGameRecords = [
-    {
-      period: "TEST20240617",
-      number: 5,
-      color: getNumberColor(5),
-    },
-    {
-      period: "TEST20240616",
-      number: 0,
-      color: getNumberColor(0),
-    },
-  ];
 
   if (activeBottomTab === 'home') {
     if (selectedGameMode === null) {
@@ -115,18 +100,17 @@ export const MainGameContent = ({
         />
       );
     } else {
-      // ⬅️ Using mock data here for testing
-return (
-  <UniversalGameContainer
-    gameMode={selectedGameMode}
-    userBalance={userBalance}
-    gameRecords={testGameRecords}
-    onBackToHome={onBackToHome}
-    onRoundComplete={handleRoundCompleteWithRecords}
-    onBalanceUpdate={onBalanceUpdate}
-    onGameRecordsUpdate={onGameRecordsUpdate}
-  />
-);
+      return (
+        <UniversalGameContainer
+          gameMode={selectedGameMode}
+          userBalance={userBalance}
+          gameRecords={gameRecords}
+          onBackToHome={onBackToHome}
+          onRoundComplete={handleRoundCompleteWithRecords}
+          onBalanceUpdate={onBalanceUpdate}
+          onGameRecordsUpdate={onGameRecordsUpdate}
+        />
+      );
     }
   }
 
@@ -153,7 +137,7 @@ return (
   if (activeBottomTab === 'my') {
     const savedUser = localStorage.getItem('colorGameUser');
     const mobile = savedUser ? JSON.parse(savedUser).mobile : undefined;
-    
+
     return (
       <MySection
         userBalance={userBalance}
