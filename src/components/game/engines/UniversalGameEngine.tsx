@@ -1,142 +1,84 @@
+import { useEffect, useState } from "react";
+import { getCurrentPeriod } from "@/lib/periodUtils";
+import { useToast } from "@/hooks/use-toast";
 
-import { useState, useEffect, useRef } from "react";
-
-interface UserBet {
-  period: string;
-  betType: 'color' | 'number';
-  betValue: string | number;
-  amount: number;
-  result?: 'win' | 'lose';
-  payout?: number;
-  timestamp: Date;
-}
-
-interface GameEngineState {
-  timeLeft: number;
-  currentPeriod: string;
-  isBettingClosed: boolean;
-  userBets: UserBet[];
-  formatTime: (seconds: number) => string;
-  placeBet: (betType: 'color' | 'number', betValue: string | number, amount: number) => boolean;
-}
-
-interface Props {
+interface UniversalGameEngineProps {
   gameType: string;
-  duration: number;
-  gameMode: string;
-  onRoundComplete: (newPeriod: string, winningNumber: number, gameType: string) => void;
-  onBettingStateChange: () => void;
-  onBalanceUpdate: (amount: number) => void;
-  userBalance: number;
+  duration: number; // e.g. 1, 3, 5 (minutes)
 }
 
-const UniversalGameEngine = ({ 
-  gameType, 
-  duration, 
-  gameMode,
-  onRoundComplete, 
-  onBettingStateChange,
-  onBalanceUpdate,
-  userBalance 
-}: Props): GameEngineState => {
-  const [timeLeft, setTimeLeft] = useState<number>(duration);
+const UniversalGameEngine: React.FC<UniversalGameEngineProps> = ({ gameType, duration }) => {
   const [currentPeriod, setCurrentPeriod] = useState<string>("");
-  const [isBettingClosed, setIsBettingClosed] = useState<boolean>(false);
-  const [userBets, setUserBets] = useState<UserBet[]>([]);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [countdown, setCountdown] = useState<number>(0);
 
-  // Generate period in YYYYMMDDRRR format
-  const generatePeriod = (): string => {
+  const calculateCountdown = () => {
     const now = new Date();
-    const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000)); // Convert to IST
-    
-    const yyyy = istTime.getFullYear();
-    const mm = String(istTime.getMonth() + 1).padStart(2, "0");
-    const dd = String(istTime.getDate()).padStart(2, "0");
-
-    // Calculate rounds since start of day in IST
-    const startOfDay = new Date(istTime);
-    startOfDay.setHours(0, 0, 0, 0);
-    const secondsSinceStart = Math.floor((istTime.getTime() - startOfDay.getTime()) / 1000);
-    const durationInSeconds = duration;
-    const roundNumber = Math.floor(secondsSinceStart / durationInSeconds) + 1;
-
-    return `${yyyy}${mm}${dd}${String(roundNumber).padStart(3, "0")}`;
-  };
-
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const placeBet = (betType: 'color' | 'number', betValue: string | number, amount: number): boolean => {
-    if (isBettingClosed || amount > userBalance) {
-      return false;
-    }
-
-    const newBet: UserBet = {
-      period: currentPeriod,
-      betType,
-      betValue,
-      amount,
-      timestamp: new Date()
-    };
-
-    setUserBets(prev => [...prev, newBet]);
-    onBalanceUpdate(-amount); // Deduct bet amount
-    return true;
-  };
-
-  const generateWinningNumber = (): number => {
-    return Math.floor(Math.random() * 10); // 0-9
+    const seconds = now.getMinutes() * 60 + now.getSeconds();
+    const totalSeconds = duration * 60;
+    return totalSeconds - (seconds % totalSeconds);
   };
 
   useEffect(() => {
-    const updateGame = () => {
-      const now = new Date();
-      const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
-      
-      const startOfDay = new Date(istTime);
-      startOfDay.setHours(0, 0, 0, 0);
-      const secondsSinceStart = Math.floor((istTime.getTime() - startOfDay.getTime()) / 1000);
-      const secondsInCurrentRound = secondsSinceStart % duration;
-      const remaining = duration - secondsInCurrentRound;
-      
-      const newPeriod = generatePeriod();
-      setCurrentPeriod(newPeriod);
-      setTimeLeft(remaining);
-      
-      // Close betting in last 10 seconds
-      setIsBettingClosed(remaining <= 10);
-      
-      // When countdown reaches 0, generate new result
-      if (remaining === duration) {
-        const winningNumber = generateWinningNumber();
-        onRoundComplete(newPeriod, winningNumber, gameType);
-      }
+    const updatePeriodAndCountdown = () => {
+      const period = getCurrentPeriod(gameType, duration);
+      const countdownValue = calculateCountdown();
+      setCurrentPeriod(period);
+      setCountdown(countdownValue);
     };
 
-    // Initial setup
-    updateGame();
+    updatePeriodAndCountdown(); // Initial
+    const interval = setInterval(updatePeriodAndCountdown, 1000); // Every second
 
-    // Set up interval
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(updateGame, 1000);
+    return () => clearInterval(interval);
+  }, [gameType, duration]);
 
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [gameType, duration, onRoundComplete]);
-
-  return {
-    timeLeft,
-    currentPeriod,
-    isBettingClosed,
-    userBets,
-    formatTime,
-    placeBet
+  const formatCountdown = (seconds: number): string => {
+    const m = Math.floor(seconds / 60)
+      .toString()
+      .padStart(2, "0");
+    const s = (seconds % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
   };
+
+  return (
+    <div className="p-4 border rounded-md shadow-md bg-white">
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <p className="text-sm font-semibold">Period</p>
+          <p className="text-lg font-bold text-blue-600">{currentPeriod}</p>
+        </div>
+        <div>
+          <p className="text-sm font-semibold">Count Down</p>
+          <p className="text-lg font-bold text-red-600">{formatCountdown(countdown)}</p>
+        </div>
+      </div>
+
+      {/* Betting buttons */}
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        <button className="bg-green-500 text-white py-2 rounded">Join Green</button>
+        <button className="bg-purple-500 text-white py-2 rounded">Join Violet</button>
+        <button className="bg-red-500 text-white py-2 rounded">Join Red</button>
+      </div>
+
+      {/* Number grid */}
+      <div className="grid grid-cols-5 gap-2">
+        {[...Array(10).keys()].map((num) => (
+          <div
+            key={num}
+            className={`text-white font-bold text-center py-2 rounded ${
+              num === 0 || num === 5
+                ? "bg-purple-600"
+                : num % 2 === 0
+                ? "bg-red-500"
+                : "bg-green-500"
+            }`}
+          >
+            {num}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 };
 
 export default UniversalGameEngine;
