@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabaseClient"; // adjust path if needed
 interface GameRecord {
   period: string;
   number: number;
-  color: string[];
+  color: string[] | null;
   gameType: string;
   duration: number;
 }
@@ -63,7 +63,11 @@ export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
               <tr key={record.period}>
                 <td>{record.period}</td>
                 <td>{record.number}</td>
-                <td>{record.color.join(", ")}</td>
+                <td>
+                  {Array.isArray(record.color)
+                    ? record.color.join(", ")
+                    : "N/A"}
+                </td>
               </tr>
             ))}
           </tbody>
