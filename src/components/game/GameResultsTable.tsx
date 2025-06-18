@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient"; // adjust path if needed
+import { supabase } from "@/lib/supabaseClient";
 
 interface GameRecord {
   period: string;
   number: number;
-  color: string[] | null;
-  gameType: string;
-  duration: number;
+  color: string[] | null; // allow null to avoid errors
+  gameType?: string;
+  duration?: number;
 }
 
 interface Props {
@@ -23,7 +23,8 @@ export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
     try {
       const { data, error } = await supabase
         .from("game_results")
-        .select("*")
+        // alias result_color to color (Step 6)
+        .select("period, number, result_color AS color")
         .eq("game_type", gameType)
         .eq("duration", duration)
         .order("created_at", { ascending: false })
@@ -41,6 +42,11 @@ export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
   useEffect(() => {
     fetchResults();
   }, [gameType, duration]);
+
+  // Step 4: Add this to log the fetched records for debugging
+  useEffect(() => {
+    console.log("Fetched records:", records);
+  }, [records]);
 
   return (
     <div>
@@ -63,11 +69,8 @@ export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
               <tr key={record.period}>
                 <td>{record.period}</td>
                 <td>{record.number}</td>
-                <td>
-                  {Array.isArray(record.color)
-                    ? record.color.join(", ")
-                    : "N/A"}
-                </td>
+                {/* Step 5: safely handle possible undefined/null colors */}
+                <td>{record.color?.join(", ") ?? "N/A"}</td>
               </tr>
             ))}
           </tbody>
