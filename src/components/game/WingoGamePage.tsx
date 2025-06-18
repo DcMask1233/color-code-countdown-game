@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UniversalGameEngine from "@/components/game/engines/UniversalGameEngine";
 import { ParityGame } from "@/components/game/engines/ParityGame";
@@ -29,30 +29,47 @@ export const WingoGamePage = ({
   onBackToHome,
   onRoundComplete,
   onBalanceUpdate,
-  onGameRecordsUpdate
+  onGameRecordsUpdate,
 }: WingoGamePageProps) => {
   const [activeTab, setActiveTab] = useState("parity");
+  const [currentPeriod, setCurrentPeriod] = useState("");
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [isBettingClosed, setIsBettingClosed] = useState(false);
 
   const getDuration = () => {
     switch (gameMode) {
-      case 'wingo-1min': return 60;
-      case 'wingo-3min': return 180;
-      case 'wingo-5min': return 300;
-      default: return 60;
+      case "wingo-1min":
+        return 60;
+      case "wingo-3min":
+        return 180;
+      case "wingo-5min":
+        return 300;
+      default:
+        return 60;
     }
   };
 
   const getGameModeTitle = () => {
     switch (gameMode) {
-      case 'wingo-1min': return 'WinGo (1min)';
-      case 'wingo-3min': return 'WinGo (3min)';
-      case 'wingo-5min': return 'WinGo (5min)';
-      default: return 'WinGo';
+      case "wingo-1min":
+        return "WinGo (1min)";
+      case "wingo-3min":
+        return "WinGo (3min)";
+      case "wingo-5min":
+        return "WinGo (5min)";
+      default:
+        return "WinGo";
     }
   };
 
+  const formatTime = (seconds: number): string => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const s = (seconds % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
+
   const duration = getDuration();
-  const durationLabel = duration === 60 ? '1min' : duration === 180 ? '3min' : '5min';
+  const durationLabel = duration === 60 ? "1min" : duration === 180 ? "3min" : "5min";
 
   const getNumberColor = (num: number): string[] => {
     if (num === 0) return ["violet", "red"];
@@ -60,32 +77,18 @@ export const WingoGamePage = ({
     return num % 2 === 0 ? ["red"] : ["green"];
   };
 
-  const createEngine = (gameType: string) =>
-    UniversalGameEngine({
-      gameType,
-      duration,
-      gameMode,
-      onRoundComplete: (newPeriod, winningNumber, gameType) => {
-        const gameInstance = `${durationLabel}-${gameType}`;
-        const newRecord = {
-          period: newPeriod,
-          number: winningNumber,
-          color: getNumberColor(winningNumber),
-          gameInstance
-        };
-        const updatedRecords = [newRecord, ...gameRecords].slice(0, 50);
-        onGameRecordsUpdate(updatedRecords);
-        onRoundComplete(newPeriod, winningNumber, gameType);
-      },
-      onBettingStateChange: () => {},
-      onBalanceUpdate,
-      userBalance
-    });
-
-  const parityEngine = createEngine('parity');
-  const sapreEngine = createEngine('sapre');
-  const bconeEngine = createEngine('bcone');
-  const emerdEngine = createEngine('emerd');
+  const handleRoundComplete = (newPeriod: string, winningNumber: number, gameType: string) => {
+    const gameInstance = `${durationLabel}-${gameType}`;
+    const newRecord = {
+      period: newPeriod,
+      number: winningNumber,
+      color: getNumberColor(winningNumber),
+      gameInstance,
+    };
+    const updatedRecords = [newRecord, ...gameRecords].slice(0, 50);
+    onGameRecordsUpdate(updatedRecords);
+    onRoundComplete(newPeriod, winningNumber, gameType);
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -99,6 +102,18 @@ export const WingoGamePage = ({
       </div>
 
       <div className="container mx-auto px-4 py-4 max-w-md">
+        <UniversalGameEngine
+          gameType={activeTab}
+          duration={duration}
+          gameMode={gameMode}
+          onPeriodChange={setCurrentPeriod}
+          onCountdownChange={setTimeLeft}
+          onBettingClosedChange={setIsBettingClosed}
+          onRoundComplete={handleRoundComplete}
+          onBalanceUpdate={onBalanceUpdate}
+          userBalance={userBalance}
+        />
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="parity">Parity</TabsTrigger>
@@ -109,52 +124,52 @@ export const WingoGamePage = ({
 
           <TabsContent value="parity" className="mt-4">
             <ParityGame
-              timeLeft={parityEngine.timeLeft}
-              currentPeriod={parityEngine.currentPeriod}
-              isBettingClosed={parityEngine.isBettingClosed}
-              userBets={parityEngine.userBets}
+              timeLeft={timeLeft}
+              currentPeriod={currentPeriod}
+              isBettingClosed={isBettingClosed}
+              userBets={[]}
               userBalance={userBalance}
-              formatTime={parityEngine.formatTime}
-              onPlaceBet={parityEngine.placeBet}
+              formatTime={formatTime}
+              onPlaceBet={() => {}}
               duration={duration}
             />
           </TabsContent>
 
           <TabsContent value="sapre" className="mt-4">
             <SapreGame
-              timeLeft={sapreEngine.timeLeft}
-              currentPeriod={sapreEngine.currentPeriod}
-              isBettingClosed={sapreEngine.isBettingClosed}
-              userBets={sapreEngine.userBets}
+              timeLeft={timeLeft}
+              currentPeriod={currentPeriod}
+              isBettingClosed={isBettingClosed}
+              userBets={[]}
               userBalance={userBalance}
-              formatTime={sapreEngine.formatTime}
-              onPlaceBet={sapreEngine.placeBet}
+              formatTime={formatTime}
+              onPlaceBet={() => {}}
               duration={duration}
             />
           </TabsContent>
 
           <TabsContent value="bcone" className="mt-4">
             <BconeGame
-              timeLeft={bconeEngine.timeLeft}
-              currentPeriod={bconeEngine.currentPeriod}
-              isBettingClosed={bconeEngine.isBettingClosed}
-              userBets={bconeEngine.userBets}
+              timeLeft={timeLeft}
+              currentPeriod={currentPeriod}
+              isBettingClosed={isBettingClosed}
+              userBets={[]}
               userBalance={userBalance}
-              formatTime={bconeEngine.formatTime}
-              onPlaceBet={bconeEngine.placeBet}
+              formatTime={formatTime}
+              onPlaceBet={() => {}}
               duration={duration}
             />
           </TabsContent>
 
           <TabsContent value="emerd" className="mt-4">
             <EmerdGame
-              timeLeft={emerdEngine.timeLeft}
-              currentPeriod={emerdEngine.currentPeriod}
-              isBettingClosed={emerdEngine.isBettingClosed}
-              userBets={emerdEngine.userBets}
+              timeLeft={timeLeft}
+              currentPeriod={currentPeriod}
+              isBettingClosed={isBettingClosed}
+              userBets={[]}
               userBalance={userBalance}
-              formatTime={emerdEngine.formatTime}
-              onPlaceBet={emerdEngine.placeBet}
+              formatTime={formatTime}
+              onPlaceBet={() => {}}
               duration={duration}
             />
           </TabsContent>
