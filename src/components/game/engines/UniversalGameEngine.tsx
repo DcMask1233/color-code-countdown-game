@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getCurrentPeriod } from "@/lib/periodUtils";
+import { ParityGame } from "./ParityGame"; // 👈 Make sure correct path
 import { useToast } from "@/hooks/use-toast";
 
 interface UniversalGameEngineProps {
@@ -10,6 +11,8 @@ interface UniversalGameEngineProps {
 const UniversalGameEngine: React.FC<UniversalGameEngineProps> = ({ gameType, duration }) => {
   const [currentPeriod, setCurrentPeriod] = useState<string>("");
   const [countdown, setCountdown] = useState<number>(0);
+  const [userBets, setUserBets] = useState<any[]>([]);
+  const [userBalance, setUserBalance] = useState<number>(1000); // temp default
 
   const calculateCountdown = () => {
     const now = new Date();
@@ -18,66 +21,58 @@ const UniversalGameEngine: React.FC<UniversalGameEngineProps> = ({ gameType, dur
     return totalSeconds - (seconds % totalSeconds);
   };
 
+  const updatePeriodAndCountdown = () => {
+    const period = getCurrentPeriod(gameType, duration);
+    const countdownValue = calculateCountdown();
+    setCurrentPeriod(period);
+    setCountdown(countdownValue);
+  };
+
   useEffect(() => {
-    const updatePeriodAndCountdown = () => {
-      const period = getCurrentPeriod(gameType, duration);
-      const countdownValue = calculateCountdown();
-      setCurrentPeriod(period);
-      setCountdown(countdownValue);
-    };
-
     updatePeriodAndCountdown(); // Initial
-    const interval = setInterval(updatePeriodAndCountdown, 1000); // Every second
-
+    const interval = setInterval(updatePeriodAndCountdown, 1000);
     return () => clearInterval(interval);
   }, [gameType, duration]);
 
   const formatCountdown = (seconds: number): string => {
-    const m = Math.floor(seconds / 60)
-      .toString()
-      .padStart(2, "0");
+    const m = Math.floor(seconds / 60).toString().padStart(2, "0");
     const s = (seconds % 60).toString().padStart(2, "0");
     return `${m}:${s}`;
   };
 
+  const handlePlaceBet = (
+    betType: "color" | "number",
+    betValue: string | number,
+    amount: number
+  ): boolean => {
+    if (amount > userBalance) return false;
+
+    const newBet = {
+      period: currentPeriod,
+      betType,
+      betValue,
+      amount,
+      timestamp: new Date(),
+    };
+
+    setUserBets((prev) => [...prev, newBet]);
+    setUserBalance((prev) => prev - amount);
+    return true;
+  };
+
+  const isBettingClosed = countdown <= 3; // Prevent bets in last 3 seconds
+
   return (
-    <div className="p-4 border rounded-md shadow-md bg-white">
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <p className="text-sm font-semibold">Period</p>
-          <p className="text-lg font-bold text-blue-600">{currentPeriod}</p>
-        </div>
-        <div>
-          <p className="text-sm font-semibold">Count Down</p>
-          <p className="text-lg font-bold text-red-600">{formatCountdown(countdown)}</p>
-        </div>
-      </div>
-
-      {/* Betting buttons */}
-      <div className="grid grid-cols-3 gap-2 mb-4">
-        <button className="bg-green-500 text-white py-2 rounded">Join Green</button>
-        <button className="bg-purple-500 text-white py-2 rounded">Join Violet</button>
-        <button className="bg-red-500 text-white py-2 rounded">Join Red</button>
-      </div>
-
-      {/* Number grid */}
-      <div className="grid grid-cols-5 gap-2">
-        {[...Array(10).keys()].map((num) => (
-          <div
-            key={num}
-            className={`text-white font-bold text-center py-2 rounded ${
-              num === 0 || num === 5
-                ? "bg-purple-600"
-                : num % 2 === 0
-                ? "bg-red-500"
-                : "bg-green-500"
-            }`}
-          >
-            {num}
-          </div>
-        ))}
-      </div>
-    </div>
+    <ParityGame
+      timeLeft={countdown}
+      currentPeriod={currentPeriod}
+      isBettingClosed={isBettingClosed}
+      userBets={userBets}
+      onPlaceBet={handlePlaceBet}
+      userBalance={userBalance}
+      formatTime={formatCountdown}
+      duration={duration}
+    />
   );
 };
 
