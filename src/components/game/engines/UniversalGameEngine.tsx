@@ -1,29 +1,107 @@
-import React, { useEffect, useState } from "react";
+import { useState, useEffect, Dispatch, SetStateAction } from "react";
+
+export interface UserBet {
+  betType: "number" | "color";
+  betValue: string | number;
+  amount: number;
+  period: string;
+  timestamp: number;
+}
 
 export interface UniversalGameEngineProps {
   gameType: string;
-  duration: number; // in seconds
+  duration: number;               // e.g. 60 seconds
+  onPeriodChange: Dispatch<SetStateAction<string>>;
+  onCountdownChange: Dispatch<SetStateAction<number>>;
+  onBettingClosedChange: Dispatch<SetStateAction<boolean>>;
   onRoundComplete: (newPeriod: string, winningNumber: number, gameType: string) => void;
   onBalanceUpdate: (amount: number) => void;
   userBalance: number;
-  onBettingStateChange?: (isClosed: boolean) => void;
 }
 
 export function UniversalGameEngine({
   gameType,
   duration,
+  onPeriodChange,
+  onCountdownChange,
+  onBettingClosedChange,
   onRoundComplete,
   onBalanceUpdate,
   userBalance,
-  onBettingStateChange,
 }: UniversalGameEngineProps) {
-  const [timeLeft, setTimeLeft] = useState(duration);
-  const [currentPeriod, setCurrentPeriod] = useState("");
-  const [isBettingClosed, setIsBettingClosed] = useState(false);
-  const [userBets, setUserBets] = useState<{ betType: string; betValue: string | number; amount: number }[]>([]);
+  const [currentPeriod, setCurrentPeriod] = useState<string>("");
+  const [timeLeft, setTimeLeft] = useState<number>(duration);
+  const [isBettingClosed, setIsBettingClosed] = useState<boolean>(false);
+  const [userBets, setUserBets] = useState<UserBet[]>([]);
 
-  // Utility to format time in mm:ss
-  const formatTime = (seconds: number) => {
+  // Generate period string, e.g. date + gameType + sequence number
+  const generatePeriod = (): string => {
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+    const timestamp = Date.now();
+    return `${dateStr}-${gameType}-${timestamp}`;
+  };
+
+  // Countdown timer effect
+  useEffect(() => {
+    setCurrentPeriod(generatePeriod());
+    onPeriodChange(generatePeriod());
+    setTimeLeft(duration);
+    setIsBettingClosed(false);
+    onBettingClosedChange(false);
+  }, [gameType, duration, onPeriodChange, onBettingClosedChange]);
+
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      setIsBettingClosed(true);
+      onBettingClosedChange(true);
+
+      // Generate winning number (0-9) randomly
+      const winningNumber = Math.floor(Math.random() * 10);
+
+      onRoundComplete(currentPeriod, winningNumber, gameType);
+
+      // Reset bets for new round
+      setUserBets([]);
+
+      // Reset for next round
+      const nextPeriod = generatePeriod();
+      setCurrentPeriod(nextPeriod);
+      onPeriodChange(nextPeriod);
+      setTimeLeft(duration);
+      setIsBettingClosed(false);
+      onBettingClosedChange(false);
+    }
+
+    // Countdown interval
+    const timerId = setInterval(() => {
+      setTimeLeft((prev) => Math.max(prev - 1, 0));
+      onCountdownChange((prev) => Math.max(prev - 1, 0));
+    }, 1000);
+
+    return () => clearInterval(timerId);
+  }, [timeLeft, currentPeriod, gameType, duration, onRoundComplete, onPeriodChange, onBettingClosedChange, onCountdownChange]);
+
+  // Place bet function
+  const placeBet = (betType: "number" | "color", betValue: string | number, amount: number): boolean => {
+    if (isBettingClosed) return false;
+    if (amount > userBalance) return false;
+
+    const newBet: UserBet = {
+      betType,
+      betValue,
+      amount,
+      period: currentPeriod,
+      timestamp: Date.now(),
+    };
+
+    setUserBets((prev) => [...prev, newBet]);
+    onBalanceUpdate(-amount);
+
+    return true;
+  };
+
+  // Format time as MM:SS
+  const formatTime = (seconds: number): string => {
     const m = Math.floor(seconds / 60)
       .toString()
       .padStart(2, "0");
@@ -31,62 +109,12 @@ export function UniversalGameEngine({
     return `${m}:${s}`;
   };
 
-  // Simulate period calculation — Replace with your own period logic
-  const generatePeriod = () => {
-    const now = new Date();
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2, "0");
-    const dd = String(now.getDate()).padStart(2, "0");
-    const totalSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-    const periodNumber = Math.floor(totalSeconds / duration);
-    return `${yyyy}${mm}${dd}${periodNumber}`;
-  };
-
-  // Countdown timer logic
-  useEffect(() => {
-    setCurrentPeriod(generatePeriod());
-    setTimeLeft(duration);
-
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          // Round ended
-          const newPeriod = generatePeriod();
-          setCurrentPeriod(newPeriod);
-          const winningNumber = Math.floor(Math.random() * 10); // Example: winning number 0-9
-          onRoundComplete(newPeriod, winningNumber, gameType);
-          return duration;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [duration, gameType, onRoundComplete]);
-
-  // Betting close state logic - e.g., close betting last 10 seconds
-  useEffect(() => {
-    const closed = timeLeft <= 10;
-    setIsBettingClosed(closed);
-    if (onBettingStateChange) onBettingStateChange(closed);
-  }, [timeLeft, onBettingStateChange]);
-
-  // Place a bet function
-  const placeBet = (betType: "number" | "color", betValue: string | number, amount: number): boolean => {
-    if (isBettingClosed) return false;
-    if (amount > userBalance) return false;
-
-    setUserBets((prev) => [...prev, { betType, betValue, amount }]);
-    onBalanceUpdate(-amount);
-    return true;
-  };
-
   return {
-    timeLeft,
     currentPeriod,
+    timeLeft,
     isBettingClosed,
     userBets,
-    formatTime,
     placeBet,
+    formatTime,
   };
 }
