@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { getCurrentPeriod } from "@/lib/periodUtils";
-import { UserBet } from "@/types/gameTypes";
+import { UserBet } from "@/types/UserBet";
 
-interface UniversalGameEngineProps {
+export interface UniversalGameEngineProps {
   gameType: string;
   duration: number;
-  onRoundComplete: (newPeriod: string, winningNumber: number, gameType: string) => void;
+  gameMode: string; // ✅ ADD THIS
+  onRoundComplete: (period: string, number: number, gameType: string) => void;
+  onBettingStateChange: (state: boolean) => void;
   onBalanceUpdate: (amount: number) => void;
   userBalance: number;
 }
@@ -13,59 +15,39 @@ interface UniversalGameEngineProps {
 export function UniversalGameEngine({
   gameType,
   duration,
+  gameMode, // ✅ Accept here
   onRoundComplete,
+  onBettingStateChange,
   onBalanceUpdate,
-  userBalance,
+  userBalance
 }: UniversalGameEngineProps) {
-  const [currentPeriod, setCurrentPeriod] = useState<string>("");
-  const [countdown, setCountdown] = useState<number>(0);
-  const [isBettingClosed, setIsBettingClosed] = useState<boolean>(false);
+  const [currentPeriod, setCurrentPeriod] = useState("");
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [isBettingClosed, setIsBettingClosed] = useState(false);
   const [userBets, setUserBets] = useState<UserBet[]>([]);
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const s = (seconds % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
 
   useEffect(() => {
     const updateCountdown = () => {
       const now = new Date();
       const seconds = now.getMinutes() * 60 + now.getSeconds();
-      const totalSeconds = duration * 60;
-      const remaining = totalSeconds - (seconds % totalSeconds);
-      setCountdown(remaining);
-      setCurrentPeriod(getCurrentPeriod(gameType, duration));
+      const totalSeconds = duration;
+      const countdown = totalSeconds - (seconds % totalSeconds);
 
-      if (remaining <= 3) {
-        setIsBettingClosed(true);
-      } else {
-        setIsBettingClosed(false);
-      }
-
-      if (remaining === totalSeconds) {
-        const winningNumber = Math.floor(Math.random() * 10);
-        onRoundComplete(getCurrentPeriod(gameType, duration), winningNumber, gameType);
-        settleBets(winningNumber);
-        setUserBets([]);
-      }
+      setTimeLeft(countdown);
+      setIsBettingClosed(countdown <= 5);
+      setCurrentPeriod(getCurrentPeriod(gameType, duration / 60)); // duration is in seconds
     };
 
-    const interval = setInterval(updateCountdown, 1000);
     updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
   }, [gameType, duration]);
-
-  const settleBets = (winningNumber: number) => {
-    const newBets = userBets.map((bet) => {
-      const isWin =
-        (bet.betType === "number" && bet.betValue === winningNumber) ||
-        (bet.betType === "color" && getNumberColor(winningNumber).includes(bet.betValue as string));
-
-      if (isWin) {
-        const payout = bet.betType === "number" ? bet.amount * 9 : bet.amount * 2;
-        onBalanceUpdate(payout);
-        return { ...bet, result: "win", payout };
-      } else {
-        return { ...bet, result: "lose", payout: 0 };
-      }
-    });
-    setUserBets(newBets);
-  };
 
   const placeBet = (
     betType: "color" | "number",
@@ -75,38 +57,24 @@ export function UniversalGameEngine({
     if (isBettingClosed || amount > userBalance) return false;
 
     const newBet: UserBet = {
-      period: currentPeriod,
       betType,
       betValue,
       amount,
+      period: currentPeriod,
       timestamp: new Date(),
     };
 
     setUserBets((prev) => [...prev, newBet]);
-    onBalanceUpdate(-amount);
+    onBalanceUpdate(userBalance - amount);
     return true;
   };
 
-  const formatTime = (seconds: number): string => {
-    const m = Math.floor(seconds / 60)
-      .toString()
-      .padStart(2, "0");
-    const s = (seconds % 60).toString().padStart(2, "0");
-    return `${m}:${s}`;
-  };
-
   return {
+    timeLeft,
     currentPeriod,
-    timeLeft: countdown,
     isBettingClosed,
     userBets,
     formatTime,
-    placeBet,
+    placeBet
   };
 }
-
-const getNumberColor = (num: number): string[] => {
-  if (num === 0) return ["violet", "red"];
-  if (num === 5) return ["violet", "green"];
-  return num % 2 === 0 ? ["red"] : ["green"];
-};
