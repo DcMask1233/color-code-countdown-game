@@ -1,21 +1,47 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { getCurrentPeriod } from "@/lib/periodUtils";
 
-interface UniversalGameEngineProps {
+export interface UniversalGameEngineProps {
   gameType: string;
-  duration: number; // e.g. 1, 3, 5 (minutes)
-  onPeriodChange: (period: string) => void;
-  onCountdownChange: (countdown: number) => void;
-  onBettingClosedChange: (isClosed: boolean) => void;
+  duration: number;
+  gameMode: string;
+  onRoundComplete: (newPeriod: string, winningNumber: number, gameType: string) => void;
+  onBettingStateChange: (state: boolean) => void;
+  onBalanceUpdate: (amount: number) => void;
+  userBalance: number;
 }
 
-const UniversalGameEngine: React.FC<UniversalGameEngineProps> = ({
+export function UniversalGameEngine({
   gameType,
   duration,
-  onPeriodChange,
-  onCountdownChange,
-  onBettingClosedChange,
-}) => {
+  gameMode,
+  onRoundComplete,
+  onBettingStateChange,
+  onBalanceUpdate,
+  userBalance
+}: UniversalGameEngineProps) {
+  const [currentPeriod, setCurrentPeriod] = useState<string>("");
+  const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [isBettingClosed, setIsBettingClosed] = useState(false);
+  const [userBets, setUserBets] = useState<
+    { betType: "number" | "color"; value: string | number; amount: number }[]
+  >([]);
+
+  useEffect(() => {
+    const updatePeriodAndCountdown = () => {
+      const period = getCurrentPeriod(gameType, duration);
+      const countdown = calculateCountdown();
+      setCurrentPeriod(period);
+      setTimeLeft(countdown);
+      setIsBettingClosed(countdown <= 3);
+      onBettingStateChange(countdown <= 3);
+    };
+
+    updatePeriodAndCountdown();
+    const interval = setInterval(updatePeriodAndCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [gameType, duration]);
+
   const calculateCountdown = () => {
     const now = new Date();
     const seconds = now.getMinutes() * 60 + now.getSeconds();
@@ -23,24 +49,30 @@ const UniversalGameEngine: React.FC<UniversalGameEngineProps> = ({
     return totalSeconds - (seconds % totalSeconds);
   };
 
-  useEffect(() => {
-    const updatePeriodAndCountdown = () => {
-      const period = getCurrentPeriod(gameType, duration);
-      const countdown = calculateCountdown();
-      const isBettingClosed = countdown <= 3; // Customize the lock time
+  const formatTime = (seconds: number): string => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const s = (seconds % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
 
-      onPeriodChange(period);
-      onCountdownChange(countdown);
-      onBettingClosedChange(isBettingClosed);
-    };
+  const placeBet = (
+    betType: "number" | "color",
+    betValue: string | number,
+    amount: number
+  ): boolean => {
+    if (userBalance < amount || isBettingClosed) return false;
 
-    updatePeriodAndCountdown(); // initial
-    const interval = setInterval(updatePeriodAndCountdown, 1000);
+    setUserBets((prev) => [...prev, { betType, value: betValue, amount }]);
+    onBalanceUpdate(-amount);
+    return true;
+  };
 
-    return () => clearInterval(interval);
-  }, [gameType, duration, onPeriodChange, onCountdownChange, onBettingClosedChange]);
-
-  return null; // This component is logic-only, no UI
-};
-
-export default UniversalGameEngine;
+  return {
+    timeLeft,
+    currentPeriod,
+    isBettingClosed,
+    userBets,
+    formatTime,
+    placeBet
+  };
+}
