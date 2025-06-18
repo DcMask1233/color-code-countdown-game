@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UniversalGameEngine, UniversalGameEngineProps } from "@/components/game/engines/UniversalGameEngine";
+import { UniversalGameEngine, UserBet } from "@/components/game/engines/UniversalGameEngine";
 import { ParityGame } from "@/components/game/engines/ParityGame";
 import { SapreGame } from "@/components/game/engines/SapreGame";
 import { BconeGame } from "@/components/game/engines/BconeGame";
@@ -32,7 +32,7 @@ export const WingoGamePage = ({
   onBalanceUpdate,
   onGameRecordsUpdate,
 }: WingoGamePageProps) => {
-  const [activeTab, setActiveTab] = useState("parity");
+  const [activeTab, setActiveTab] = useState<string>("parity");
 
   const getDuration = () => {
     switch (gameMode) {
@@ -47,6 +47,73 @@ export const WingoGamePage = ({
     }
   };
 
+  const duration = getDuration();
+
+  // Helper to get number colors
+  const getNumberColor = (num: number): string[] => {
+    if (num === 0) return ["violet", "red"];
+    if (num === 5) return ["violet", "green"];
+    return num % 2 === 0 ? ["red"] : ["green"];
+  };
+
+  // This helper manages the onRoundComplete for all engines
+  const handleRoundComplete = (newPeriod: string, winningNumber: number, gameType: string) => {
+    const newRecord: GameRecord = {
+      period: newPeriod,
+      number: winningNumber,
+      color: getNumberColor(winningNumber),
+      gameInstance: `${duration / 60}min-${gameType}`,
+    };
+    const updatedRecords = [newRecord, ...gameRecords].slice(0, 50);
+    onGameRecordsUpdate(updatedRecords);
+    onRoundComplete(newPeriod, winningNumber, gameType);
+  };
+
+  // Create engine instance per game type
+  const parityEngine = UniversalGameEngine({
+    gameType: "parity",
+    duration,
+    onPeriodChange: () => {},
+    onCountdownChange: () => {},
+    onBettingClosedChange: () => {},
+    onRoundComplete: handleRoundComplete,
+    onBalanceUpdate,
+    userBalance,
+  });
+
+  const sapreEngine = UniversalGameEngine({
+    gameType: "sapre",
+    duration,
+    onPeriodChange: () => {},
+    onCountdownChange: () => {},
+    onBettingClosedChange: () => {},
+    onRoundComplete: handleRoundComplete,
+    onBalanceUpdate,
+    userBalance,
+  });
+
+  const bconeEngine = UniversalGameEngine({
+    gameType: "bcone",
+    duration,
+    onPeriodChange: () => {},
+    onCountdownChange: () => {},
+    onBettingClosedChange: () => {},
+    onRoundComplete: handleRoundComplete,
+    onBalanceUpdate,
+    userBalance,
+  });
+
+  const emerdEngine = UniversalGameEngine({
+    gameType: "emerd",
+    duration,
+    onPeriodChange: () => {},
+    onCountdownChange: () => {},
+    onBettingClosedChange: () => {},
+    onRoundComplete: handleRoundComplete,
+    onBalanceUpdate,
+    userBalance,
+  });
+
   const getGameModeTitle = () => {
     switch (gameMode) {
       case "wingo-1min":
@@ -59,92 +126,6 @@ export const WingoGamePage = ({
         return "WinGo";
     }
   };
-
-  const duration = getDuration();
-  const durationLabel = duration === 60 ? "1min" : duration === 180 ? "3min" : "5min";
-
-  const getNumberColor = (num: number): string[] => {
-    if (num === 0) return ["violet", "red"];
-    if (num === 5) return ["violet", "green"];
-    return num % 2 === 0 ? ["red"] : ["green"];
-  };
-
-  // Create engines for each game type
-  const parityEngine = UniversalGameEngine({
-    gameType: "parity",
-    duration,
-    userBalance,
-    onRoundComplete: (newPeriod, winningNumber, gameType) => {
-      const gameInstance = `${durationLabel}-parity`;
-      const newRecord = {
-        period: newPeriod,
-        number: winningNumber,
-        color: getNumberColor(winningNumber),
-        gameInstance,
-      };
-      const updatedRecords = [newRecord, ...gameRecords].slice(0, 50);
-      onGameRecordsUpdate(updatedRecords);
-      onRoundComplete(newPeriod, winningNumber, gameType);
-    },
-    onBalanceUpdate,
-  });
-
-  const sapreEngine = UniversalGameEngine({
-    gameType: "sapre",
-    duration,
-    userBalance,
-    onRoundComplete: (newPeriod, winningNumber, gameType) => {
-      const gameInstance = `${durationLabel}-sapre`;
-      const newRecord = {
-        period: newPeriod,
-        number: winningNumber,
-        color: getNumberColor(winningNumber),
-        gameInstance,
-      };
-      const updatedRecords = [newRecord, ...gameRecords].slice(0, 50);
-      onGameRecordsUpdate(updatedRecords);
-      onRoundComplete(newPeriod, winningNumber, gameType);
-    },
-    onBalanceUpdate,
-  });
-
-  const bconeEngine = UniversalGameEngine({
-    gameType: "bcone",
-    duration,
-    userBalance,
-    onRoundComplete: (newPeriod, winningNumber, gameType) => {
-      const gameInstance = `${durationLabel}-bcone`;
-      const newRecord = {
-        period: newPeriod,
-        number: winningNumber,
-        color: getNumberColor(winningNumber),
-        gameInstance,
-      };
-      const updatedRecords = [newRecord, ...gameRecords].slice(0, 50);
-      onGameRecordsUpdate(updatedRecords);
-      onRoundComplete(newPeriod, winningNumber, gameType);
-    },
-    onBalanceUpdate,
-  });
-
-  const emerdEngine = UniversalGameEngine({
-    gameType: "emerd",
-    duration,
-    userBalance,
-    onRoundComplete: (newPeriod, winningNumber, gameType) => {
-      const gameInstance = `${durationLabel}-emerd`;
-      const newRecord = {
-        period: newPeriod,
-        number: winningNumber,
-        color: getNumberColor(winningNumber),
-        gameInstance,
-      };
-      const updatedRecords = [newRecord, ...gameRecords].slice(0, 50);
-      onGameRecordsUpdate(updatedRecords);
-      onRoundComplete(newPeriod, winningNumber, gameType);
-    },
-    onBalanceUpdate,
-  });
 
   return (
     <div className="min-h-screen bg-gray-100">
