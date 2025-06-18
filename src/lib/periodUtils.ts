@@ -1,14 +1,20 @@
+
 export function getCurrentPeriod(gameType: string, duration: number): string {
   const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, "0");
-  const dd = String(now.getDate()).padStart(2, "0");
+  // Use IST time (UTC + 5.5 hours) for consistency
+  const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+  
+  const yyyy = istTime.getFullYear();
+  const mm = String(istTime.getMonth() + 1).padStart(2, "0");
+  const dd = String(istTime.getDate()).padStart(2, "0");
 
-  // Calculate how many full "duration" slots have passed since 00:00 today
-  const totalMinutes = now.getHours() * 60 + now.getMinutes();
-  const periodNumber = Math.floor(totalMinutes / duration);
+  // Calculate how many full "duration" slots have passed since 00:00 IST today
+  const startOfDay = new Date(istTime);
+  startOfDay.setHours(0, 0, 0, 0);
+  const secondsSinceStart = Math.floor((istTime.getTime() - startOfDay.getTime()) / 1000);
+  const periodNumber = Math.floor(secondsSinceStart / duration) + 1;
 
-  // Pad the period number to always have 3 digits (e.g. 001, 045, 123)
+  // Pad the period number to always have 3 digits
   const periodStr = String(periodNumber).padStart(3, "0");
 
   return `${yyyy}${mm}${dd}${periodStr}`;

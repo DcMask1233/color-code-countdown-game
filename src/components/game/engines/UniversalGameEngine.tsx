@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { getCurrentPeriod } from "@/lib/periodUtils";
 import { UserBet } from "@/types/UserBet";
@@ -5,7 +6,7 @@ import { UserBet } from "@/types/UserBet";
 export interface UniversalGameEngineProps {
   gameType: string;
   duration: number;
-  gameMode: string; // ✅ ADD THIS
+  gameMode: string;
   onRoundComplete: (period: string, number: number, gameType: string) => void;
   onBettingStateChange: (state: boolean) => void;
   onBalanceUpdate: (amount: number) => void;
@@ -15,7 +16,7 @@ export interface UniversalGameEngineProps {
 export function UniversalGameEngine({
   gameType,
   duration,
-  gameMode, // ✅ Accept here
+  gameMode,
   onRoundComplete,
   onBettingStateChange,
   onBalanceUpdate,
@@ -32,22 +33,40 @@ export function UniversalGameEngine({
     return `${m}:${s}`;
   };
 
+  const generateWinningNumber = () => Math.floor(Math.random() * 10);
+
   useEffect(() => {
     const updateCountdown = () => {
       const now = new Date();
-      const seconds = now.getMinutes() * 60 + now.getSeconds();
-      const totalSeconds = duration;
-      const countdown = totalSeconds - (seconds % totalSeconds);
+      const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
 
-      setTimeLeft(countdown);
-      setIsBettingClosed(countdown <= 5);
-      setCurrentPeriod(getCurrentPeriod(gameType, duration / 60)); // duration is in seconds
+      const startOfDay = new Date(istTime);
+      startOfDay.setHours(0, 0, 0, 0);
+      const secondsSinceStart = Math.floor((istTime.getTime() - startOfDay.getTime()) / 1000);
+      const secondsInCurrentRound = secondsSinceStart % duration;
+      const remaining = duration - secondsInCurrentRound;
+
+      const newPeriod = getCurrentPeriod(gameType, duration);
+      setTimeLeft(remaining);
+      setCurrentPeriod(newPeriod);
+
+      const shouldCloseBetting = remaining <= 5;
+      if (shouldCloseBetting !== isBettingClosed) {
+        setIsBettingClosed(shouldCloseBetting);
+        onBettingStateChange(shouldCloseBetting);
+      }
+
+      // When a new round starts (remaining equals duration), complete the previous round
+      if (remaining === duration) {
+        const winningNumber = generateWinningNumber();
+        onRoundComplete(newPeriod, winningNumber, gameType);
+      }
     };
 
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
-  }, [gameType, duration]);
+  }, [gameType, duration, onRoundComplete, onBettingStateChange, isBettingClosed]);
 
   const placeBet = (
     betType: "color" | "number",
