@@ -115,17 +115,18 @@ export const MainGameContent = ({
         />
       );
     } else {
-      return (
-        <UniversalGameContainer
-          gameMode={selectedGameMode}
-          userBalance={userBalance}
-          gameRecords={testGameRecords} {/* ⬅️ Using mock data here for testing */}
-          onBackToHome={onBackToHome}
-          onRoundComplete={handleRoundCompleteWithRecords}
-          onBalanceUpdate={onBalanceUpdate}
-          onGameRecordsUpdate={onGameRecordsUpdate}
-        />
-      );
+      // ⬅️ Using mock data here for testing
+return (
+  <UniversalGameContainer
+    gameMode={selectedGameMode}
+    userBalance={userBalance}
+    gameRecords={testGameRecords}
+    onBackToHome={onBackToHome}
+    onRoundComplete={handleRoundCompleteWithRecords}
+    onBalanceUpdate={onBalanceUpdate}
+    onGameRecordsUpdate={onGameRecordsUpdate}
+  />
+);
     }
   }
 
