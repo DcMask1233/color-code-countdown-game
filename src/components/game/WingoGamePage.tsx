@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UniversalGameEngine } from "@/components/game/engines/UniversalGameEngine";
 import { ParityGame } from "@/components/game/engines/ParityGame";
 import { SapreGame } from "@/components/game/engines/SapreGame";
 import { BconeGame } from "@/components/game/engines/BconeGame";
 import { EmerdGame } from "@/components/game/engines/EmerdGame";
-import { UniversalGameEngine } from "@/components/game/engines/UniversalGameEngine";
 import { UserBet } from "@/types/UserBet";
 
 interface GameRecord {
@@ -62,10 +62,11 @@ export const WingoGamePage = ({
     return num % 2 === 0 ? ["red"] : ["green"];
   };
 
-  const createEngine = (gameType: string) => {
-    return UniversalGameEngine({
+  const createEngine = (gameType: string) =>
+    UniversalGameEngine({
       gameType,
       duration,
+      gameMode,
       onRoundComplete: (newPeriod, winningNumber, gameType) => {
         const gameInstance = `${durationLabel}-${gameType}`;
         const newRecord = {
@@ -78,10 +79,10 @@ export const WingoGamePage = ({
         onGameRecordsUpdate(updatedRecords);
         onRoundComplete(newPeriod, winningNumber, gameType);
       },
+      onBettingStateChange: () => {},
       onBalanceUpdate,
       userBalance
     });
-  };
 
   const parityEngine = createEngine('parity');
   const sapreEngine = createEngine('sapre');
