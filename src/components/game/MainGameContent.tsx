@@ -88,6 +88,20 @@ export const MainGameContent = ({
     onRoundComplete(newPeriod, winningNumber, gameType);
   };
 
+  // ✅ MOCK DATA FOR TESTING PURPOSE
+  const testGameRecords = [
+    {
+      period: "TEST20240617",
+      number: 5,
+      color: getNumberColor(5),
+    },
+    {
+      period: "TEST20240616",
+      number: 0,
+      color: getNumberColor(0),
+    },
+  ];
+
   if (activeBottomTab === 'home') {
     if (selectedGameMode === null) {
       return (
@@ -105,7 +119,7 @@ export const MainGameContent = ({
         <UniversalGameContainer
           gameMode={selectedGameMode}
           userBalance={userBalance}
-          gameRecords={gameRecords}
+          gameRecords={testGameRecords} {/* ⬅️ Using mock data here for testing */}
           onBackToHome={onBackToHome}
           onRoundComplete={handleRoundCompleteWithRecords}
           onBalanceUpdate={onBalanceUpdate}
