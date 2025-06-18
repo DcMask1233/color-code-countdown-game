@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient"; // adjust path if needed
 
 interface GameRecord {
   period: string;
@@ -17,17 +18,19 @@ export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
   const [records, setRecords] = useState<GameRecord[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Function to fetch latest game results from backend or API
   const fetchResults = async () => {
     setLoading(true);
     try {
-      // Replace with your actual API endpoint or data fetching logic
-      const response = await fetch(
-        `/api/game-results?gameType=${gameType}&duration=${duration}`
-      );
-      if (!response.ok) throw new Error("Failed to fetch game results");
-      const data: GameRecord[] = await response.json();
-      setRecords(data);
+      const { data, error } = await supabase
+        .from("game_results")
+        .select("*")
+        .eq("game_type", gameType)
+        .eq("duration", duration)
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      setRecords(data || []);
     } catch (error) {
       console.error("Error fetching game results:", error);
     } finally {
