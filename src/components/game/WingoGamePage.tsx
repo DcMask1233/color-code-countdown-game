@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UniversalGameEngine } from "@/components/game/engines/UniversalGameEngine";
 import { ParityGame } from "@/components/game/engines/ParityGame";
 import { SapreGame } from "@/components/game/engines/SapreGame";
 import { BconeGame } from "@/components/game/engines/BconeGame";
 import { EmerdGame } from "@/components/game/engines/EmerdGame";
-import { UserBet } from "@/types/gameTypes";
+import { UniversalGameEngine } from "@/components/game/engines/UniversalGameEngine";
+import { UserBet } from "@/types/UserBet";
 
 interface GameRecord {
   period: string;
@@ -13,6 +13,7 @@ interface GameRecord {
   color: string[];
   gameInstance?: string;
 }
+
 interface WingoGamePageProps {
   gameMode: string;
   userBalance: number;
@@ -61,8 +62,8 @@ export const WingoGamePage = ({
     return num % 2 === 0 ? ["red"] : ["green"];
   };
 
-  const createEngine = (gameType: string) =>
-    UniversalGameEngine({
+  const createEngine = (gameType: string) => {
+    return UniversalGameEngine({
       gameType,
       duration,
       onRoundComplete: (newPeriod, winningNumber, gameType) => {
@@ -77,10 +78,10 @@ export const WingoGamePage = ({
         onGameRecordsUpdate(updatedRecords);
         onRoundComplete(newPeriod, winningNumber, gameType);
       },
-      onBettingStateChange: () => {},
       onBalanceUpdate,
       userBalance
     });
+  };
 
   const parityEngine = createEngine('parity');
   const sapreEngine = createEngine('sapre');
@@ -108,19 +109,55 @@ export const WingoGamePage = ({
           </TabsList>
 
           <TabsContent value="parity" className="mt-4">
-            <ParityGame {...parityEngine} userBalance={userBalance} duration={duration} />
+            <ParityGame
+              timeLeft={parityEngine.timeLeft}
+              currentPeriod={parityEngine.currentPeriod}
+              isBettingClosed={parityEngine.isBettingClosed}
+              userBets={parityEngine.userBets}
+              userBalance={userBalance}
+              formatTime={parityEngine.formatTime}
+              onPlaceBet={parityEngine.placeBet}
+              duration={duration}
+            />
           </TabsContent>
 
           <TabsContent value="sapre" className="mt-4">
-            <SapreGame {...sapreEngine} userBalance={userBalance} duration={duration} />
+            <SapreGame
+              timeLeft={sapreEngine.timeLeft}
+              currentPeriod={sapreEngine.currentPeriod}
+              isBettingClosed={sapreEngine.isBettingClosed}
+              userBets={sapreEngine.userBets}
+              userBalance={userBalance}
+              formatTime={sapreEngine.formatTime}
+              onPlaceBet={sapreEngine.placeBet}
+              duration={duration}
+            />
           </TabsContent>
 
           <TabsContent value="bcone" className="mt-4">
-            <BconeGame {...bconeEngine} userBalance={userBalance} duration={duration} />
+            <BconeGame
+              timeLeft={bconeEngine.timeLeft}
+              currentPeriod={bconeEngine.currentPeriod}
+              isBettingClosed={bconeEngine.isBettingClosed}
+              userBets={bconeEngine.userBets}
+              userBalance={userBalance}
+              formatTime={bconeEngine.formatTime}
+              onPlaceBet={bconeEngine.placeBet}
+              duration={duration}
+            />
           </TabsContent>
 
           <TabsContent value="emerd" className="mt-4">
-            <EmerdGame {...emerdEngine} userBalance={userBalance} duration={duration} />
+            <EmerdGame
+              timeLeft={emerdEngine.timeLeft}
+              currentPeriod={emerdEngine.currentPeriod}
+              isBettingClosed={emerdEngine.isBettingClosed}
+              userBets={emerdEngine.userBets}
+              userBalance={userBalance}
+              formatTime={emerdEngine.formatTime}
+              onPlaceBet={emerdEngine.placeBet}
+              duration={duration}
+            />
           </TabsContent>
         </Tabs>
       </div>
