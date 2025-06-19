@@ -1,0 +1,16 @@
+name: Generate Game Results Every Minute
+
+on:
+  schedule:
+    - cron: "*/1 * * * *"  # Runs every 1 minute
+  workflow_dispatch:       # Allows manual trigger
+
+jobs:
+  call-edge-function:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Call Supabase Edge Function to generate game results
+        run: |
+          curl -X POST https://rdhfmkqxkycdjkystkbt.supabase.co/functions/v1/generate-game-results \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_EDGE_KEY }}"
