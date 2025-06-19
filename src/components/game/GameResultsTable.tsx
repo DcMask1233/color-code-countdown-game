@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -27,17 +26,15 @@ export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
     return (
       <div className="flex gap-1">
         {colors.map((color, index) => (
-          <Badge
+          <div
             key={index}
-            className={`text-white text-xs px-2 py-1 ${
+            className={`w-6 h-6 rounded-full ${
               color === 'green' ? 'bg-green-500' :
               color === 'red' ? 'bg-red-500' :
               color === 'violet' ? 'bg-purple-500' :
               'bg-gray-500'
             }`}
-          >
-            {color}
-          </Badge>
+          />
         ))}
       </div>
     );
