@@ -1,34 +1,21 @@
-import { useEffect, useState } from "react";
+// components/admin/AdminControls.tsx
+
+import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import ResultOverridePanel from "./ResultOverridePanel";
 
 export default function AdminControls() {
   const [gameType, setGameType] = useState("Wingo1");
   const [period, setPeriod] = useState("");
   const [nextResult, setNextResult] = useState("");
-  const [adminResults, setAdminResults] = useState([]);
-
-  // Fetch existing admin result overrides
-  const fetchAdminResults = async () => {
-    const { data, error } = await supabase
-      .from("admin_results")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(10);
-
-    if (error) {
-      console.error("Fetch error:", error.message);
-    } else {
-      setAdminResults(data);
-    }
-  };
-
-  useEffect(() => {
-    fetchAdminResults();
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!period || !nextResult || !gameType) return alert("Please fill all fields.");
+
+    if (!period || !nextResult || !gameType) {
+      alert("Please fill all fields.");
+      return;
+    }
 
     const { error } = await supabase.from("admin_results").insert([
       {
@@ -44,22 +31,12 @@ export default function AdminControls() {
       alert("Result set successfully!");
       setPeriod("");
       setNextResult("");
-      fetchAdminResults();
-    }
-  };
-
-  const deleteResult = async (id: string) => {
-    const { error } = await supabase.from("admin_results").delete().eq("id", id);
-    if (error) {
-      alert("Delete failed");
-    } else {
-      alert("Deleted");
-      fetchAdminResults();
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Result override form */}
       <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-lg shadow">
         <input
           type="text"
@@ -90,28 +67,8 @@ export default function AdminControls() {
         </button>
       </form>
 
-      <div>
-        <h2 className="text-lg font-semibold mb-4">🕒 Recent Admin Overrides</h2>
-        <ul className="space-y-3">
-          {adminResults.map((r: any) => (
-            <li
-              key={r.id}
-              className="flex justify-between items-center bg-gray-100 p-3 rounded shadow-sm"
-            >
-              <div>
-                <strong>{r.game_type}</strong> | Period: {r.period} →{" "}
-                <span className="text-blue-700 font-bold">{r.next_result_number}</span>
-              </div>
-              <button
-                onClick={() => deleteResult(r.id)}
-                className="text-red-500 hover:underline"
-              >
-                Delete
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
+      {/* Result list and delete actions */}
+      <ResultOverridePanel />
     </div>
   );
 }
