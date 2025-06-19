@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSupabasePeriod } from "@/hooks/useSupabasePeriod";
 import { UserBet } from "@/types/UserBet";
+import { useUserBets } from "@/hooks/useUserBets";
 
 export interface UniversalGameEngineProps {
   gameType: string;
@@ -24,8 +25,8 @@ export function UniversalGameEngine({
 }: UniversalGameEngineProps) {
   const { currentPeriod, timeLeft, isLoading, error } = useSupabasePeriod(duration);
   const [isBettingClosed, setIsBettingClosed] = useState(false);
-  const [userBets, setUserBets] = useState<UserBet[]>([]);
   const [lastCompletedPeriod, setLastCompletedPeriod] = useState("");
+  const { userBets, addBet, updateBetResult, getBetsByGameType } = useUserBets();
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60).toString().padStart(2, "0");
@@ -51,8 +52,45 @@ export function UniversalGameEngine({
       // Complete the current period that users were betting on
       onRoundComplete(currentPeriod, winningNumber, gameType);
       setLastCompletedPeriod(currentPeriod);
+
+      // Update bet results for this period
+      const periodBets = getBetsByGameType(gameType).filter(bet => bet.period === currentPeriod);
+      periodBets.forEach(bet => {
+        const isWin = calculateWin(bet, winningNumber);
+        const payout = isWin ? calculatePayout(bet) : 0;
+        updateBetResult(bet.period, bet.gameType, isWin ? 'win' : 'lose', payout);
+        
+        // Update balance with winnings
+        if (isWin && payout > 0) {
+          onBalanceUpdate(payout);
+        }
+      });
     }
   }, [timeLeft, currentPeriod, isBettingClosed, lastCompletedPeriod, onRoundComplete, onBettingStateChange, gameType, isLoading, error]);
+
+  const calculateWin = (bet: UserBet, winningNumber: number): boolean => {
+    if (bet.betType === 'number') {
+      return bet.betValue === winningNumber;
+    } else {
+      // Color logic
+      const winningColors = getNumberColors(winningNumber);
+      return winningColors.includes(bet.betValue as string);
+    }
+  };
+
+  const calculatePayout = (bet: UserBet): number => {
+    if (bet.betType === 'number') {
+      return bet.amount * 9; // 9x payout for number bets
+    } else {
+      return bet.amount * 2; // 2x payout for color bets
+    }
+  };
+
+  const getNumberColors = (num: number): string[] => {
+    if (num === 0) return ["violet", "red"];
+    if (num === 5) return ["violet", "green"];
+    return num % 2 === 0 ? ["red"] : ["green"];
+  };
 
   const placeBet = (
     betType: "color" | "number",
@@ -67,10 +105,13 @@ export function UniversalGameEngine({
       amount,
       period: currentPeriod,
       timestamp: new Date(),
+      gameType,
+      gameMode
     };
 
-    setUserBets((prev) => [...prev, newBet]);
-    onBalanceUpdate(userBalance - amount);
+    addBet(newBet);
+    // Fix: Pass negative amount to deduct from balance
+    onBalanceUpdate(-amount);
     return true;
   };
 
@@ -80,7 +121,7 @@ export function UniversalGameEngine({
       timeLeft: 0,
       currentPeriod: "Loading...",
       isBettingClosed: true,
-      userBets,
+      userBets: getBetsByGameType(gameType),
       formatTime,
       placeBet: () => false
     };
@@ -93,7 +134,7 @@ export function UniversalGameEngine({
       timeLeft: 0,
       currentPeriod: "Error",
       isBettingClosed: true,
-      userBets,
+      userBets: getBetsByGameType(gameType),
       formatTime,
       placeBet: () => false
     };
@@ -103,7 +144,7 @@ export function UniversalGameEngine({
     timeLeft,
     currentPeriod,
     isBettingClosed,
-    userBets,
+    userBets: getBetsByGameType(gameType),
     formatTime,
     placeBet
   };

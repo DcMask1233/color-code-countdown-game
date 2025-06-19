@@ -1,3 +1,4 @@
+
 export interface UserBet {
   period: string;
   betType: 'color' | 'number';
@@ -6,4 +7,6 @@ export interface UserBet {
   result?: 'win' | 'lose';
   payout?: number;
   timestamp: Date;
+  gameType: string; // Added gameType for better filtering
+  gameMode?: string; // Added gameMode to distinguish between different time intervals
 }

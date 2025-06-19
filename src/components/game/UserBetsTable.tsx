@@ -2,16 +2,7 @@
 import React, { useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PaginationControls } from "./PaginationControls";
-
-interface UserBet {
-  period: string;
-  betType: 'color' | 'number';
-  betValue: string | number;
-  amount: number;
-  result?: 'win' | 'lose';
-  payout?: number;
-  timestamp: Date;
-}
+import { UserBet } from "@/types/UserBet";
 
 interface UserBetsTableProps {
   userBets: UserBet[];
@@ -27,11 +18,12 @@ export const UserBetsTable: React.FC<UserBetsTableProps> = ({
   const [currentPage, setCurrentPage] = useState(0);
   const RECORDS_PER_PAGE = 10;
 
-  // Filter bets by game type (this would need to be enhanced based on how you track game types in bets)
+  // Filter bets by game type
   const filteredBets = useMemo(() => {
-    // For now, showing all user bets - you might want to add game type filtering
-    return userBets.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [userBets]);
+    return userBets
+      .filter(bet => bet.gameType === gameType)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [userBets, gameType]);
 
   const totalPages = Math.ceil(filteredBets.length / RECORDS_PER_PAGE);
   const startIndex = currentPage * RECORDS_PER_PAGE;

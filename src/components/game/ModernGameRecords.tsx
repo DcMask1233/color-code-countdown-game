@@ -4,29 +4,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GameResultsTable } from "./GameResultsTable";
 import { UserBetsTable } from "./UserBetsTable";
-
-interface UserBet {
-  period: string;
-  betType: 'color' | 'number';
-  betValue: string | number;
-  amount: number;
-  result?: 'win' | 'lose';
-  payout?: number;
-  timestamp: Date;
-}
+import { useUserBets } from "@/hooks/useUserBets";
 
 interface ModernGameRecordsProps {
-  userBets: UserBet[];
+  userBets: any[]; // Keep for compatibility but we'll use the hook instead
   gameType: string;
   duration: number;
 }
 
 export const ModernGameRecords: React.FC<ModernGameRecordsProps> = ({
-  userBets,
   gameType,
   duration
 }) => {
   const [activeTab, setActiveTab] = useState(`${gameType}-record`);
+  const { userBets } = useUserBets(); // Use the persistent bets from hook
 
   const getGameDisplayName = (gameId: string) => {
     switch (gameId) {

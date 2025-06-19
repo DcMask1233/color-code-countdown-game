@@ -1,39 +1,76 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useUserBets } from "@/hooks/useUserBets";
 
 interface BettingHistorySectionProps {
   gameRecords: any[];
 }
 
 export const BettingHistorySection = ({ gameRecords }: BettingHistorySectionProps) => {
-  // Mock betting history data since we need to track actual bets
-  const bettingHistory = [
-    {
-      id: 1,
-      gameType: "WinGo 1min",
-      period: "20240106001",
-      betType: "Color",
-      betValue: "Green",
-      betAmount: 100,
-      result: "Win",
-      winAmount: 200,
-      timestamp: new Date().toISOString()
-    },
-    {
-      id: 2,
-      gameType: "WinGo 1min", 
-      period: "20240106002",
-      betType: "Number",
-      betValue: "5",
-      betAmount: 50,
-      result: "Loss",
-      winAmount: 0,
-      timestamp: new Date(Date.now() - 300000).toISOString()
-    }
-  ];
+  const { userBets } = useUserBets();
 
-  if (bettingHistory.length === 0) {
+  // Sort bets by timestamp (newest first)
+  const sortedBets = [...userBets].sort((a, b) => 
+    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
+
+  const getGameDisplayName = (gameType: string, gameMode?: string) => {
+    const baseName = gameType.charAt(0).toUpperCase() + gameType.slice(1);
+    if (gameMode) {
+      const duration = gameMode.split('-')[1];
+      return `${baseName} ${duration}`;
+    }
+    return baseName;
+  };
+
+  const getResultBadge = (bet: any) => {
+    if (bet.result === 'win') {
+      return (
+        <Badge className="bg-green-500">
+          +₹{bet.payout || (bet.amount * 2)}
+        </Badge>
+      );
+    } else if (bet.result === 'lose') {
+      return (
+        <Badge className="bg-red-500">
+          -₹{bet.amount}
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge className="bg-yellow-500">
+          Pending
+        </Badge>
+      );
+    }
+  };
+
+  const getBetValueDisplay = (bet: any) => {
+    if (bet.betType === 'color') {
+      return (
+        <div className="flex items-center gap-2">
+          <div
+            className={`w-4 h-4 rounded-full ${
+              bet.betValue === 'green' ? 'bg-green-500' :
+              bet.betValue === 'red' ? 'bg-red-500' :
+              bet.betValue === 'violet' ? 'bg-purple-500' :
+              'bg-gray-500'
+            }`}
+          />
+          <span className="capitalize">{bet.betValue}</span>
+        </div>
+      );
+    } else {
+      return (
+        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-800 font-semibold text-sm">
+          {bet.betValue}
+        </span>
+      );
+    }
+  };
+
+  if (sortedBets.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
         <p>No betting history found</p>
@@ -45,14 +82,14 @@ export const BettingHistorySection = ({ gameRecords }: BettingHistorySectionProp
   return (
     <div className="space-y-3">
       <h3 className="font-semibold text-gray-800 mb-4">Betting History</h3>
-      {bettingHistory.map((bet) => (
-        <Card key={bet.id} className="border border-gray-200">
+      {sortedBets.slice(0, 10).map((bet, index) => (
+        <Card key={`${bet.period}-${index}`} className="border border-gray-200">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-sm font-medium">{bet.gameType}</CardTitle>
-              <Badge className={bet.result === 'Win' ? "bg-green-500" : "bg-red-500"}>
-                {bet.result === 'Win' ? `+₹${bet.winAmount}` : `-₹${bet.betAmount}`}
-              </Badge>
+              <CardTitle className="text-sm font-medium">
+                {getGameDisplayName(bet.gameType, bet.gameMode)}
+              </CardTitle>
+              {getResultBadge(bet)}
             </div>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -63,11 +100,13 @@ export const BettingHistorySection = ({ gameRecords }: BettingHistorySectionProp
               </div>
               <div>
                 <span className="text-gray-500">Bet:</span>
-                <p className="font-medium">{bet.betType} - {bet.betValue}</p>
+                <div className="font-medium">
+                  {getBetValueDisplay(bet)}
+                </div>
               </div>
               <div>
                 <span className="text-gray-500">Amount:</span>
-                <p className="font-medium">₹{bet.betAmount}</p>
+                <p className="font-medium">₹{bet.amount}</p>
               </div>
               <div>
                 <span className="text-gray-500">Time:</span>
@@ -77,6 +116,11 @@ export const BettingHistorySection = ({ gameRecords }: BettingHistorySectionProp
           </CardContent>
         </Card>
       ))}
+      {sortedBets.length > 10 && (
+        <p className="text-center text-sm text-gray-500 mt-4">
+          Showing latest 10 bets out of {sortedBets.length} total
+        </p>
+      )}
     </div>
   );
 };
