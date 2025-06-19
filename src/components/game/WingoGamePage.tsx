@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UniversalGameEngine } from "@/components/game/engines/UniversalGameEngine";
+import UniversalGameEngine from "@/components/game/engines/UniversalGameEngine";
 import { ParityGame } from "@/components/game/engines/ParityGame";
 import { SapreGame } from "@/components/game/engines/SapreGame";
 import { BconeGame } from "@/components/game/engines/BconeGame";
@@ -91,6 +91,7 @@ export const WingoGamePage = ({
 
   return (
     <div className="min-h-screen bg-gray-100">
+      {/* Header */}
       <div className="bg-[#1e99eb] text-white p-4">
         <div className="flex items-center gap-4">
           <button onClick={onBackToHome} className="text-white hover:bg-blue-600 rounded p-1 text-base">
@@ -100,15 +101,17 @@ export const WingoGamePage = ({
         </div>
       </div>
 
+      {/* Tabs */}
       <div className="container mx-auto px-4 py-4 max-w-md">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-4 mb-2">
             <TabsTrigger value="parity">Parity</TabsTrigger>
             <TabsTrigger value="sapre">Sapre</TabsTrigger>
             <TabsTrigger value="bcone">Bcone</TabsTrigger>
             <TabsTrigger value="emerd">Emerd</TabsTrigger>
           </TabsList>
 
+          {/* PARITY */}
           <TabsContent value="parity" className="mt-4">
             <ParityGame
               timeLeft={parityEngine.timeLeft}
@@ -122,6 +125,7 @@ export const WingoGamePage = ({
             />
           </TabsContent>
 
+          {/* SAPRE */}
           <TabsContent value="sapre" className="mt-4">
             <SapreGame
               timeLeft={sapreEngine.timeLeft}
@@ -135,6 +139,7 @@ export const WingoGamePage = ({
             />
           </TabsContent>
 
+          {/* BCONE */}
           <TabsContent value="bcone" className="mt-4">
             <BconeGame
               timeLeft={bconeEngine.timeLeft}
@@ -148,6 +153,7 @@ export const WingoGamePage = ({
             />
           </TabsContent>
 
+          {/* EMERD */}
           <TabsContent value="emerd" className="mt-4">
             <EmerdGame
               timeLeft={emerdEngine.timeLeft}
