@@ -2,7 +2,7 @@
 import { ColorButtons } from "@/components/game/ColorButtons";
 import { NumberGrid } from "@/components/game/NumberGrid";
 import { BetPopup } from "@/components/game/BetPopup";
-import { GameRecord } from "@/components/game/GameRecord";
+import { ModernGameRecords } from "@/components/game/ModernGameRecords";
 import { useState } from "react";
 
 interface UserBet {
@@ -90,7 +90,7 @@ export const EmerdGame = ({
         disabled={isBettingClosed}
       />
 
-      <GameRecord 
+      <ModernGameRecords 
         userBets={userBets}
         gameType="emerd"
         duration={duration}

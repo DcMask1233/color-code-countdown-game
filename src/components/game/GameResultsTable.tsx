@@ -1,13 +1,9 @@
-import React, { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient"; // adjust path if needed
 
-interface GameRecord {
-  period: string;
-  number: number;
-  color: string[] | null;
-  gameType: string;
-  duration: number;
-}
+import React from "react";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PaginationControls } from "./PaginationControls";
+import { useGameResults } from "@/hooks/useGameResults";
 
 interface Props {
   gameType: string;
@@ -15,69 +11,97 @@ interface Props {
 }
 
 export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
-  const [records, setRecords] = useState<GameRecord[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { 
+    results, 
+    loading, 
+    currentPage, 
+    totalPages, 
+    totalCount, 
+    nextPage, 
+    prevPage 
+  } = useGameResults(gameType, duration);
 
-  const fetchResults = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("game_results")
-        .select("period, number, result_color, game_type, duration")
-        .eq("game_type", gameType)
-        .eq("duration", duration)
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      if (error) throw error;
-
-      const formattedData = (data || []).map((item: any) => ({
-        period: item.period,
-        number: item.number,
-        color: item.result_color || null,
-        gameType: item.game_type,
-        duration: item.duration,
-      }));
-
-      setRecords(formattedData);
-    } catch (error) {
-      console.error("Error fetching game results:", error);
-    } finally {
-      setLoading(false);
-    }
+  const getResultBadge = (colors: string[] | null) => {
+    if (!colors || colors.length === 0) return null;
+    
+    return (
+      <div className="flex gap-1">
+        {colors.map((color, index) => (
+          <Badge
+            key={index}
+            className={`text-white text-xs px-2 py-1 ${
+              color === 'green' ? 'bg-green-500' :
+              color === 'red' ? 'bg-red-500' :
+              color === 'violet' ? 'bg-purple-500' :
+              'bg-gray-500'
+            }`}
+          >
+            {color}
+          </Badge>
+        ))}
+      </div>
+    );
   };
 
-  useEffect(() => {
-    fetchResults();
-  }, [gameType, duration]);
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="text-gray-500 mt-2">Loading records...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!loading && results.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500">No data found.</p>
+      </div>
+    );
+  }
+
+  const startIndex = currentPage * 10;
+  const endIndex = Math.min(startIndex + 10, totalCount);
 
   return (
-    <div>
-      <h3>
-        Results for {gameType} - {duration} min
-      </h3>
-      {loading && <p>Loading...</p>}
-      {!loading && records.length === 0 && <p>No results found.</p>}
-      {!loading && records.length > 0 && (
-        <table>
-          <thead>
-            <tr>
-              <th>Period</th>
-              <th>Number</th>
-              <th>Color</th>
-            </tr>
-          </thead>
-          <tbody>
-            {records.map((record) => (
-              <tr key={record.period}>
-                <td>{record.period}</td>
-                <td>{record.number}</td>
-                <td>{record.color ? record.color.join(", ") : "N/A"}</td>
-              </tr>
+    <div className="space-y-4">
+      <div className="rounded-lg border bg-white overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gray-50">
+              <TableHead className="font-semibold text-gray-700">Period</TableHead>
+              <TableHead className="font-semibold text-gray-700">Number</TableHead>
+              <TableHead className="font-semibold text-gray-700">Result</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {results.map((record) => (
+              <TableRow key={record.id} className="hover:bg-gray-50">
+                <TableCell className="font-medium">{record.period}</TableCell>
+                <TableCell>
+                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-800 font-semibold">
+                    {record.number}
+                  </span>
+                </TableCell>
+                <TableCell>{getResultBadge(record.result_color)}</TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
-      )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={() => {}}
+        startIndex={startIndex}
+        endIndex={endIndex}
+        totalItems={totalCount}
+        onNextPage={nextPage}
+        onPrevPage={prevPage}
+      />
     </div>
   );
 };

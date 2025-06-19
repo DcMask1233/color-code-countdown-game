@@ -8,6 +8,8 @@ interface PaginationControlsProps {
   startIndex: number;
   endIndex: number;
   totalItems: number;
+  onNextPage?: () => void;
+  onPrevPage?: () => void;
 }
 
 export const PaginationControls = ({
@@ -16,16 +18,22 @@ export const PaginationControls = ({
   onPageChange,
   startIndex,
   endIndex,
-  totalItems
+  totalItems,
+  onNextPage,
+  onPrevPage
 }: PaginationControlsProps) => {
   const nextPage = () => {
-    if (currentPage < totalPages - 1) {
+    if (onNextPage) {
+      onNextPage();
+    } else if (currentPage < totalPages - 1) {
       onPageChange(currentPage + 1);
     }
   };
 
   const prevPage = () => {
-    if (currentPage > 0) {
+    if (onPrevPage) {
+      onPrevPage();
+    } else if (currentPage > 0) {
       onPageChange(currentPage - 1);
     }
   };
@@ -53,7 +61,7 @@ export const PaginationControls = ({
           }`}
         >
           <ChevronLeft className="w-4 h-4" />
-          Prev
+          Previous
         </button>
         
         <div className="flex items-center gap-2">
