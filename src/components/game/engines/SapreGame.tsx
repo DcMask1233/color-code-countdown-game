@@ -54,11 +54,11 @@ export const SapreGame = ({
   return <>
       <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-gray-600 text-sm font-semibold">Period</span>
+          <span className="text-sm font-semibold text-gray-950">Period</span>
           <span className="text-sm font-semibold text-gray-800">{currentPeriod}</span>
         </div>
         <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-600">Count Down</span>
+          <span className="text-sm text-gray-950 font-semibold">Count Down</span>
           <span className={`text-lg font-bold transition-all duration-300 ${isBettingClosed ? 'text-black opacity-50 blur-[1px]' : 'text-black'}`}>
             {formatTime(timeLeft)}
           </span>
