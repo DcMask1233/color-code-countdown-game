@@ -1,5 +1,5 @@
-
 import { useState, useEffect } from "react";
+import { getCurrentPeriod } from "@/lib/periodUtils";
 
 interface CountdownTimerProps {
   onRoundComplete: (newPeriod: string, winningNumber: number) => void;
@@ -15,6 +15,7 @@ export const CountdownTimer = ({
   const [timeLeft, setTimeLeft] = useState(60);
   const [currentPeriod, setCurrentPeriod] = useState("");
   const [isBettingClosed, setIsBettingClosed] = useState(false);
+  const [lastCompletedPeriod, setLastCompletedPeriod] = useState("");
 
   const getGameDuration = () => {
     switch (gameMode) {
@@ -27,22 +28,6 @@ export const CountdownTimer = ({
       default:
         return 60;
     }
-  };
-
-  const generatePeriod = (duration: number) => {
-    const now = new Date();
-    const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000)); // IST offset
-
-    const yyyy = istTime.getFullYear();
-    const mm = String(istTime.getMonth() + 1).padStart(2, '0');
-    const dd = String(istTime.getDate()).padStart(2, '0');
-
-    const startOfDay = new Date(istTime);
-    startOfDay.setHours(0, 0, 0, 0);
-    const secondsSinceStart = Math.floor((istTime.getTime() - startOfDay.getTime()) / 1000);
-    const roundNum = Math.floor(secondsSinceStart / duration) + 1;
-
-    return `${yyyy}${mm}${dd}${String(roundNum).padStart(3, '0')}`;
   };
 
   const generateWinningNumber = () => Math.floor(Math.random() * 10);
@@ -60,7 +45,7 @@ export const CountdownTimer = ({
       const secondsInCurrentRound = secondsSinceStart % duration;
       const remaining = duration - secondsInCurrentRound;
 
-      const newPeriod = generatePeriod(duration);
+      const newPeriod = getCurrentPeriod('parity', duration);
       setTimeLeft(remaining);
       setCurrentPeriod(newPeriod);
 
@@ -70,16 +55,26 @@ export const CountdownTimer = ({
         onBettingStateChange(shouldCloseBetting);
       }
 
-      if (remaining === duration) {
+      // Complete round when time is up
+      if (remaining >= duration - 1 && lastCompletedPeriod !== newPeriod) {
         const winningNumber = generateWinningNumber();
-        onRoundComplete(newPeriod, winningNumber);
+        const prevPeriodNum = Math.floor(secondsSinceStart / duration);
+        const yyyy = istTime.getFullYear();
+        const mm = String(istTime.getMonth() + 1).padStart(2, "0");
+        const dd = String(istTime.getDate()).padStart(2, "0");
+        const prevPeriod = `${yyyy}${mm}${dd}${String(prevPeriodNum).padStart(3, "0")}`;
+        
+        if (prevPeriodNum > 0) {
+          onRoundComplete(prevPeriod, winningNumber);
+          setLastCompletedPeriod(prevPeriod);
+        }
       }
     };
 
     updateTimer(); // Run immediately
     const timer = setInterval(updateTimer, 1000);
     return () => clearInterval(timer);
-  }, [onRoundComplete, onBettingStateChange, isBettingClosed, gameMode]);
+  }, [onRoundComplete, onBettingStateChange, isBettingClosed, gameMode, lastCompletedPeriod]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);

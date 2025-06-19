@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    console.log('Starting game result generation...');
+    console.log('🎮 Starting game result generation...');
 
     // Generate results for all game types and durations
     const gameTypes = ['parity', 'sapre', 'bcone', 'emerd'];
@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
 
     for (const gameType of gameTypes) {
       for (const duration of durations) {
-        console.log(`Generating result for ${gameType} ${duration}s`);
+        console.log(`🎯 Generating result for ${gameType} ${duration}s`);
         
         const { data, error } = await supabaseClient.rpc('insert_game_result', {
           p_game_type: gameType,
@@ -36,9 +36,9 @@ Deno.serve(async (req) => {
         });
 
         if (error) {
-          console.error(`Error generating result for ${gameType} ${duration}s:`, error);
+          console.error(`❌ Error for ${gameType} ${duration}s:`, error);
         } else {
-          console.log(`Generated result for ${gameType} ${duration}s:`, data);
+          console.log(`✅ Result for ${gameType} ${duration}s:`, data);
           results.push({
             gameType,
             duration,
@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in generate-game-results function:', error);
+    console.error('💥 Error in generate-game-results function:', error);
     return new Response(
       JSON.stringify({ 
         success: false, 

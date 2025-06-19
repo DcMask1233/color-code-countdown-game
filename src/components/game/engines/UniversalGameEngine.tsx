@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { getCurrentPeriod } from "@/lib/periodUtils";
 import { UserBet } from "@/types/UserBet";
@@ -26,6 +25,7 @@ export function UniversalGameEngine({
   const [timeLeft, setTimeLeft] = useState(0);
   const [isBettingClosed, setIsBettingClosed] = useState(false);
   const [userBets, setUserBets] = useState<UserBet[]>([]);
+  const [lastCompletedPeriod, setLastCompletedPeriod] = useState("");
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60).toString().padStart(2, "0");
@@ -56,17 +56,28 @@ export function UniversalGameEngine({
         onBettingStateChange(shouldCloseBetting);
       }
 
-      // When a new round starts (remaining equals duration), complete the previous round
-      if (remaining === duration) {
+      // When time is up (remaining is 0 or very close to duration), complete the previous round
+      // This ensures we complete the round that just ended, not the new one starting
+      if (remaining >= duration - 1 && lastCompletedPeriod !== newPeriod) {
         const winningNumber = generateWinningNumber();
-        onRoundComplete(newPeriod, winningNumber, gameType);
+        // Complete the previous period, not the current one
+        const prevPeriodNum = Math.floor(secondsSinceStart / duration);
+        const yyyy = istTime.getFullYear();
+        const mm = String(istTime.getMonth() + 1).padStart(2, "0");
+        const dd = String(istTime.getDate()).padStart(2, "0");
+        const prevPeriod = `${yyyy}${mm}${dd}${String(prevPeriodNum).padStart(3, "0")}`;
+        
+        if (prevPeriodNum > 0) { // Only complete if not the first period of the day
+          onRoundComplete(prevPeriod, winningNumber, gameType);
+          setLastCompletedPeriod(prevPeriod);
+        }
       }
     };
 
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
-  }, [gameType, duration, onRoundComplete, onBettingStateChange, isBettingClosed]);
+  }, [gameType, duration, onRoundComplete, onBettingStateChange, isBettingClosed, lastCompletedPeriod]);
 
   const placeBet = (
     betType: "color" | "number",
