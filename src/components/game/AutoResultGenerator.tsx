@@ -1,6 +1,6 @@
 
 import { useEffect } from 'react';
- { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 
 export const AutoResultGenerator = () => {
   useEffect(() => {
