@@ -1,27 +1,37 @@
 // pages/admin/admin.tsx
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "@/lib/supabase";
 import AdminControls from "@/components/admin/AdminControls";
 
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+
 export default function AdminPage() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
 
-  // Restrict access to a specific admin email
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      const email = data?.user?.email;
-      if (!email || email !== "admin@example.com") {
+    async function checkUser() {
+      const { data } = await supabase.auth.getUser();
+      if (!data?.user || data.user.email !== ADMIN_EMAIL) {
+        router.push("/");
+      } else {
+        setLoading(false);
+      }
+    }
+    checkUser();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session || session.user.email !== ADMIN_EMAIL) {
         router.push("/");
       }
     });
-  }, []);
 
-  return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">🎮 Admin Panel</h1>
-      <AdminControls />
-    </div>
-  );
+    return () => listener?.unsubscribe();
+  }, [router]);
+
+  if (loading) return <div>Loading Admin Panel...</div>;
+
+  return <AdminControls />;
 }
