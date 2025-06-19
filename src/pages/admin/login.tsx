@@ -17,7 +17,7 @@ export default function AdminLogin() {
 
     if (error) {
       alert("Login failed: " + error.message);
-    } else if (data?.user?.email === "youradmin@email.com") {
+    } else if (data?.user?.email === "dcmask@gmail.com") {
       router.push("/admin"); // go to admin dashboard
     } else {
       alert("Not an admin user");
