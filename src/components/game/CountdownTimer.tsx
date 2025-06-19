@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from "react";
-import { getCurrentPeriod } from "@/lib/periodUtils";
+import { useSupabasePeriod } from "@/hooks/useSupabasePeriod";
 
 interface CountdownTimerProps {
   onRoundComplete: (newPeriod: string, winningNumber: number) => void;
@@ -12,8 +13,6 @@ export const CountdownTimer = ({
   onBettingStateChange,
   gameMode = 'wingo-1min',
 }: CountdownTimerProps) => {
-  const [timeLeft, setTimeLeft] = useState(60);
-  const [currentPeriod, setCurrentPeriod] = useState("");
   const [isBettingClosed, setIsBettingClosed] = useState(false);
   const [lastCompletedPeriod, setLastCompletedPeriod] = useState("");
 
@@ -30,57 +29,46 @@ export const CountdownTimer = ({
     }
   };
 
+  const duration = getGameDuration();
+  const { currentPeriod, timeLeft, isLoading, error } = useSupabasePeriod(duration);
+
   const generateWinningNumber = () => Math.floor(Math.random() * 10);
 
   useEffect(() => {
-    const duration = getGameDuration();
+    if (isLoading || error) return;
 
-    const updateTimer = () => {
-      const now = new Date();
-      const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+    const shouldCloseBetting = timeLeft <= 10;
+    if (shouldCloseBetting !== isBettingClosed) {
+      setIsBettingClosed(shouldCloseBetting);
+      onBettingStateChange(shouldCloseBetting);
+    }
 
-      const startOfDay = new Date(istTime);
-      startOfDay.setHours(0, 0, 0, 0);
-      const secondsSinceStart = Math.floor((istTime.getTime() - startOfDay.getTime()) / 1000);
-      const secondsInCurrentRound = secondsSinceStart % duration;
-      const remaining = duration - secondsInCurrentRound;
-
-      const newPeriod = getCurrentPeriod('parity', duration);
-      setTimeLeft(remaining);
-      setCurrentPeriod(newPeriod);
-
-      const shouldCloseBetting = remaining <= 10;
-      if (shouldCloseBetting !== isBettingClosed) {
-        setIsBettingClosed(shouldCloseBetting);
-        onBettingStateChange(shouldCloseBetting);
-      }
-
-      // Complete round when time is up
-      if (remaining >= duration - 1 && lastCompletedPeriod !== newPeriod) {
-        const winningNumber = generateWinningNumber();
-        const prevPeriodNum = Math.floor(secondsSinceStart / duration);
-        const yyyy = istTime.getFullYear();
-        const mm = String(istTime.getMonth() + 1).padStart(2, "0");
-        const dd = String(istTime.getDate()).padStart(2, "0");
-        const prevPeriod = `${yyyy}${mm}${dd}${String(prevPeriodNum).padStart(3, "0")}`;
+    // Complete round when time is up
+    if (timeLeft >= duration - 1 && lastCompletedPeriod !== currentPeriod) {
+      const winningNumber = generateWinningNumber();
+      
+      // Calculate previous period number
+      const currentPeriodNumber = parseInt(currentPeriod.slice(-3));
+      if (currentPeriodNumber > 1) { // Only complete if not the first period of the day
+        const prevPeriodNumber = currentPeriodNumber - 1;
+        const datePrefix = currentPeriod.slice(0, -3);
+        const prevPeriod = `${datePrefix}${String(prevPeriodNumber).padStart(3, "0")}`;
         
-        if (prevPeriodNum > 0) {
-          onRoundComplete(prevPeriod, winningNumber);
-          setLastCompletedPeriod(prevPeriod);
-        }
+        onRoundComplete(prevPeriod, winningNumber);
+        setLastCompletedPeriod(prevPeriod);
       }
-    };
-
-    updateTimer(); // Run immediately
-    const timer = setInterval(updateTimer, 1000);
-    return () => clearInterval(timer);
-  }, [onRoundComplete, onBettingStateChange, isBettingClosed, gameMode, lastCompletedPeriod]);
+    }
+  }, [timeLeft, currentPeriod, isBettingClosed, lastCompletedPeriod, onRoundComplete, onBettingStateChange, duration, isLoading, error]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // Handle loading and error states
+  const displayPeriod = isLoading ? "Loading..." : error ? "Error" : currentPeriod;
+  const displayTime = isLoading || error ? 0 : timeLeft;
 
   return (
     <div className="flex justify-between items-center mb-6 px-4">
@@ -89,7 +77,7 @@ export const CountdownTimer = ({
           <span className="text-yellow-500 text-lg">🏆</span>
           <span className="text-sm text-gray-600 font-medium">Period</span>
         </div>
-        <span className="text-2xl font-bold text-gray-800">{currentPeriod}</span>
+        <span className="text-2xl font-bold text-gray-800">{displayPeriod}</span>
       </div>
 
       <div className="flex flex-col items-center">
@@ -99,7 +87,7 @@ export const CountdownTimer = ({
             isBettingClosed ? 'text-gray-800 opacity-50 blur-[1px]' : 'text-gray-800'
           }`}
         >
-          {formatTime(timeLeft)}
+          {formatTime(displayTime)}
         </span>
       </div>
     </div>

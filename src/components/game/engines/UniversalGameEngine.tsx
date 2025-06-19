@@ -1,5 +1,6 @@
+
 import { useEffect, useState } from "react";
-import { getCurrentPeriod } from "@/lib/periodUtils";
+import { useSupabasePeriod } from "@/hooks/useSupabasePeriod";
 import { UserBet } from "@/types/UserBet";
 
 export interface UniversalGameEngineProps {
@@ -21,8 +22,7 @@ export function UniversalGameEngine({
   onBalanceUpdate,
   userBalance
 }: UniversalGameEngineProps) {
-  const [currentPeriod, setCurrentPeriod] = useState("");
-  const [timeLeft, setTimeLeft] = useState(0);
+  const { currentPeriod, timeLeft, isLoading, error } = useSupabasePeriod(duration);
   const [isBettingClosed, setIsBettingClosed] = useState(false);
   const [userBets, setUserBets] = useState<UserBet[]>([]);
   const [lastCompletedPeriod, setLastCompletedPeriod] = useState("");
@@ -36,55 +36,37 @@ export function UniversalGameEngine({
   const generateWinningNumber = () => Math.floor(Math.random() * 10);
 
   useEffect(() => {
-    const updateCountdown = () => {
-      const now = new Date();
-      const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+    if (isLoading || error) return;
 
-      const startOfDay = new Date(istTime);
-      startOfDay.setHours(0, 0, 0, 0);
-      const secondsSinceStart = Math.floor((istTime.getTime() - startOfDay.getTime()) / 1000);
-      const secondsInCurrentRound = secondsSinceStart % duration;
-      const remaining = duration - secondsInCurrentRound;
+    const shouldCloseBetting = timeLeft <= 5;
+    if (shouldCloseBetting !== isBettingClosed) {
+      setIsBettingClosed(shouldCloseBetting);
+      onBettingStateChange(shouldCloseBetting);
+    }
 
-      const newPeriod = getCurrentPeriod(gameType, duration);
-      setTimeLeft(remaining);
-      setCurrentPeriod(newPeriod);
-
-      const shouldCloseBetting = remaining <= 5;
-      if (shouldCloseBetting !== isBettingClosed) {
-        setIsBettingClosed(shouldCloseBetting);
-        onBettingStateChange(shouldCloseBetting);
-      }
-
-      // When time is up (remaining is 0 or very close to duration), complete the previous round
-      // This ensures we complete the round that just ended, not the new one starting
-      if (remaining >= duration - 1 && lastCompletedPeriod !== newPeriod) {
-        const winningNumber = generateWinningNumber();
-        // Complete the previous period, not the current one
-        const prevPeriodNum = Math.floor(secondsSinceStart / duration);
-        const yyyy = istTime.getFullYear();
-        const mm = String(istTime.getMonth() + 1).padStart(2, "0");
-        const dd = String(istTime.getDate()).padStart(2, "0");
-        const prevPeriod = `${yyyy}${mm}${dd}${String(prevPeriodNum).padStart(3, "0")}`;
+    // When time is up (timeLeft is 0 or very close to duration), complete the previous round
+    if (timeLeft >= duration - 1 && lastCompletedPeriod !== currentPeriod) {
+      const winningNumber = generateWinningNumber();
+      
+      // Calculate previous period number
+      const currentPeriodNumber = parseInt(currentPeriod.slice(-3));
+      if (currentPeriodNumber > 1) { // Only complete if not the first period of the day
+        const prevPeriodNumber = currentPeriodNumber - 1;
+        const datePrefix = currentPeriod.slice(0, -3);
+        const prevPeriod = `${datePrefix}${String(prevPeriodNumber).padStart(3, "0")}`;
         
-        if (prevPeriodNum > 0) { // Only complete if not the first period of the day
-          onRoundComplete(prevPeriod, winningNumber, gameType);
-          setLastCompletedPeriod(prevPeriod);
-        }
+        onRoundComplete(prevPeriod, winningNumber, gameType);
+        setLastCompletedPeriod(prevPeriod);
       }
-    };
-
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-    return () => clearInterval(interval);
-  }, [gameType, duration, onRoundComplete, onBettingStateChange, isBettingClosed, lastCompletedPeriod]);
+    }
+  }, [timeLeft, currentPeriod, isBettingClosed, lastCompletedPeriod, onRoundComplete, onBettingStateChange, gameType, duration, isLoading, error]);
 
   const placeBet = (
     betType: "color" | "number",
     betValue: string | number,
     amount: number
   ): boolean => {
-    if (isBettingClosed || amount > userBalance) return false;
+    if (isBettingClosed || amount > userBalance || isLoading) return false;
 
     const newBet: UserBet = {
       betType,
@@ -98,6 +80,31 @@ export function UniversalGameEngine({
     onBalanceUpdate(userBalance - amount);
     return true;
   };
+
+  // Show loading or error states
+  if (isLoading) {
+    return {
+      timeLeft: 0,
+      currentPeriod: "Loading...",
+      isBettingClosed: true,
+      userBets,
+      formatTime,
+      placeBet: () => false
+    };
+  }
+
+  if (error) {
+    console.error('Period fetch error:', error);
+    // Fallback to prevent app crash
+    return {
+      timeLeft: 0,
+      currentPeriod: "Error",
+      isBettingClosed: true,
+      userBets,
+      formatTime,
+      placeBet: () => false
+    };
+  }
 
   return {
     timeLeft,
