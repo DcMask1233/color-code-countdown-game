@@ -96,7 +96,7 @@ export const UserBetsTable: React.FC<UserBetsTableProps> = ({
               <TableRow key={`${bet.period}-${index}`} className="hover:bg-gray-50">
                 <TableCell className="font-medium">{bet.period}</TableCell>
                 <TableCell>
-                  {betType === 'number' ? (
+                  {bet.betType === 'number' ? (
                     <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-800 font-semibold">
                       {bet.betValue}
                     </span>
