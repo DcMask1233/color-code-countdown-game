@@ -1,151 +1,149 @@
+import React, { useEffect, useState, useRef } from "react";
+import { supabase } from "@/lib/supabase";
+import {
+  generatePeriod,
+  getPeriodEndTime,
+  GameType,
+} from "@/lib/periodUtils";
 
-import { useEffect, useState } from "react";
-import { useSupabasePeriod } from "@/hooks/useSupabasePeriod";
-import { UserBet } from "@/types/UserBet";
-import { useUserBets } from "@/hooks/useUserBets";
-
-export interface UniversalGameEngineProps {
-  gameType: string;
-  duration: number;
-  gameMode: string;
-  onRoundComplete: (period: string, number: number, gameType: string) => void;
-  onBettingStateChange: (state: boolean) => void;
-  onBalanceUpdate: (amount: number) => void;
-  userBalance: number;
+interface UniversalGameEngineProps {
+  gameType: GameType;
 }
 
-export function UniversalGameEngine({
-  gameType,
-  duration,
-  gameMode,
-  onRoundComplete,
-  onBettingStateChange,
-  onBalanceUpdate,
-  userBalance
-}: UniversalGameEngineProps) {
-  const { currentPeriod, timeLeft, isLoading, error } = useSupabasePeriod(duration);
-  const [isBettingClosed, setIsBettingClosed] = useState(false);
-  const [lastCompletedPeriod, setLastCompletedPeriod] = useState("");
-  const { userBets, addBet, updateBetResult, getBetsByGameType } = useUserBets();
+export default function UniversalGameEngine({ gameType }: UniversalGameEngineProps) {
+  const [currentPeriod, setCurrentPeriod] = useState<string>("");
+  const [countdown, setCountdown] = useState<number>(0);
+  const [resultNumber, setResultNumber] = useState<number | null>(null);
+  const countdownInterval = useRef<NodeJS.Timeout | null>(null);
 
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60).toString().padStart(2, "0");
-    const s = (seconds % 60).toString().padStart(2, "0");
-    return `${m}:${s}`;
-  };
-
-  const generateWinningNumber = () => Math.floor(Math.random() * 10);
-
+  // Update current period and countdown every second
   useEffect(() => {
-    if (isLoading || error) return;
+    const updatePeriodAndCountdown = () => {
+      const now = new Date();
+      const period = generatePeriod(gameType, now);
+      setCurrentPeriod(period);
 
-    const shouldCloseBetting = timeLeft <= 5;
-    if (shouldCloseBetting !== isBettingClosed) {
-      setIsBettingClosed(shouldCloseBetting);
-      onBettingStateChange(shouldCloseBetting);
-    }
+      const periodEnd = getPeriodEndTime(gameType, now);
+      const secondsLeft = Math.floor((periodEnd.getTime() - now.getTime()) / 1000);
+      setCountdown(secondsLeft > 0 ? secondsLeft : 0);
+    };
 
-    // Complete round when time is up - complete the CURRENT period that was being displayed
-    if (timeLeft <= 1 && lastCompletedPeriod !== currentPeriod) {
-      const winningNumber = generateWinningNumber();
-      
-      // Complete the current period that users were betting on
-      onRoundComplete(currentPeriod, winningNumber, gameType);
-      setLastCompletedPeriod(currentPeriod);
+    updatePeriodAndCountdown();
 
-      // Update bet results for this period
-      const periodBets = getBetsByGameType(gameType).filter(bet => bet.period === currentPeriod);
-      periodBets.forEach(bet => {
-        const isWin = calculateWin(bet, winningNumber);
-        const payout = isWin ? calculatePayout(bet) : 0;
-        updateBetResult(bet.period, bet.gameType, isWin ? 'win' : 'lose', payout);
-        
-        // Update balance with winnings
-        if (isWin && payout > 0) {
-          onBalanceUpdate(payout);
+    countdownInterval.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          updatePeriodAndCountdown();
+          return 0;
         }
+        return prev - 1;
       });
-    }
-  }, [timeLeft, currentPeriod, isBettingClosed, lastCompletedPeriod, onRoundComplete, onBettingStateChange, gameType, isLoading, error]);
+    }, 1000);
 
-  const calculateWin = (bet: UserBet, winningNumber: number): boolean => {
-    if (bet.betType === 'number') {
-      return bet.betValue === winningNumber;
-    } else {
-      // Color logic
-      const winningColors = getNumberColors(winningNumber);
-      return winningColors.includes(bet.betValue as string);
-    }
-  };
-
-  const calculatePayout = (bet: UserBet): number => {
-    if (bet.betType === 'number') {
-      return bet.amount * 9; // 9x payout for number bets
-    } else {
-      return bet.amount * 2; // 2x payout for color bets
-    }
-  };
-
-  const getNumberColors = (num: number): string[] => {
-    if (num === 0) return ["violet", "red"];
-    if (num === 5) return ["violet", "green"];
-    return num % 2 === 0 ? ["red"] : ["green"];
-  };
-
-  const placeBet = (
-    betType: "color" | "number",
-    betValue: string | number,
-    amount: number
-  ): boolean => {
-    if (isBettingClosed || amount > userBalance || isLoading) return false;
-
-    const newBet: UserBet = {
-      betType,
-      betValue,
-      amount,
-      period: currentPeriod,
-      timestamp: new Date(),
-      gameType,
-      gameMode
+    return () => {
+      if (countdownInterval.current) clearInterval(countdownInterval.current);
     };
+  }, [gameType]);
 
-    addBet(newBet);
-    // Fix: Pass negative amount to deduct from balance
-    onBalanceUpdate(-amount);
-    return true;
-  };
+  // Listen for real-time new game results matching current period & gameType
+  useEffect(() => {
+    const channel = supabase
+      .channel("game_results")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "game_results" },
+        (payload) => {
+          if (
+            payload.new.game_type === gameType &&
+            payload.new.period === currentPeriod
+          ) {
+            setResultNumber(payload.new.result_number);
+          }
+        }
+      )
+      .subscribe();
 
-  // Show loading or error states
-  if (isLoading) {
-    return {
-      timeLeft: 0,
-      currentPeriod: "Loading...",
-      isBettingClosed: true,
-      userBets: getBetsByGameType(gameType),
-      formatTime,
-      placeBet: () => false
+    return () => {
+      supabase.removeChannel(channel);
     };
-  }
+  }, [gameType, currentPeriod]);
 
-  if (error) {
-    console.error('Period fetch error:', error);
-    // Fallback to prevent app crash
-    return {
-      timeLeft: 0,
-      currentPeriod: "Error",
-      isBettingClosed: true,
-      userBets: getBetsByGameType(gameType),
-      formatTime,
-      placeBet: () => false
-    };
-  }
+  // When countdown reaches zero, generate or fetch result
+  useEffect(() => {
+    if (countdown !== 0) return;
 
-  return {
-    timeLeft,
-    currentPeriod,
-    isBettingClosed,
-    userBets: getBetsByGameType(gameType),
-    formatTime,
-    placeBet
-  };
+    async function generateOrFetchResult() {
+      try {
+        // Check admin override first
+        const { data: adminResults, error: adminError } = await supabase
+          .from("admin_results")
+          .select("next_result_number")
+          .eq("game_type", gameType)
+          .eq("period", currentPeriod)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (adminError) {
+          console.error("Error fetching admin override:", adminError);
+          return;
+        }
+
+        let finalResult: number;
+
+        if (adminResults && adminResults.length > 0 && adminResults[0].next_result_number !== null) {
+          finalResult = adminResults[0].next_result_number;
+        } else {
+          // Generate random fallback result (0-9)
+          finalResult = Math.floor(Math.random() * 10);
+        }
+
+        setResultNumber(finalResult);
+
+        // Save to game_results table if not exists
+        const { data: existingResult, error: fetchError } = await supabase
+          .from("game_results")
+          .select("*")
+          .eq("game_type", gameType)
+          .eq("period", currentPeriod)
+          .limit(1)
+          .single();
+
+        if (!existingResult) {
+          const { error: insertError } = await supabase.from("game_results").insert([
+            {
+              game_type: gameType,
+              period: currentPeriod,
+              result_number: finalResult,
+            },
+          ]);
+
+          if (insertError) {
+            console.error("Error inserting game result:", insertError);
+          }
+        }
+      } catch (err) {
+        console.error("Error generating/fetching result:", err);
+      }
+    }
+
+    generateOrFetchResult();
+  }, [countdown, currentPeriod, gameType]);
+
+  return (
+    <div className="p-4 border rounded shadow-md max-w-md mx-auto">
+      <h2 className="text-xl font-bold mb-2">{gameType} Game</h2>
+      <p>
+        <strong>Current Period:</strong> {currentPeriod || "Loading..."}
+      </p>
+      <p>
+        <strong>Time Left:</strong> {countdown}s
+      </p>
+      <p>
+        <strong>Result:</strong>{" "}
+        {resultNumber !== null ? resultNumber : "Waiting for result..."}
+      </p>
+      {/* TODO: Add betting UI, user wallet, and history here */}
+    </div>
+  );
 }
+
