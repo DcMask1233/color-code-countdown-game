@@ -5,7 +5,6 @@ import { ParityGame } from "@/components/game/engines/ParityGame";
 import { SapreGame } from "@/components/game/engines/SapreGame";
 import { BconeGame } from "@/components/game/engines/BconeGame";
 import { EmerdGame } from "@/components/game/engines/EmerdGame";
-import { UserBet } from "@/types/UserBet";
 
 interface GameRecord {
   period: string;
@@ -54,44 +53,9 @@ export const WingoGamePage = ({
   };
 
   const duration = getDuration();
-  const durationLabel = duration === 60 ? '1min' : duration === 180 ? '3min' : '5min';
-
-  const getNumberColor = (num: number): string[] => {
-    if (num === 0) return ["violet", "red"];
-    if (num === 5) return ["violet", "green"];
-    return num % 2 === 0 ? ["red"] : ["green"];
-  };
-
-  const createEngine = (gameType: string) =>
-    UniversalGameEngine({
-      gameType,
-      duration,
-      gameMode,
-      onRoundComplete: (newPeriod, winningNumber, gameType) => {
-        const gameInstance = `${durationLabel}-${gameType}`;
-        const newRecord = {
-          period: newPeriod,
-          number: winningNumber,
-          color: getNumberColor(winningNumber),
-          gameInstance
-        };
-        const updatedRecords = [newRecord, ...gameRecords].slice(0, 50);
-        onGameRecordsUpdate(updatedRecords);
-        onRoundComplete(newPeriod, winningNumber, gameType);
-      },
-      onBettingStateChange: () => {},
-      onBalanceUpdate,
-      userBalance
-    });
-
-  const parityEngine = createEngine('parity');
-  const sapreEngine = createEngine('sapre');
-  const bconeEngine = createEngine('bcone');
-  const emerdEngine = createEngine('emerd');
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Header */}
       <div className="bg-[#1e99eb] text-white p-4">
         <div className="flex items-center gap-4">
           <button onClick={onBackToHome} className="text-white hover:bg-blue-600 rounded p-1 text-base">
@@ -101,7 +65,6 @@ export const WingoGamePage = ({
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="container mx-auto px-4 py-4 max-w-md">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4 mb-2">
@@ -111,60 +74,24 @@ export const WingoGamePage = ({
             <TabsTrigger value="emerd">Emerd</TabsTrigger>
           </TabsList>
 
-          {/* PARITY */}
-          <TabsContent value="parity" className="mt-4">
-            <ParityGame
-              timeLeft={parityEngine.timeLeft}
-              currentPeriod={parityEngine.currentPeriod}
-              isBettingClosed={parityEngine.isBettingClosed}
-              userBets={parityEngine.userBets}
-              userBalance={userBalance}
-              formatTime={parityEngine.formatTime}
-              onPlaceBet={parityEngine.placeBet}
-              duration={duration}
-            />
+          <TabsContent value="parity" className="mt-4 space-y-4">
+            <UniversalGameEngine gameType="parity" />
+            <ParityGame userBalance={userBalance} duration={duration} />
           </TabsContent>
 
-          {/* SAPRE */}
-          <TabsContent value="sapre" className="mt-4">
-            <SapreGame
-              timeLeft={sapreEngine.timeLeft}
-              currentPeriod={sapreEngine.currentPeriod}
-              isBettingClosed={sapreEngine.isBettingClosed}
-              userBets={sapreEngine.userBets}
-              userBalance={userBalance}
-              formatTime={sapreEngine.formatTime}
-              onPlaceBet={sapreEngine.placeBet}
-              duration={duration}
-            />
+          <TabsContent value="sapre" className="mt-4 space-y-4">
+            <UniversalGameEngine gameType="sapre" />
+            <SapreGame userBalance={userBalance} duration={duration} />
           </TabsContent>
 
-          {/* BCONE */}
-          <TabsContent value="bcone" className="mt-4">
-            <BconeGame
-              timeLeft={bconeEngine.timeLeft}
-              currentPeriod={bconeEngine.currentPeriod}
-              isBettingClosed={bconeEngine.isBettingClosed}
-              userBets={bconeEngine.userBets}
-              userBalance={userBalance}
-              formatTime={bconeEngine.formatTime}
-              onPlaceBet={bconeEngine.placeBet}
-              duration={duration}
-            />
+          <TabsContent value="bcone" className="mt-4 space-y-4">
+            <UniversalGameEngine gameType="bcone" />
+            <BconeGame userBalance={userBalance} duration={duration} />
           </TabsContent>
 
-          {/* EMERD */}
-          <TabsContent value="emerd" className="mt-4">
-            <EmerdGame
-              timeLeft={emerdEngine.timeLeft}
-              currentPeriod={emerdEngine.currentPeriod}
-              isBettingClosed={emerdEngine.isBettingClosed}
-              userBets={emerdEngine.userBets}
-              userBalance={userBalance}
-              formatTime={emerdEngine.formatTime}
-              onPlaceBet={emerdEngine.placeBet}
-              duration={duration}
-            />
+          <TabsContent value="emerd" className="mt-4 space-y-4">
+            <UniversalGameEngine gameType="emerd" />
+            <EmerdGame userBalance={userBalance} duration={duration} />
           </TabsContent>
         </Tabs>
       </div>
