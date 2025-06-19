@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { GameResultsTable } from "./GameResultsTable";
 import { UserBetsTable } from "./UserBetsTable";
 
@@ -27,55 +26,53 @@ export const ModernGameRecords: React.FC<ModernGameRecordsProps> = ({
   gameType,
   duration
 }) => {
-  const [activeTab, setActiveTab] = useState("parity-record");
+  const [activeTab, setActiveTab] = useState(`${gameType}-record`);
 
-  const gameTypes = [
-    { id: 'parity', name: 'Parity' },
-    { id: 'sapre', name: 'Sapre' },
-    { id: 'bcone', name: 'Bcone' },
-    { id: 'emerd', name: 'Emerd' }
-  ];
+  const getGameDisplayName = (gameId: string) => {
+    switch (gameId) {
+      case 'parity': return 'Parity';
+      case 'sapre': return 'Sapre';
+      case 'bcone': return 'Bcone';
+      case 'emerd': return 'Emerd';
+      default: return 'Game';
+    }
+  };
+
+  const gameDisplayName = getGameDisplayName(gameType);
 
   return (
     <Card className="w-full mt-4">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold text-gray-800">Game Records</CardTitle>
+        <CardTitle className="text-lg font-semibold text-gray-800">{gameDisplayName} Record</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 gap-1 p-1 bg-gray-100 rounded-lg mx-4">
-            {gameTypes.map((game) => (
-              <React.Fragment key={game.id}>
-                <TabsTrigger
-                  value={`${game.id}-record`}
-                  className="text-xs px-2 py-1 data-[state=active]:bg-white data-[state=active]:text-blue-600"
-                >
-                  {game.name}
-                </TabsTrigger>
-                <TabsTrigger
-                  value={`my-${game.id}-record`}
-                  className="text-xs px-2 py-1 data-[state=active]:bg-white data-[state=active]:text-blue-600"
-                >
-                  My {game.name}
-                </TabsTrigger>
-              </React.Fragment>
-            ))}
+          <TabsList className="grid w-full grid-cols-2 gap-1 p-1 bg-gray-100 rounded-lg mx-4">
+            <TabsTrigger
+              value={`${gameType}-record`}
+              className="text-sm px-4 py-2 data-[state=active]:bg-white data-[state=active]:text-blue-600"
+            >
+              {gameDisplayName} Record
+            </TabsTrigger>
+            <TabsTrigger
+              value={`my-${gameType}-record`}
+              className="text-sm px-4 py-2 data-[state=active]:bg-white data-[state=active]:text-blue-600"
+            >
+              My {gameDisplayName} Record
+            </TabsTrigger>
           </TabsList>
 
-          {gameTypes.map((game) => (
-            <React.Fragment key={game.id}>
-              <TabsContent value={`${game.id}-record`} className="mt-4 px-4">
-                <GameResultsTable gameType={game.id} duration={duration} />
-              </TabsContent>
-              <TabsContent value={`my-${game.id}-record`} className="mt-4 px-4">
-                <UserBetsTable 
-                  userBets={userBets} 
-                  gameType={game.id}
-                  title={`My ${game.name} Records`}
-                />
-              </TabsContent>
-            </React.Fragment>
-          ))}
+          <TabsContent value={`${gameType}-record`} className="mt-4 px-4">
+            <GameResultsTable gameType={gameType} duration={duration} />
+          </TabsContent>
+          
+          <TabsContent value={`my-${gameType}-record`} className="mt-4 px-4">
+            <UserBetsTable 
+              userBets={userBets} 
+              gameType={gameType}
+              title={`My ${gameDisplayName} Records`}
+            />
+          </TabsContent>
         </Tabs>
       </CardContent>
     </Card>

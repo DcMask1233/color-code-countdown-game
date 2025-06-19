@@ -1,6 +1,5 @@
 
 import React, { useState, useMemo } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PaginationControls } from "./PaginationControls";
 
@@ -39,26 +38,24 @@ export const UserBetsTable: React.FC<UserBetsTableProps> = ({
   const endIndex = Math.min(startIndex + RECORDS_PER_PAGE, filteredBets.length);
   const currentBets = filteredBets.slice(startIndex, endIndex);
 
-  const getResultBadge = (betValue: string | number, betType: 'color' | 'number') => {
-    if (betType === 'color') {
+  const getResultDisplay = (betValue: string | number, betType: 'color' | 'number') => {
+    if (betType === 'number') {
+      return (
+        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-800 font-semibold">
+          {betValue}
+        </span>
+      );
+    } else {
       const color = betValue as string;
       return (
-        <Badge
-          className={`text-white text-xs px-2 py-1 ${
+        <div
+          className={`w-6 h-6 rounded-full ${
             color === 'green' ? 'bg-green-500' :
             color === 'red' ? 'bg-red-500' :
             color === 'violet' ? 'bg-purple-500' :
             'bg-gray-500'
           }`}
-        >
-          {color}
-        </Badge>
-      );
-    } else {
-      return (
-        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-800 font-semibold">
-          {betValue}
-        </span>
+        />
       );
     }
   };
@@ -90,8 +87,7 @@ export const UserBetsTable: React.FC<UserBetsTableProps> = ({
           <TableHeader>
             <TableRow className="bg-gray-50">
               <TableHead className="font-semibold text-gray-700">Period</TableHead>
-              <TableHead className="font-semibold text-gray-700">Bet</TableHead>
-              <TableHead className="font-semibold text-gray-700">Amount</TableHead>
+              <TableHead className="font-semibold text-gray-700">Number</TableHead>
               <TableHead className="font-semibold text-gray-700">Result</TableHead>
             </TableRow>
           </TableHeader>
@@ -99,25 +95,16 @@ export const UserBetsTable: React.FC<UserBetsTableProps> = ({
             {currentBets.map((bet, index) => (
               <TableRow key={`${bet.period}-${index}`} className="hover:bg-gray-50">
                 <TableCell className="font-medium">{bet.period}</TableCell>
-                <TableCell>{getResultBadge(bet.betValue, bet.betType)}</TableCell>
                 <TableCell>
-                  <span className="text-gray-700">₹{bet.amount}</span>
-                </TableCell>
-                <TableCell>
-                  {bet.result ? (
-                    <Badge
-                      className={`text-white text-xs px-2 py-1 ${
-                        bet.result === 'win' ? 'bg-green-500' : 'bg-red-500'
-                      }`}
-                    >
-                      {bet.result}
-                    </Badge>
+                  {betType === 'number' ? (
+                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-800 font-semibold">
+                      {bet.betValue}
+                    </span>
                   ) : (
-                    <Badge className="bg-gray-400 text-white text-xs px-2 py-1">
-                      pending
-                    </Badge>
+                    <span className="text-gray-700">-</span>
                   )}
                 </TableCell>
+                <TableCell>{getResultDisplay(bet.betValue, bet.betType)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
