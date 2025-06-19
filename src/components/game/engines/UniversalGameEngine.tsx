@@ -30,6 +30,7 @@ export default function UniversalGameEngine({ gameType }: UniversalGameEnginePro
 
     updatePeriodAndCountdown();
 
+    if (countdownInterval.current) clearInterval(countdownInterval.current);
     countdownInterval.current = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -68,13 +69,13 @@ export default function UniversalGameEngine({ gameType }: UniversalGameEnginePro
     };
   }, [gameType, currentPeriod]);
 
-  // When countdown reaches zero, generate or fetch result
+  // When countdown reaches zero, generate or fetch result and settle bets
   useEffect(() => {
     if (countdown !== 0) return;
 
     async function generateOrFetchResult() {
       try {
-        // Check admin override first
+        // 1. Check admin override for this game and period
         const { data: adminResults, error: adminError } = await supabase
           .from("admin_results")
           .select("next_result_number")
@@ -90,16 +91,20 @@ export default function UniversalGameEngine({ gameType }: UniversalGameEnginePro
 
         let finalResult: number;
 
-        if (adminResults && adminResults.length > 0 && adminResults[0].next_result_number !== null) {
+        if (
+          adminResults &&
+          adminResults.length > 0 &&
+          adminResults[0].next_result_number !== null
+        ) {
           finalResult = adminResults[0].next_result_number;
         } else {
-          // Generate random fallback result (0-9)
+          // Fallback: generate random result (0-9)
           finalResult = Math.floor(Math.random() * 10);
         }
 
         setResultNumber(finalResult);
 
-        // Save to game_results table if not exists
+        // 2. Check if result already exists for this game & period
         const { data: existingResult, error: fetchError } = await supabase
           .from("game_results")
           .select("*")
@@ -108,7 +113,14 @@ export default function UniversalGameEngine({ gameType }: UniversalGameEnginePro
           .limit(1)
           .single();
 
+        if (fetchError && fetchError.code !== "PGRST116") {
+          // PGRST116 means no rows found - ignore
+          console.error("Error fetching existing result:", fetchError);
+          return;
+        }
+
         if (!existingResult) {
+          // 3. Insert new game result
           const { error: insertError } = await supabase.from("game_results").insert([
             {
               game_type: gameType,
@@ -119,6 +131,17 @@ export default function UniversalGameEngine({ gameType }: UniversalGameEnginePro
 
           if (insertError) {
             console.error("Error inserting game result:", insertError);
+            return;
+          }
+
+          // 4. Call RPC to settle bets for this result
+          const { error: settleError } = await supabase.rpc("settle_bets_for_result", {
+            p_game_type: gameType,
+            p_period: currentPeriod,
+          });
+
+          if (settleError) {
+            console.error("Error settling bets:", settleError);
           }
         }
       } catch (err) {
@@ -146,4 +169,3 @@ export default function UniversalGameEngine({ gameType }: UniversalGameEnginePro
     </div>
   );
 }
-
