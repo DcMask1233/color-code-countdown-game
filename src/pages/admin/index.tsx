@@ -11,7 +11,7 @@ export default function AdminPanel() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error }) => {
       if (data?.user) {
-        if (data.user.email === "youradmin@email.com") {
+        if (data.user.email === "dcmask21@gmail.com") {
           setUser(data.user);
         } else {
           router.push("/admin/login");
