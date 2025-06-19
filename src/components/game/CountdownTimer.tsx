@@ -43,22 +43,15 @@ export const CountdownTimer = ({
       onBettingStateChange(shouldCloseBetting);
     }
 
-    // Complete round when time is up
-    if (timeLeft >= duration - 1 && lastCompletedPeriod !== currentPeriod) {
+    // Complete round when time is up - complete the CURRENT period that was being displayed
+    if (timeLeft <= 1 && lastCompletedPeriod !== currentPeriod) {
       const winningNumber = generateWinningNumber();
       
-      // Calculate previous period number
-      const currentPeriodNumber = parseInt(currentPeriod.slice(-3));
-      if (currentPeriodNumber > 1) { // Only complete if not the first period of the day
-        const prevPeriodNumber = currentPeriodNumber - 1;
-        const datePrefix = currentPeriod.slice(0, -3);
-        const prevPeriod = `${datePrefix}${String(prevPeriodNumber).padStart(3, "0")}`;
-        
-        onRoundComplete(prevPeriod, winningNumber);
-        setLastCompletedPeriod(prevPeriod);
-      }
+      // Complete the current period that users were betting on
+      onRoundComplete(currentPeriod, winningNumber);
+      setLastCompletedPeriod(currentPeriod);
     }
-  }, [timeLeft, currentPeriod, isBettingClosed, lastCompletedPeriod, onRoundComplete, onBettingStateChange, duration, isLoading, error]);
+  }, [timeLeft, currentPeriod, isBettingClosed, lastCompletedPeriod, onRoundComplete, onBettingStateChange, isLoading, error]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);

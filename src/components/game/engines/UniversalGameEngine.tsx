@@ -44,22 +44,15 @@ export function UniversalGameEngine({
       onBettingStateChange(shouldCloseBetting);
     }
 
-    // When time is up (timeLeft is 0 or very close to duration), complete the previous round
-    if (timeLeft >= duration - 1 && lastCompletedPeriod !== currentPeriod) {
+    // Complete round when time is up - complete the CURRENT period that was being displayed
+    if (timeLeft <= 1 && lastCompletedPeriod !== currentPeriod) {
       const winningNumber = generateWinningNumber();
       
-      // Calculate previous period number
-      const currentPeriodNumber = parseInt(currentPeriod.slice(-3));
-      if (currentPeriodNumber > 1) { // Only complete if not the first period of the day
-        const prevPeriodNumber = currentPeriodNumber - 1;
-        const datePrefix = currentPeriod.slice(0, -3);
-        const prevPeriod = `${datePrefix}${String(prevPeriodNumber).padStart(3, "0")}`;
-        
-        onRoundComplete(prevPeriod, winningNumber, gameType);
-        setLastCompletedPeriod(prevPeriod);
-      }
+      // Complete the current period that users were betting on
+      onRoundComplete(currentPeriod, winningNumber, gameType);
+      setLastCompletedPeriod(currentPeriod);
     }
-  }, [timeLeft, currentPeriod, isBettingClosed, lastCompletedPeriod, onRoundComplete, onBettingStateChange, gameType, duration, isLoading, error]);
+  }, [timeLeft, currentPeriod, isBettingClosed, lastCompletedPeriod, onRoundComplete, onBettingStateChange, gameType, isLoading, error]);
 
   const placeBet = (
     betType: "color" | "number",
