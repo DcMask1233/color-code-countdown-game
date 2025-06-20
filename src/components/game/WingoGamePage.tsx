@@ -23,6 +23,14 @@ interface WingoGamePageProps {
   onGameRecordsUpdate: (records: GameRecord[]) => void;
 }
 
+// Mapping tab values (lowercase) to GameType strings (PascalCase)
+const gameTypeMap = {
+  parity: "Parity",
+  sapre: "Sapre",
+  bcone: "Bcone",
+  emerd: "Emerd",
+} as const;
+
 export const WingoGamePage = ({
   gameMode,
   userBalance,
@@ -32,7 +40,7 @@ export const WingoGamePage = ({
   onBalanceUpdate,
   onGameRecordsUpdate
 }: WingoGamePageProps) => {
-  const [activeTab, setActiveTab] = useState("parity");
+  const [activeTab, setActiveTab] = useState<keyof typeof gameTypeMap>("parity");
 
   const getDuration = () => {
     switch (gameMode) {
@@ -53,6 +61,7 @@ export const WingoGamePage = ({
   };
 
   const duration = getDuration();
+  const selectedGameType = gameTypeMap[activeTab];
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -75,22 +84,22 @@ export const WingoGamePage = ({
           </TabsList>
 
           <TabsContent value="parity" className="mt-4 space-y-4">
-            <UniversalGameEngine gameType="parity" />
+            <UniversalGameEngine gameType="Parity" />
             <ParityGame userBalance={userBalance} duration={duration} />
           </TabsContent>
 
           <TabsContent value="sapre" className="mt-4 space-y-4">
-            <UniversalGameEngine gameType="sapre" />
+            <UniversalGameEngine gameType="Sapre" />
             <SapreGame userBalance={userBalance} duration={duration} />
           </TabsContent>
 
           <TabsContent value="bcone" className="mt-4 space-y-4">
-            <UniversalGameEngine gameType="bcone" />
+            <UniversalGameEngine gameType="Bcone" />
             <BconeGame userBalance={userBalance} duration={duration} />
           </TabsContent>
 
           <TabsContent value="emerd" className="mt-4 space-y-4">
-            <UniversalGameEngine gameType="emerd" />
+            <UniversalGameEngine gameType="Emerd" />
             <EmerdGame userBalance={userBalance} duration={duration} />
           </TabsContent>
         </Tabs>
