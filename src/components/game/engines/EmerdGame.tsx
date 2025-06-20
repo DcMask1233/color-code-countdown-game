@@ -3,7 +3,7 @@ import { NumberGrid } from "@/components/game/NumberGrid";
 import { ModernGameRecords } from "@/components/game/ModernGameRecords";
 import { BetPopup } from "@/components/game/BetPopup";
 import { useState } from "react";
-import { useGameEngine } from "@/components/game/engine/useGameEngine";
+import { useGameEngine } from "@/hooks/useGameEngine"; // Make sure this path is correct!
 
 interface EmerdGameProps {
   userBalance: number;
@@ -16,9 +16,9 @@ export const EmerdGame = ({ userBalance, duration }: EmerdGameProps) => {
     currentPeriod,
     isBettingClosed,
     userBets,
-    formatTime,
+    formatTime,   // Make sure your hook exports this, or define a helper below
     placeBet,
-  } = useGameEngine("emerd");
+  } = useGameEngine("Emerd", duration); // Pass "Emerd" and duration
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<"color" | "number">("color");
@@ -36,10 +36,17 @@ export const EmerdGame = ({ userBalance, duration }: EmerdGameProps) => {
     setShowBetPopup(true);
   };
 
-  const handleConfirmBet = (amount: number) => {
-    const success = placeBet(selectedBetType, selectedBetValue, amount);
+  const handleConfirmBet = async (amount: number) => {
+    const success = await placeBet(selectedBetType, selectedBetValue, amount);
     if (success) setShowBetPopup(false);
   };
+
+  // If formatTime is not from the hook, define here:
+  // const formatTime = (seconds: number) => {
+  //   const mins = Math.floor(seconds / 60).toString().padStart(2, "0");
+  //   const secs = (seconds % 60).toString().padStart(2, "0");
+  //   return `${mins}:${secs}`;
+  // };
 
   return (
     <>
@@ -64,7 +71,7 @@ export const EmerdGame = ({ userBalance, duration }: EmerdGameProps) => {
 
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed} />
 
-      <ModernGameRecords userBets={userBets} gameType="emerd" duration={duration} />
+      <ModernGameRecords userBets={userBets} gameType="Emerd" duration={duration} />
 
       <BetPopup
         isOpen={showBetPopup}
