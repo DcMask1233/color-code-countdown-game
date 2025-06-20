@@ -1,8 +1,10 @@
 import { ColorButtons } from "@/components/game/ColorButtons";
 import { NumberGrid } from "@/components/game/NumberGrid";
-import { BetPopup } from "@/components/game/BetPopup";
 import { ModernGameRecords } from "@/components/game/ModernGameRecords";
+import { BetPopup } from "@/components/game/BetPopup";
 import { useState } from "react";
+import { useGameEngine } from "@/hooks/useGameEngine";
+
 interface UserBet {
   period: string;
   betType: 'color' | 'number';
@@ -12,49 +14,53 @@ interface UserBet {
   payout?: number;
   timestamp: Date;
 }
+
 interface SapreGameProps {
-  timeLeft: number;
-  currentPeriod: string;
-  isBettingClosed: boolean;
-  userBets: UserBet[];
-  onPlaceBet: (betType: 'color' | 'number', betValue: string | number, amount: number) => boolean;
   userBalance: number;
-  formatTime: (seconds: number) => string;
   duration: number;
 }
-export const SapreGame = ({
-  timeLeft,
-  currentPeriod,
-  isBettingClosed,
-  userBets,
-  onPlaceBet,
-  userBalance,
-  formatTime,
-  duration
-}: SapreGameProps) => {
+
+export const SapreGame = ({ userBalance, duration }: SapreGameProps) => {
+  const {
+    currentPeriod,
+    timeLeft,
+    userBets,
+    placeBet,
+    isBettingClosed
+  } = useGameEngine("sapre", duration);
+
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<'color' | 'number'>('color');
-  const [selectedBetValue, setSelectedBetValue] = useState<string | number>('');
+  const [selectedBetValue, setSelectedBetValue] = useState<string | number>("");
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
   const handleColorSelect = (color: string) => {
     setSelectedBetType('color');
     setSelectedBetValue(color);
     setShowBetPopup(true);
   };
+
   const handleNumberSelect = (number: number) => {
     setSelectedBetType('number');
     setSelectedBetValue(number);
     setShowBetPopup(true);
   };
-  const handleConfirmBet = (amount: number) => {
-    const success = onPlaceBet(selectedBetType, selectedBetValue, amount);
-    if (success) {
-      setShowBetPopup(false);
-    }
+
+  const handleConfirmBet = async (amount: number) => {
+    const success = await placeBet(selectedBetType, selectedBetValue, amount);
+    if (success) setShowBetPopup(false);
   };
-  return <>
+
+  return (
+    <>
       <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-sm font-semibold text-gray-950">Period</span>
+          <span className="text-sm text-gray-950 font-semibold">Period</span>
           <span className="text-sm font-semibold text-gray-800">{currentPeriod}</span>
         </div>
         <div className="flex justify-between items-center">
@@ -66,11 +72,18 @@ export const SapreGame = ({
       </div>
 
       <ColorButtons onColorSelect={handleColorSelect} disabled={isBettingClosed} />
-
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed} />
-
       <ModernGameRecords userBets={userBets} gameType="sapre" duration={duration} />
 
-      <BetPopup isOpen={showBetPopup} onClose={() => setShowBetPopup(false)} selectedType={selectedBetType} selectedValue={selectedBetValue} userBalance={userBalance} onConfirmBet={handleConfirmBet} disabled={isBettingClosed} />
-    </>;
+      <BetPopup
+        isOpen={showBetPopup}
+        onClose={() => setShowBetPopup(false)}
+        selectedType={selectedBetType}
+        selectedValue={selectedBetValue}
+        userBalance={userBalance}
+        onConfirmBet={handleConfirmBet}
+        disabled={isBettingClosed}
+      />
+    </>
+  );
 };
