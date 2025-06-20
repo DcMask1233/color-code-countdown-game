@@ -1,21 +1,21 @@
 // pages/admin/admin.tsx
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import AdminControls from "@/components/admin/AdminControls";
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
 export default function AdminPage() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function checkUser() {
       const { data } = await supabase.auth.getUser();
       if (!data?.user || data.user.email !== ADMIN_EMAIL) {
-        router.push("/");
+        navigate("/");
       } else {
         setLoading(false);
       }
@@ -24,12 +24,12 @@ export default function AdminPage() {
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session || session.user.email !== ADMIN_EMAIL) {
-        router.push("/");
+        navigate("/");
       }
     });
 
-    return () => listener?.unsubscribe();
-  }, [router]);
+    return () => listener?.subscription.unsubscribe();
+  }, [navigate]);
 
   if (loading) return <div>Loading Admin Panel...</div>;
 
