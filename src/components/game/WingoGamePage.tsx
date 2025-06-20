@@ -40,6 +40,7 @@ export const WingoGamePage = ({
   onBalanceUpdate,
   onGameRecordsUpdate
 }: WingoGamePageProps) => {
+  // Active tab is keyof gameTypeMap (one of the lowercase keys)
   const [activeTab, setActiveTab] = useState<keyof typeof gameTypeMap>("parity");
 
   const getDuration = () => {
@@ -61,7 +62,7 @@ export const WingoGamePage = ({
   };
 
   const duration = getDuration();
-  const selectedGameType = gameTypeMap[activeTab];
+  const selectedGameType = gameTypeMap[activeTab]; // e.g. "Parity"
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -75,7 +76,11 @@ export const WingoGamePage = ({
       </div>
 
       <div className="container mx-auto px-4 py-4 max-w-md">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as keyof typeof gameTypeMap)}
+          className="w-full"
+        >
           <TabsList className="grid w-full grid-cols-4 mb-2">
             <TabsTrigger value="parity">Parity</TabsTrigger>
             <TabsTrigger value="sapre">Sapre</TabsTrigger>
