@@ -1,20 +1,32 @@
-// hooks/useGameEngine.ts
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { generatePeriod, getPeriodEndTime, GameType } from "@/lib/periodUtils";
 
+interface UserBet {
+  period: string;
+  betType: "color" | "number";
+  betValue: string | number;
+  amount: number;
+  timestamp: Date;
+  result?: "win" | "lose";
+  payout?: number;
+}
+
 export function useGameEngine(gameType: GameType, duration: number) {
   const [currentPeriod, setCurrentPeriod] = useState("");
   const [timeLeft, setTimeLeft] = useState(0);
-  const [userBets, setUserBets] = useState<any[]>([]);
+  const [userBets, setUserBets] = useState<UserBet[]>([]);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
   // ⏳ Period and countdown logic
   useEffect(() => {
     const update = () => {
       const now = new Date();
-      const period = generatePeriod(duration, now);
-      const end = getPeriodEndTime(duration, now);
+
+      // Pass gameType to generatePeriod and getPeriodEndTime, not duration
+      const period = generatePeriod(gameType, now);
+      const end = getPeriodEndTime(gameType, now);
+
       const left = Math.max(0, Math.floor((end.getTime() - now.getTime()) / 1000));
       setCurrentPeriod(period);
       setTimeLeft(left);
@@ -25,7 +37,7 @@ export function useGameEngine(gameType: GameType, duration: number) {
     if (countdownRef.current) clearInterval(countdownRef.current);
 
     countdownRef.current = setInterval(() => {
-      setTimeLeft(prev => {
+      setTimeLeft((prev) => {
         if (prev <= 1) {
           update();
           return 0;
@@ -37,14 +49,19 @@ export function useGameEngine(gameType: GameType, duration: number) {
     return () => {
       if (countdownRef.current) clearInterval(countdownRef.current);
     };
-  }, [gameType, duration]);
+  }, [gameType]); // depend on gameType only
 
   // 🎰 Bet placement logic
   const placeBet = async (
-    betType: 'color' | 'number',
+    betType: "color" | "number",
     betValue: string | number,
     amount: number
   ) => {
+    if (!currentPeriod) {
+      console.error("Current period not set yet");
+      return false;
+    }
+
     const { error } = await supabase.from("user_bets").insert({
       period: currentPeriod,
       game_type: gameType,
@@ -58,7 +75,7 @@ export function useGameEngine(gameType: GameType, duration: number) {
       return false;
     }
 
-    setUserBets(prev => [
+    setUserBets((prev) => [
       ...prev,
       {
         period: currentPeriod,
@@ -66,13 +83,13 @@ export function useGameEngine(gameType: GameType, duration: number) {
         betValue,
         amount,
         timestamp: new Date(),
-      }
+      },
     ]);
 
     return true;
   };
 
-  // Format time (optional, can be moved to utils)
+  // Format time helper
   const formatTime = (seconds: number) => {
     const min = Math.floor(seconds / 60);
     const sec = seconds % 60;
