@@ -9,6 +9,7 @@ export function useGameEngine(gameType: GameType, duration: number) {
   const [userBets, setUserBets] = useState<any[]>([]);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
+  // ⏳ Period and countdown logic
   useEffect(() => {
     const update = () => {
       const now = new Date();
@@ -20,9 +21,11 @@ export function useGameEngine(gameType: GameType, duration: number) {
     };
 
     update();
+
     if (countdownRef.current) clearInterval(countdownRef.current);
+
     countdownRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
+      setTimeLeft(prev => {
         if (prev <= 1) {
           update();
           return 0;
@@ -36,7 +39,12 @@ export function useGameEngine(gameType: GameType, duration: number) {
     };
   }, [gameType, duration]);
 
-  const placeBet = async (betType: 'color' | 'number', betValue: string | number, amount: number) => {
+  // 🎰 Bet placement logic
+  const placeBet = async (
+    betType: 'color' | 'number',
+    betValue: string | number,
+    amount: number
+  ) => {
     const { error } = await supabase.from("user_bets").insert({
       period: currentPeriod,
       game_type: gameType,
@@ -44,21 +52,31 @@ export function useGameEngine(gameType: GameType, duration: number) {
       bet_value: betValue,
       amount,
     });
+
     if (error) {
-      console.error("Failed to place bet", error);
+      console.error("❌ Failed to place bet:", error);
       return false;
     }
+
     setUserBets(prev => [
       ...prev,
       {
         period: currentPeriod,
-        betType: betType,
-        betValue: betValue,
+        betType,
+        betValue,
         amount,
         timestamp: new Date(),
       }
     ]);
+
     return true;
+  };
+
+  // Format time (optional, can be moved to utils)
+  const formatTime = (seconds: number) => {
+    const min = Math.floor(seconds / 60);
+    const sec = seconds % 60;
+    return `${min}:${sec.toString().padStart(2, "0")}`;
   };
 
   return {
@@ -67,5 +85,6 @@ export function useGameEngine(gameType: GameType, duration: number) {
     userBets,
     placeBet,
     isBettingClosed: timeLeft <= 5,
+    formatTime,
   };
 }
