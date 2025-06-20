@@ -3,7 +3,7 @@ import { NumberGrid } from "@/components/game/NumberGrid";
 import { ModernGameRecords } from "@/components/game/ModernGameRecords";
 import { BetPopup } from "@/components/game/BetPopup";
 import { useState } from "react";
-import { useGameEngine } from "@/components/game/engine/useGameEngine";
+import { useGameEngine } from "@/hooks/useGameEngine"; // fix path if needed
 
 interface SapreGameProps {
   userBalance: number;
@@ -18,7 +18,7 @@ export const SapreGame = ({ userBalance, duration }: SapreGameProps) => {
     userBets,
     formatTime,
     placeBet,
-  } = useGameEngine("sapre");
+  } = useGameEngine("Sapre", duration); // Capitalized and pass duration
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<"color" | "number">("color");
@@ -36,8 +36,8 @@ export const SapreGame = ({ userBalance, duration }: SapreGameProps) => {
     setShowBetPopup(true);
   };
 
-  const handleConfirmBet = (amount: number) => {
-    const success = placeBet(selectedBetType, selectedBetValue, amount);
+  const handleConfirmBet = async (amount: number) => {
+    const success = await placeBet(selectedBetType, selectedBetValue, amount);
     if (success) setShowBetPopup(false);
   };
 
@@ -64,7 +64,7 @@ export const SapreGame = ({ userBalance, duration }: SapreGameProps) => {
 
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed} />
 
-      <ModernGameRecords userBets={userBets} gameType="sapre" duration={duration} />
+      <ModernGameRecords userBets={userBets} gameType="Sapre" duration={duration} />
 
       <BetPopup
         isOpen={showBetPopup}
