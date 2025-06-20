@@ -2,7 +2,7 @@ import { ColorButtons } from "@/components/game/ColorButtons";
 import { NumberGrid } from "@/components/game/NumberGrid";
 import { ModernGameRecords } from "@/components/game/ModernGameRecords";
 import { BetPopup } from "@/components/game/BetPopup";
-import useGameEngine from "@/hooks/useGameEngine";
+import { useGameEngine } from "@/hooks/useGameEngine";  // Named import
 import { useState } from "react";
 
 interface BconeGameProps {
@@ -16,9 +16,9 @@ export const BconeGame = ({ userBalance, duration }: BconeGameProps) => {
     currentPeriod,
     isBettingClosed,
     userBets,
-    onPlaceBet,
+    placeBet,          // consistent with other components
     formatTime
-  } = useGameEngine("bcone", duration);
+  } = useGameEngine("Bcone", duration);  // Capitalized "Bcone"
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<'color' | 'number'>('color');
@@ -36,8 +36,8 @@ export const BconeGame = ({ userBalance, duration }: BconeGameProps) => {
     setShowBetPopup(true);
   };
 
-  const handleConfirmBet = (amount: number) => {
-    const success = onPlaceBet(selectedBetType, selectedBetValue, amount);
+  const handleConfirmBet = async (amount: number) => {
+    const success = await placeBet(selectedBetType, selectedBetValue, amount);
     if (success) setShowBetPopup(false);
   };
 
@@ -59,7 +59,7 @@ export const BconeGame = ({ userBalance, duration }: BconeGameProps) => {
       <ColorButtons onColorSelect={handleColorSelect} disabled={isBettingClosed} />
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed} />
 
-      <ModernGameRecords userBets={userBets} gameType="bcone" duration={duration} />
+      <ModernGameRecords userBets={userBets} gameType="Bcone" duration={duration} />
 
       <BetPopup
         isOpen={showBetPopup}
