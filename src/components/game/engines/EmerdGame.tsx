@@ -1,57 +1,48 @@
 import { ColorButtons } from "@/components/game/ColorButtons";
 import { NumberGrid } from "@/components/game/NumberGrid";
-import { BetPopup } from "@/components/game/BetPopup";
 import { ModernGameRecords } from "@/components/game/ModernGameRecords";
+import { BetPopup } from "@/components/game/BetPopup";
+import useGameEngine from "@/hooks/useGameEngine";
 import { useState } from "react";
-interface UserBet {
-  period: string;
-  betType: 'color' | 'number';
-  betValue: string | number;
-  amount: number;
-  result?: 'win' | 'lose';
-  payout?: number;
-  timestamp: Date;
-}
+
 interface EmerdGameProps {
-  timeLeft: number;
-  currentPeriod: string;
-  isBettingClosed: boolean;
-  userBets: UserBet[];
-  onPlaceBet: (betType: 'color' | 'number', betValue: string | number, amount: number) => boolean;
   userBalance: number;
-  formatTime: (seconds: number) => string;
   duration: number;
 }
-export const EmerdGame = ({
-  timeLeft,
-  currentPeriod,
-  isBettingClosed,
-  userBets,
-  onPlaceBet,
-  userBalance,
-  formatTime,
-  duration
-}: EmerdGameProps) => {
+
+export const EmerdGame = ({ userBalance, duration }: EmerdGameProps) => {
+  const {
+    timeLeft,
+    currentPeriod,
+    isBettingClosed,
+    userBets,
+    onPlaceBet,
+    formatTime
+  } = useGameEngine("emerd", duration);  // Pass "emerd" game type here
+
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<'color' | 'number'>('color');
   const [selectedBetValue, setSelectedBetValue] = useState<string | number>('');
+
   const handleColorSelect = (color: string) => {
     setSelectedBetType('color');
     setSelectedBetValue(color);
     setShowBetPopup(true);
   };
+
   const handleNumberSelect = (number: number) => {
     setSelectedBetType('number');
     setSelectedBetValue(number);
     setShowBetPopup(true);
   };
+
   const handleConfirmBet = (amount: number) => {
     const success = onPlaceBet(selectedBetType, selectedBetValue, amount);
-    if (success) {
-      setShowBetPopup(false);
-    }
+    if (success) setShowBetPopup(false);
   };
-  return <>
+
+  return (
+    <>
       <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm text-gray-950 font-semibold">Period</span>
@@ -66,11 +57,19 @@ export const EmerdGame = ({
       </div>
 
       <ColorButtons onColorSelect={handleColorSelect} disabled={isBettingClosed} />
-
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed} />
 
       <ModernGameRecords userBets={userBets} gameType="emerd" duration={duration} />
 
-      <BetPopup isOpen={showBetPopup} onClose={() => setShowBetPopup(false)} selectedType={selectedBetType} selectedValue={selectedBetValue} userBalance={userBalance} onConfirmBet={handleConfirmBet} disabled={isBettingClosed} />
-    </>;
+      <BetPopup
+        isOpen={showBetPopup}
+        onClose={() => setShowBetPopup(false)}
+        selectedType={selectedBetType}
+        selectedValue={selectedBetValue}
+        userBalance={userBalance}
+        onConfirmBet={handleConfirmBet}
+        disabled={isBettingClosed}
+      />
+    </>
+  );
 };
