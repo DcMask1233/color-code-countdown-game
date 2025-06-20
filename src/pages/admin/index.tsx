@@ -1,12 +1,12 @@
 // pages/admin/index.tsx
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 
 export default function AdminPanel() {
   const [user, setUser] = useState<any>(null);
-  const router = useRouter();
+  const navigate = useNavigate();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error }) => {
@@ -14,13 +14,13 @@ export default function AdminPanel() {
         if (data.user.email === "dcmask21@gmail.com") {
           setUser(data.user);
         } else {
-          router.push("/admin/login");
+          navigate("/admin/login");
         }
       } else {
-        router.push("/admin/login");
+        navigate("/admin/login");
       }
     });
-  }, []);
+  }, [navigate]);
 
   if (!user) return <p className="text-center mt-10">Checking access...</p>;
 
