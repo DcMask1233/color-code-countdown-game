@@ -1,9 +1,9 @@
-
 import { ColorButtons } from "@/components/game/ColorButtons";
 import { NumberGrid } from "@/components/game/NumberGrid";
 import { ModernGameRecords } from "@/components/game/ModernGameRecords";
 import { BetPopup } from "@/components/game/BetPopup";
 import { useState } from "react";
+import { useGameEngine } from "@/hooks/useGameEngine";
 
 interface UserBet {
   period: string;
@@ -16,29 +16,31 @@ interface UserBet {
 }
 
 interface ParityGameProps {
-  timeLeft: number;
-  currentPeriod: string;
-  isBettingClosed: boolean;
-  userBets: UserBet[];
-  onPlaceBet: (betType: 'color' | 'number', betValue: string | number, amount: number) => boolean;
   userBalance: number;
-  formatTime: (seconds: number) => string;
   duration: number;
 }
 
 export const ParityGame = ({
-  timeLeft,
-  currentPeriod,
-  isBettingClosed,
-  userBets,
-  onPlaceBet,
   userBalance,
-  formatTime,
-  duration
+  duration,
 }: ParityGameProps) => {
+  const {
+    currentPeriod,
+    timeLeft,
+    userBets,
+    placeBet,
+    isBettingClosed
+  } = useGameEngine("parity", duration);
+
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<'color' | 'number'>('color');
-  const [selectedBetValue, setSelectedBetValue] = useState<string | number>('');
+  const [selectedBetValue, setSelectedBetValue] = useState<string | number>("");
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
 
   const handleColorSelect = (color: string) => {
     setSelectedBetType('color');
@@ -52,15 +54,14 @@ export const ParityGame = ({
     setShowBetPopup(true);
   };
 
-  const handleConfirmBet = (amount: number) => {
-    const success = onPlaceBet(selectedBetType, selectedBetValue, amount);
-    if (success) {
-      setShowBetPopup(false);
-    }
+  const handleConfirmBet = async (amount: number) => {
+    const success = await placeBet(selectedBetType, selectedBetValue, amount);
+    if (success) setShowBetPopup(false);
   };
 
   return (
     <>
+      {/* Period & Countdown UI */}
       <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm text-gray-950 font-semibold">Period</span>
@@ -75,9 +76,7 @@ export const ParityGame = ({
       </div>
 
       <ColorButtons onColorSelect={handleColorSelect} disabled={isBettingClosed} />
-
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed} />
-
       <ModernGameRecords userBets={userBets} gameType="parity" duration={duration} />
 
       <BetPopup
