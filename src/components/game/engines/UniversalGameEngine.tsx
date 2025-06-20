@@ -16,14 +16,24 @@ export default function UniversalGameEngine({ gameType }: UniversalGameEnginePro
   const [resultNumber, setResultNumber] = useState<number | null>(null);
   const countdownInterval = useRef<NodeJS.Timeout | null>(null);
 
+  // ✅ Map GameType to duration
+  const gameDurations: Record<GameType, number> = {
+    Parity: 60,
+    Sapre: 180,
+    Bcone: 300,
+    Emerd: 300,
+  };
+
+  const duration = gameDurations[gameType];
+
   // Update current period and countdown every second
   useEffect(() => {
     const updatePeriodAndCountdown = () => {
       const now = new Date();
-      const period = generatePeriod(gameType, now);
+      const period = generatePeriod(duration, now);
       setCurrentPeriod(period);
 
-      const periodEnd = getPeriodEndTime(gameType, now);
+      const periodEnd = getPeriodEndTime(duration, now);
       const secondsLeft = Math.floor((periodEnd.getTime() - now.getTime()) / 1000);
       setCountdown(secondsLeft > 0 ? secondsLeft : 0);
     };
@@ -69,10 +79,10 @@ export default function UniversalGameEngine({ gameType }: UniversalGameEnginePro
     };
   }, [gameType, currentPeriod]);
 
-  // Fetch result again in case user opened late (optional fallback)
+  // Fallback: fetch existing result
   useEffect(() => {
     async function fetchExistingResult() {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("game_results")
         .select("number")
         .eq("game_type", gameType)
