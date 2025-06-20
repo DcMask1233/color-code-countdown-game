@@ -16,24 +16,15 @@ export default function UniversalGameEngine({ gameType }: UniversalGameEnginePro
   const [resultNumber, setResultNumber] = useState<number | null>(null);
   const countdownInterval = useRef<NodeJS.Timeout | null>(null);
 
-  // ✅ Map GameType to duration
-  const gameDurations: Record<GameType, number> = {
-    Parity: 60,
-    Sapre: 180,
-    Bcone: 300,
-    Emerd: 300,
-  };
-
-  const duration = gameDurations[gameType];
-
-  // Update current period and countdown every second
   useEffect(() => {
     const updatePeriodAndCountdown = () => {
       const now = new Date();
-      const period = generatePeriod(duration, now);
+
+      // Pass gameType (string), NOT duration (number)
+      const period = generatePeriod(gameType, now);
       setCurrentPeriod(period);
 
-      const periodEnd = getPeriodEndTime(duration, now);
+      const periodEnd = getPeriodEndTime(gameType, now);
       const secondsLeft = Math.floor((periodEnd.getTime() - now.getTime()) / 1000);
       setCountdown(secondsLeft > 0 ? secondsLeft : 0);
     };
@@ -56,7 +47,7 @@ export default function UniversalGameEngine({ gameType }: UniversalGameEnginePro
     };
   }, [gameType]);
 
-  // Real-time listener for result INSERT
+  // Real-time listener for new results
   useEffect(() => {
     const channel = supabase
       .channel("game_results")
@@ -79,7 +70,7 @@ export default function UniversalGameEngine({ gameType }: UniversalGameEnginePro
     };
   }, [gameType, currentPeriod]);
 
-  // Fallback: fetch existing result
+  // Fetch existing result if available
   useEffect(() => {
     async function fetchExistingResult() {
       const { data } = await supabase
