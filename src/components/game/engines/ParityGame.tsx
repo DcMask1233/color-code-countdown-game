@@ -20,17 +20,14 @@ interface ParityGameProps {
   duration: number;
 }
 
-export const ParityGame = ({
-  userBalance,
-  duration,
-}: ParityGameProps) => {
+export const ParityGame = ({ userBalance, duration }: ParityGameProps) => {
   const {
     currentPeriod,
     timeLeft,
     userBets,
     placeBet,
     isBettingClosed
-  } = useGameEngine("parity", duration);
+  } = useGameEngine("Parity", duration);  // Capitalized "Parity"
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<'color' | 'number'>('color');
@@ -61,7 +58,6 @@ export const ParityGame = ({
 
   return (
     <>
-      {/* Period & Countdown UI */}
       <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm text-gray-950 font-semibold">Period</span>
@@ -77,7 +73,7 @@ export const ParityGame = ({
 
       <ColorButtons onColorSelect={handleColorSelect} disabled={isBettingClosed} />
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed} />
-      <ModernGameRecords userBets={userBets} gameType="parity" duration={duration} />
+      <ModernGameRecords userBets={userBets} gameType="Parity" duration={duration} />
 
       <BetPopup
         isOpen={showBetPopup}
