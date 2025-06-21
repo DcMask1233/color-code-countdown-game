@@ -1,9 +1,9 @@
+import { useState } from "react";
 import { ColorButtons } from "@/components/game/ColorButtons";
 import { NumberGrid } from "@/components/game/NumberGrid";
 import { ModernGameRecords } from "@/components/game/ModernGameRecords";
 import { BetPopup } from "@/components/game/BetPopup";
-import { useGameEngine } from "@/hooks/useGameEngine";  // Named import
-import { useState } from "react";
+import { useGameEngine } from "@/hooks/useGameEngine";
 
 interface BconeGameProps {
   userBalance: number;
@@ -16,22 +16,22 @@ export const BconeGame = ({ userBalance, duration }: BconeGameProps) => {
     currentPeriod,
     isBettingClosed,
     userBets,
-    placeBet,          // consistent with other components
+    placeBet,
     formatTime
-  } = useGameEngine("Bcone", duration);  // Capitalized "Bcone"
+  } = useGameEngine("Bcone"); // ✅ Duration handled inside backend logic
 
   const [showBetPopup, setShowBetPopup] = useState(false);
-  const [selectedBetType, setSelectedBetType] = useState<'color' | 'number'>('color');
-  const [selectedBetValue, setSelectedBetValue] = useState<string | number>('');
+  const [selectedBetType, setSelectedBetType] = useState<"color" | "number">("color");
+  const [selectedBetValue, setSelectedBetValue] = useState<string | number>("");
 
   const handleColorSelect = (color: string) => {
-    setSelectedBetType('color');
+    setSelectedBetType("color");
     setSelectedBetValue(color);
     setShowBetPopup(true);
   };
 
   const handleNumberSelect = (number: number) => {
-    setSelectedBetType('number');
+    setSelectedBetType("number");
     setSelectedBetValue(number);
     setShowBetPopup(true);
   };
@@ -43,6 +43,7 @@ export const BconeGame = ({ userBalance, duration }: BconeGameProps) => {
 
   return (
     <>
+      {/* Header */}
       <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm text-gray-950 font-semibold">Period</span>
@@ -56,11 +57,14 @@ export const BconeGame = ({ userBalance, duration }: BconeGameProps) => {
         </div>
       </div>
 
+      {/* Betting Controls */}
       <ColorButtons onColorSelect={handleColorSelect} disabled={isBettingClosed} />
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed} />
 
+      {/* Bet Records */}
       <ModernGameRecords userBets={userBets} gameType="Bcone" duration={duration} />
 
+      {/* Popup */}
       <BetPopup
         isOpen={showBetPopup}
         onClose={() => setShowBetPopup(false)}
