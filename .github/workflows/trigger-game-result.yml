@@ -1,0 +1,15 @@
+name: Trigger Generate & Settle Game Results
+
+on:
+  schedule:
+    - cron: '*/1 * * * *'  # Every minute
+  workflow_dispatch:
+
+jobs:
+  call-edge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Supabase Edge Function
+        run: |
+          curl -X POST "${{ secrets.EDGE_FUNCTION_URL }}/generate-and-settle-results" \
+          -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
