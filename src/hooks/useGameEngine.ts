@@ -12,7 +12,7 @@ interface UserBet {
   payout?: number;
 }
 
-export function useGameEngine(gameType: GameType, duration: number) {
+export function useGameEngine(gameType: GameType) {
   const [currentPeriod, setCurrentPeriod] = useState("");
   const [timeLeft, setTimeLeft] = useState(0);
   const [userBets, setUserBets] = useState<UserBet[]>([]);
@@ -22,12 +22,10 @@ export function useGameEngine(gameType: GameType, duration: number) {
   useEffect(() => {
     const update = () => {
       const now = new Date();
-
-      // Pass gameType to generatePeriod and getPeriodEndTime, not duration
       const period = generatePeriod(gameType, now);
       const end = getPeriodEndTime(gameType, now);
-
       const left = Math.max(0, Math.floor((end.getTime() - now.getTime()) / 1000));
+
       setCurrentPeriod(period);
       setTimeLeft(left);
     };
@@ -49,29 +47,29 @@ export function useGameEngine(gameType: GameType, duration: number) {
     return () => {
       if (countdownRef.current) clearInterval(countdownRef.current);
     };
-  }, [gameType]); // depend on gameType only
+  }, [gameType]);
 
-  // 🎰 Bet placement logic
+  // 🎰 Place bet using secure RPC
   const placeBet = async (
     betType: "color" | "number",
     betValue: string | number,
     amount: number
   ) => {
     if (!currentPeriod) {
-      console.error("Current period not set yet");
+      console.error("⛔ Current period not available yet");
       return false;
     }
 
-    const { error } = await supabase.from("user_bets").insert({
-      period: currentPeriod,
-      game_type: gameType,
-      bet_type: betType,
-      bet_value: betValue,
-      amount,
+    const { error } = await supabase.rpc("place_bet_secure", {
+      p_game_type: gameType,
+      p_period: currentPeriod,
+      p_bet_type: betType,
+      p_bet_value: String(betValue),
+      p_amount: amount,
     });
 
     if (error) {
-      console.error("❌ Failed to place bet:", error);
+      console.error("❌ Failed to place bet:", error.message);
       return false;
     }
 
@@ -89,7 +87,6 @@ export function useGameEngine(gameType: GameType, duration: number) {
     return true;
   };
 
-  // Format time helper
   const formatTime = (seconds: number) => {
     const min = Math.floor(seconds / 60);
     const sec = seconds % 60;
