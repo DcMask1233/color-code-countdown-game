@@ -16,26 +16,24 @@ export default function UniversalGameEngine({ gameType }: UniversalGameEnginePro
   const [resultNumber, setResultNumber] = useState<number | null>(null);
   const countdownInterval = useRef<NodeJS.Timeout | null>(null);
 
+  // Update countdown & current period every second
   useEffect(() => {
-    const updatePeriodAndCountdown = () => {
+    const updateCountdown = () => {
       const now = new Date();
-
-      // Pass gameType (string), NOT duration (number)
       const period = generatePeriod(gameType, now);
-      setCurrentPeriod(period);
+      const end = getPeriodEndTime(gameType, now);
+      const timeLeft = Math.max(0, Math.floor((end.getTime() - now.getTime()) / 1000));
 
-      const periodEnd = getPeriodEndTime(gameType, now);
-      const secondsLeft = Math.floor((periodEnd.getTime() - now.getTime()) / 1000);
-      setCountdown(secondsLeft > 0 ? secondsLeft : 0);
+      setCurrentPeriod(period);
+      setCountdown(timeLeft);
     };
 
-    updatePeriodAndCountdown();
+    updateCountdown();
 
-    if (countdownInterval.current) clearInterval(countdownInterval.current);
     countdownInterval.current = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          updatePeriodAndCountdown();
+          updateCountdown();
           return 0;
         }
         return prev - 1;
@@ -47,7 +45,7 @@ export default function UniversalGameEngine({ gameType }: UniversalGameEnginePro
     };
   }, [gameType]);
 
-  // Real-time listener for new results
+  // Subscribe to real-time results
   useEffect(() => {
     const channel = supabase
       .channel("game_results")
@@ -70,24 +68,25 @@ export default function UniversalGameEngine({ gameType }: UniversalGameEnginePro
     };
   }, [gameType, currentPeriod]);
 
-  // Fetch existing result if available
+  // Fetch existing result on load (fallback in case real-time is missed)
   useEffect(() => {
-    async function fetchExistingResult() {
+    const fetchResult = async () => {
       const { data } = await supabase
         .from("game_results")
         .select("number")
         .eq("game_type", gameType)
         .eq("period", currentPeriod)
-        .limit(1)
         .single();
 
       if (data) {
         setResultNumber(data.number);
+      } else {
+        setResultNumber(null);
       }
-    }
+    };
 
     if (currentPeriod) {
-      fetchExistingResult();
+      fetchResult();
     }
   }, [currentPeriod, gameType]);
 
@@ -102,7 +101,7 @@ export default function UniversalGameEngine({ gameType }: UniversalGameEnginePro
       </p>
       <p>
         <strong>Result:</strong>{" "}
-        {resultNumber !== null ? resultNumber : "Waiting for result..."}
+        {resultNumber !== null ? resultNumber : "Waiting..."}
       </p>
     </div>
   );
