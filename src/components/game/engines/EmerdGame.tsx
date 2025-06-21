@@ -1,9 +1,9 @@
+import { useState } from "react";
 import { ColorButtons } from "@/components/game/ColorButtons";
 import { NumberGrid } from "@/components/game/NumberGrid";
 import { ModernGameRecords } from "@/components/game/ModernGameRecords";
 import { BetPopup } from "@/components/game/BetPopup";
-import { useState } from "react";
-import { useGameEngine } from "@/hooks/useGameEngine"; // Make sure this path is correct!
+import { useGameEngine } from "@/hooks/useGameEngine";
 
 interface EmerdGameProps {
   userBalance: number;
@@ -16,9 +16,9 @@ export const EmerdGame = ({ userBalance, duration }: EmerdGameProps) => {
     currentPeriod,
     isBettingClosed,
     userBets,
-    formatTime,   // Make sure your hook exports this, or define a helper below
     placeBet,
-  } = useGameEngine("Emerd", duration); // Pass "Emerd" and duration
+    formatTime,
+  } = useGameEngine("Emerd", duration); // 👈 Supabase-driven logic via hook
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<"color" | "number">("color");
@@ -41,15 +41,9 @@ export const EmerdGame = ({ userBalance, duration }: EmerdGameProps) => {
     if (success) setShowBetPopup(false);
   };
 
-  // If formatTime is not from the hook, define here:
-  // const formatTime = (seconds: number) => {
-  //   const mins = Math.floor(seconds / 60).toString().padStart(2, "0");
-  //   const secs = (seconds % 60).toString().padStart(2, "0");
-  //   return `${mins}:${secs}`;
-  // };
-
   return (
     <>
+      {/* Header */}
       <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm text-gray-950 font-semibold">Period</span>
@@ -57,22 +51,20 @@ export const EmerdGame = ({ userBalance, duration }: EmerdGameProps) => {
         </div>
         <div className="flex justify-between items-center">
           <span className="text-sm text-gray-950 font-semibold">Count Down</span>
-          <span
-            className={`text-lg font-bold transition-all duration-300 ${
-              isBettingClosed ? "text-black opacity-50 blur-[1px]" : "text-black"
-            }`}
-          >
+          <span className={`text-lg font-bold transition-all duration-300 ${isBettingClosed ? "text-black opacity-50 blur-[1px]" : "text-black"}`}>
             {formatTime(timeLeft)}
           </span>
         </div>
       </div>
 
+      {/* Betting UI */}
       <ColorButtons onColorSelect={handleColorSelect} disabled={isBettingClosed} />
-
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed} />
 
+      {/* Game Records */}
       <ModernGameRecords userBets={userBets} gameType="Emerd" duration={duration} />
 
+      {/* Betting Popup */}
       <BetPopup
         isOpen={showBetPopup}
         onClose={() => setShowBetPopup(false)}
