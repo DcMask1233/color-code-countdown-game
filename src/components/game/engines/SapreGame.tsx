@@ -1,16 +1,8 @@
-import { useState } from "react";
-import { ColorButtons } from "@/components/game/ColorButtons";
-import { NumberGrid } from "@/components/game/NumberGrid";
-import { ModernGameRecords } from "@/components/game/ModernGameRecords";
-import { BetPopup } from "@/components/game/BetPopup";
-import { useGameEngine } from "@/hooks/useGameEngine";
-
 interface SapreGameProps {
   userBalance: number;
-  duration: number;
 }
 
-export const SapreGame = ({ userBalance, duration }: SapreGameProps) => {
+export const SapreGame = ({ userBalance }: SapreGameProps) => {
   const {
     timeLeft,
     currentPeriod,
@@ -18,7 +10,7 @@ export const SapreGame = ({ userBalance, duration }: SapreGameProps) => {
     userBets,
     placeBet,
     formatTime,
-  } = useGameEngine("Sapre", duration);
+  } = useGameEngine("Sapre");
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<"color" | "number">("color");
@@ -43,7 +35,6 @@ export const SapreGame = ({ userBalance, duration }: SapreGameProps) => {
 
   return (
     <>
-      {/* Header */}
       <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm text-gray-950 font-semibold">Period</span>
@@ -61,14 +52,11 @@ export const SapreGame = ({ userBalance, duration }: SapreGameProps) => {
         </div>
       </div>
 
-      {/* Betting UI */}
       <ColorButtons onColorSelect={handleColorSelect} disabled={isBettingClosed} />
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed} />
 
-      {/* Game Records */}
-      <ModernGameRecords userBets={userBets} gameType="Sapre" duration={duration} />
+      <ModernGameRecords userBets={userBets} gameType="Sapre" />
 
-      {/* Betting Popup */}
       <BetPopup
         isOpen={showBetPopup}
         onClose={() => setShowBetPopup(false)}
