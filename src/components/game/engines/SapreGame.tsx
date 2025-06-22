@@ -5,12 +5,12 @@ import { ModernGameRecords } from "@/components/game/ModernGameRecords";
 import { BetPopup } from "@/components/game/BetPopup";
 import { useGameEngine } from "@/hooks/useGameEngine";
 
-interface SapreGameProps {
+interface EmerdGameProps {
   userBalance: number;
   duration: number;
 }
 
-export const SapreGame = ({ userBalance, duration }: SapreGameProps) => {
+export const EmerdGame = ({ userBalance, duration }: EmerdGameProps) => {
   const {
     timeLeft,
     currentPeriod,
@@ -18,7 +18,7 @@ export const SapreGame = ({ userBalance, duration }: SapreGameProps) => {
     userBets,
     placeBet,
     formatTime,
-  } = useGameEngine("Sapre", duration);
+  } = useGameEngine("Emerd", duration); // 👈 Supabase-driven logic via hook
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<"color" | "number">("color");
@@ -51,11 +51,7 @@ export const SapreGame = ({ userBalance, duration }: SapreGameProps) => {
         </div>
         <div className="flex justify-between items-center">
           <span className="text-sm text-gray-950 font-semibold">Count Down</span>
-          <span
-            className={`text-lg font-bold transition-all duration-300 ${
-              isBettingClosed ? "text-black opacity-50 blur-[1px]" : "text-black"
-            }`}
-          >
+          <span className={`text-lg font-bold transition-all duration-300 ${isBettingClosed ? "text-black opacity-50 blur-[1px]" : "text-black"}`}>
             {formatTime(timeLeft)}
           </span>
         </div>
@@ -66,7 +62,7 @@ export const SapreGame = ({ userBalance, duration }: SapreGameProps) => {
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed} />
 
       {/* Game Records */}
-      <ModernGameRecords userBets={userBets} gameType="Sapre" duration={duration} />
+      <ModernGameRecords userBets={userBets} gameType="Emerd" duration={duration} />
 
       {/* Betting Popup */}
       <BetPopup
