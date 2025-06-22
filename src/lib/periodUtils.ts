@@ -2,6 +2,7 @@
 
 export type GameType = "Wingo1" | "Wingo3" | "Wingo5" | "Parity" | "Sapre" | "Bcone" | "Emerd";
 
+// Duration in minutes for each game type
 const GAME_INTERVALS: Record<GameType, number> = {
   Wingo1: 1,
   Wingo3: 3,
@@ -12,60 +13,44 @@ const GAME_INTERVALS: Record<GameType, number> = {
   Emerd: 10,
 };
 
-/**
- * Converts a Date object to IST timezone components
- * without changing the original date object.
- */
+// Convert UTC to IST (without altering the input date object)
 function toIST(date: Date): Date {
-  // IST is UTC +5:30
-  const utc = date.getTime() + date.getTimezoneOffset() * 60000;
-  return new Date(utc + 5.5 * 60 * 60000);
+  const utcTime = date.getTime() + date.getTimezoneOffset() * 60000;
+  return new Date(utcTime + 5.5 * 60 * 60000);
 }
 
-/**
- * Generates period number string based on IST time.
- * Format: YYYYMMDD + 3 digit period number for the day
- */
+// ✅ Generate current period number in format: YYYYMMDD + 3-digit period count
 export function generatePeriod(gameType: GameType, now = new Date()): string {
   const interval = GAME_INTERVALS[gameType];
-  if (!interval) throw new Error("Unsupported game type");
+  if (!interval) throw new Error(`Unsupported game type: ${gameType}`);
 
-  const istDate = toIST(now);
-  const year = istDate.getFullYear();
-  const month = `${istDate.getMonth() + 1}`.padStart(2, "0");
-  const day = `${istDate.getDate()}`.padStart(2, "0");
+  const ist = toIST(now);
+  const yyyy = ist.getFullYear();
+  const mm = `${ist.getMonth() + 1}`.padStart(2, "0");
+  const dd = `${ist.getDate()}`.padStart(2, "0");
 
-  const totalMinutes = istDate.getHours() * 60 + istDate.getMinutes();
-  const periodIndex = Math.floor(totalMinutes / interval);
-  const periodNumber = `${periodIndex}`.padStart(3, "0");
+  const minutes = ist.getHours() * 60 + ist.getMinutes();
+  const periodIndex = Math.floor(minutes / interval).toString().padStart(3, "0");
 
-  return `${year}${month}${day}${periodNumber}`;
+  return `${yyyy}${mm}${dd}${periodIndex}`;
 }
 
-/**
- * Get the period start time in IST timezone
- */
+// ✅ Get exact start time of the current period (IST)
 export function getPeriodStartTime(gameType: GameType, now = new Date()): Date {
   const interval = GAME_INTERVALS[gameType];
-  const istDate = toIST(now);
+  const ist = toIST(now);
+  const offsetMinutes = ist.getMinutes() % interval;
 
-  const start = new Date(istDate);
-  const offset = start.getMinutes() % interval;
+  ist.setMinutes(ist.getMinutes() - offsetMinutes);
+  ist.setSeconds(0);
+  ist.setMilliseconds(0);
 
-  start.setMinutes(start.getMinutes() - offset);
-  start.setSeconds(0);
-  start.setMilliseconds(0);
-
-  return start;
+  return ist;
 }
 
-/**
- * Get the period end time in IST timezone
- */
+// ✅ Get exact end time of the current period (IST)
 export function getPeriodEndTime(gameType: GameType, now = new Date()): Date {
   const start = getPeriodStartTime(gameType, now);
   const interval = GAME_INTERVALS[gameType];
-
   return new Date(start.getTime() + interval * 60 * 1000);
 }
-
