@@ -7,10 +7,10 @@ import { useGameEngine } from "@/hooks/useGameEngine";
 
 interface ParityGameProps {
   userBalance: number;
-  duration: number;
+  gameMode: "Wingo1min" | "Wingo3min" | "Wingo5min";
 }
 
-export const ParityGame = ({ userBalance, duration }: ParityGameProps) => {
+export const ParityGame = ({ userBalance, gameMode }: ParityGameProps) => {
   const {
     currentPeriod,
     timeLeft,
@@ -18,7 +18,7 @@ export const ParityGame = ({ userBalance, duration }: ParityGameProps) => {
     placeBet,
     isBettingClosed,
     formatTime,
-  } = useGameEngine("Parity"); // ✅ Duration is now internally handled by periodUtils
+  } = useGameEngine("Parity", gameMode); // ✅ Pass gameMode into engine
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<"color" | "number">("color");
@@ -66,7 +66,7 @@ export const ParityGame = ({ userBalance, duration }: ParityGameProps) => {
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed} />
 
       {/* Bet Records */}
-      <ModernGameRecords userBets={userBets} gameType="Parity" duration={duration} />
+      <ModernGameRecords userBets={userBets} gameType="Parity" gameMode={gameMode} />
 
       {/* Bet Popup */}
       <BetPopup
