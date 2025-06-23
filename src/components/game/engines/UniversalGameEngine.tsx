@@ -7,21 +7,22 @@ import {
 } from "@/lib/periodUtils";
 
 interface UniversalGameEngineProps {
-  gameType: GameType;
+  gameType: GameType; // Parity, Sapre, etc.
+  gameMode: "Wingo1min" | "Wingo3min" | "Wingo5min"; // Wingo mode
 }
 
-export default function UniversalGameEngine({ gameType }: UniversalGameEngineProps) {
+export default function UniversalGameEngine({ gameType, gameMode }: UniversalGameEngineProps) {
   const [currentPeriod, setCurrentPeriod] = useState<string>("");
   const [countdown, setCountdown] = useState<number>(0);
   const [resultNumber, setResultNumber] = useState<number | null>(null);
   const countdownInterval = useRef<NodeJS.Timeout | null>(null);
 
-  // Update countdown & current period every second
+  // Update countdown and currentPeriod based on gameMode
   useEffect(() => {
     const updateCountdown = () => {
       const now = new Date();
-      const period = generatePeriod(gameType, now);
-      const end = getPeriodEndTime(gameType, now);
+      const period = generatePeriod(gameMode, now);
+      const end = getPeriodEndTime(gameMode, now);
       const timeLeft = Math.max(0, Math.floor((end.getTime() - now.getTime()) / 1000));
 
       setCurrentPeriod(period);
@@ -43,7 +44,7 @@ export default function UniversalGameEngine({ gameType }: UniversalGameEnginePro
     return () => {
       if (countdownInterval.current) clearInterval(countdownInterval.current);
     };
-  }, [gameType]);
+  }, [gameMode]);
 
   // Subscribe to real-time results
   useEffect(() => {
@@ -53,10 +54,12 @@ export default function UniversalGameEngine({ gameType }: UniversalGameEnginePro
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "game_results" },
         (payload) => {
-          if (
+          const match =
             payload.new.game_type === gameType &&
-            payload.new.period === currentPeriod
-          ) {
+            payload.new.game_mode === gameMode &&
+            payload.new.period === currentPeriod;
+
+          if (match) {
             setResultNumber(payload.new.number);
           }
         }
@@ -66,15 +69,16 @@ export default function UniversalGameEngine({ gameType }: UniversalGameEnginePro
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [gameType, currentPeriod]);
+  }, [gameType, gameMode, currentPeriod]);
 
-  // Fetch existing result on load (fallback in case real-time is missed)
+  // Fallback result fetch
   useEffect(() => {
     const fetchResult = async () => {
       const { data } = await supabase
         .from("game_results")
         .select("number")
         .eq("game_type", gameType)
+        .eq("game_mode", gameMode)
         .eq("period", currentPeriod)
         .single();
 
@@ -88,11 +92,13 @@ export default function UniversalGameEngine({ gameType }: UniversalGameEnginePro
     if (currentPeriod) {
       fetchResult();
     }
-  }, [currentPeriod, gameType]);
+  }, [currentPeriod, gameType, gameMode]);
 
   return (
     <div className="p-4 border rounded shadow-md max-w-md mx-auto">
-      <h2 className="text-xl font-bold mb-2">{gameType} Game</h2>
+      <h2 className="text-xl font-bold mb-2">
+        {gameType} - {gameMode}
+      </h2>
       <p>
         <strong>Current Period:</strong> {currentPeriod || "Loading..."}
       </p>
@@ -100,8 +106,7 @@ export default function UniversalGameEngine({ gameType }: UniversalGameEnginePro
         <strong>Time Left:</strong> {countdown}s
       </p>
       <p>
-        <strong>Result:</strong>{" "}
-        {resultNumber !== null ? resultNumber : "Waiting..."}
+        <strong>Result:</strong> {resultNumber !== null ? resultNumber : "Waiting..."}
       </p>
     </div>
   );
