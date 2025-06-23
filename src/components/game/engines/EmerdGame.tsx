@@ -7,10 +7,10 @@ import { useGameEngine } from "@/hooks/useGameEngine";
 
 interface EmerdGameProps {
   userBalance: number;
-  duration: number;
+  gameMode: "Wingo1min" | "Wingo3min" | "Wingo5min";
 }
 
-export const EmerdGame = ({ userBalance, duration }: EmerdGameProps) => {
+export const EmerdGame = ({ userBalance, gameMode }: EmerdGameProps) => {
   const {
     timeLeft,
     currentPeriod,
@@ -18,7 +18,7 @@ export const EmerdGame = ({ userBalance, duration }: EmerdGameProps) => {
     userBets,
     placeBet,
     formatTime,
-  } = useGameEngine("Emerd", duration); // 👈 Supabase-driven logic via hook
+  } = useGameEngine("Emerd", gameMode); // ✅ Now uses correct backend-driven params
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<"color" | "number">("color");
@@ -62,7 +62,7 @@ export const EmerdGame = ({ userBalance, duration }: EmerdGameProps) => {
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed} />
 
       {/* Game Records */}
-      <ModernGameRecords userBets={userBets} gameType="Emerd" duration={duration} />
+      <ModernGameRecords userBets={userBets} gameType="Emerd" gameMode={gameMode} />
 
       {/* Betting Popup */}
       <BetPopup
