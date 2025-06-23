@@ -7,10 +7,10 @@ import { useGameEngine } from "@/hooks/useGameEngine";
 
 interface BconeGameProps {
   userBalance: number;
-  duration: number;
+  gameMode: "Wingo1min" | "Wingo3min" | "Wingo5min";
 }
 
-export const BconeGame = ({ userBalance, duration }: BconeGameProps) => {
+export const BconeGame = ({ userBalance, gameMode }: BconeGameProps) => {
   const {
     timeLeft,
     currentPeriod,
@@ -18,7 +18,7 @@ export const BconeGame = ({ userBalance, duration }: BconeGameProps) => {
     userBets,
     placeBet,
     formatTime
-  } = useGameEngine("Bcone"); // ✅ Duration handled inside backend logic
+  } = useGameEngine("Bcone", gameMode); // ✅ Now correctly passes gameMode
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<"color" | "number">("color");
@@ -62,7 +62,7 @@ export const BconeGame = ({ userBalance, duration }: BconeGameProps) => {
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed} />
 
       {/* Bet Records */}
-      <ModernGameRecords userBets={userBets} gameType="Bcone" duration={duration} />
+      <ModernGameRecords userBets={userBets} gameType="Bcone" gameMode={gameMode} />
 
       {/* Popup */}
       <BetPopup
