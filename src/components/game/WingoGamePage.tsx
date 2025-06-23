@@ -14,7 +14,7 @@ interface GameRecord {
 }
 
 interface WingoGamePageProps {
-  gameMode: string;
+  gameMode: "Wingo1min" | "Wingo3min" | "Wingo5min";
   userBalance: number;
   gameRecords: GameRecord[];
   onBackToHome: () => void;
@@ -23,7 +23,6 @@ interface WingoGamePageProps {
   onGameRecordsUpdate: (records: GameRecord[]) => void;
 }
 
-// Mapping tab values (lowercase) to GameType strings (PascalCase)
 const gameTypeMap = {
   parity: "Parity",
   sapre: "Sapre",
@@ -38,34 +37,27 @@ export const WingoGamePage = ({
   onBackToHome,
   onRoundComplete,
   onBalanceUpdate,
-  onGameRecordsUpdate
+  onGameRecordsUpdate,
 }: WingoGamePageProps) => {
-  // Active tab is keyof gameTypeMap (one of the lowercase keys)
   const [activeTab, setActiveTab] = useState<keyof typeof gameTypeMap>("parity");
-
-  const getDuration = () => {
-    switch (gameMode) {
-      case 'wingo-1min': return 60;
-      case 'wingo-3min': return 180;
-      case 'wingo-5min': return 300;
-      default: return 60;
-    }
-  };
+  const selectedGameType = gameTypeMap[activeTab]; // "Parity" | "Sapre" | etc.
 
   const getGameModeTitle = () => {
     switch (gameMode) {
-      case 'wingo-1min': return 'WinGo (1min)';
-      case 'wingo-3min': return 'WinGo (3min)';
-      case 'wingo-5min': return 'WinGo (5min)';
-      default: return 'WinGo';
+      case "Wingo1min":
+        return "WinGo (1 min)";
+      case "Wingo3min":
+        return "WinGo (3 min)";
+      case "Wingo5min":
+        return "WinGo (5 min)";
+      default:
+        return "WinGo";
     }
   };
 
-  const duration = getDuration();
-  const selectedGameType = gameTypeMap[activeTab]; // e.g. "Parity"
-
   return (
     <div className="min-h-screen bg-gray-100">
+      {/* Header */}
       <div className="bg-[#1e99eb] text-white p-4">
         <div className="flex items-center gap-4">
           <button onClick={onBackToHome} className="text-white hover:bg-blue-600 rounded p-1 text-base">
@@ -75,6 +67,7 @@ export const WingoGamePage = ({
         </div>
       </div>
 
+      {/* Tabs */}
       <div className="container mx-auto px-4 py-4 max-w-md">
         <Tabs
           value={activeTab}
@@ -88,24 +81,28 @@ export const WingoGamePage = ({
             <TabsTrigger value="emerd">Emerd</TabsTrigger>
           </TabsList>
 
+          {/* Parity */}
           <TabsContent value="parity" className="mt-4 space-y-4">
-            <UniversalGameEngine gameType="Parity" />
-            <ParityGame userBalance={userBalance} duration={duration} />
+            <UniversalGameEngine gameType="Parity" gameMode={gameMode} />
+            <ParityGame userBalance={userBalance} gameMode={gameMode} />
           </TabsContent>
 
+          {/* Sapre */}
           <TabsContent value="sapre" className="mt-4 space-y-4">
-            <UniversalGameEngine gameType="Sapre" />
-            <SapreGame userBalance={userBalance} duration={duration} />
+            <UniversalGameEngine gameType="Sapre" gameMode={gameMode} />
+            <SapreGame userBalance={userBalance} gameMode={gameMode} />
           </TabsContent>
 
+          {/* Bcone */}
           <TabsContent value="bcone" className="mt-4 space-y-4">
-            <UniversalGameEngine gameType="Bcone" />
-            <BconeGame userBalance={userBalance} duration={duration} />
+            <UniversalGameEngine gameType="Bcone" gameMode={gameMode} />
+            <BconeGame userBalance={userBalance} gameMode={gameMode} />
           </TabsContent>
 
+          {/* Emerd */}
           <TabsContent value="emerd" className="mt-4 space-y-4">
-            <UniversalGameEngine gameType="Emerd" />
-            <EmerdGame userBalance={userBalance} duration={duration} />
+            <UniversalGameEngine gameType="Emerd" gameMode={gameMode} />
+            <EmerdGame userBalance={userBalance} gameMode={gameMode} />
           </TabsContent>
         </Tabs>
       </div>
