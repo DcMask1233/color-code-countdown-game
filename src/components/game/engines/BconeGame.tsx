@@ -4,6 +4,7 @@ import { NumberGrid } from "@/components/game/NumberGrid";
 import { ModernGameRecords } from "@/components/game/ModernGameRecords";
 import { BetPopup } from "@/components/game/BetPopup";
 import { useGameEngine } from "@/hooks/useGameEngine";
+import { getDurationFromGameMode } from "@/lib/gameUtils"; // ✅ ADD THIS
 
 interface BconeGameProps {
   userBalance: number;
@@ -18,7 +19,7 @@ export const BconeGame = ({ userBalance, gameMode }: BconeGameProps) => {
     userBets,
     placeBet,
     formatTime
-  } = useGameEngine("Bcone", gameMode); // ✅ Now correctly passes gameMode
+  } = useGameEngine("Bcone", gameMode);
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<"color" | "number">("color");
