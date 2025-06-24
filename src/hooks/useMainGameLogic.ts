@@ -29,6 +29,7 @@ export function useMainGameLogic({
   const handleGameSelect = (mode: string) => {
     if (["Wingo1min", "Wingo3min", "Wingo5min"].includes(mode)) {
       setSelectedGameMode(mode as GameMode);
+      setActiveBottomTab("home"); // ✅ Required to render game interface
     } else {
       console.warn("Invalid game mode selected:", mode);
     }
@@ -40,7 +41,7 @@ export function useMainGameLogic({
 
   const handleRoundComplete = (newPeriod: string, winningNumber: number, gameType: string) => {
     console.log(`Round completed for ${gameType}: Period ${newPeriod}, Winning Number: ${winningNumber}`);
-    // Logic for updating user balance, win/loss handling etc. can be triggered here
+    // You can handle stats update or balance update here
   };
 
   const handleNavigateToPromotion = () => {
