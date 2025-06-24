@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MainGame } from "@/components/game/MainGame";
-import { AutoResultGenerator } from "@/components/game/AutoResultGenerator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -38,12 +37,10 @@ const Index = () => {
       setTotalDepositAmount(userData.totalDepositAmount || 0);
       setTotalWithdrawAmount(userData.totalWithdrawAmount || 0);
     } else {
-      // Redirect to login if not authenticated
       navigate('/login');
     }
   }, [navigate]);
 
-  // Fetch game results from Supabase every 30 seconds
   useEffect(() => {
     const fetchGameResults = async () => {
       const { data, error } = await supabase
@@ -58,19 +55,17 @@ const Index = () => {
       }
 
       if (data) {
-        // Assuming data matches GameRecord interface or can be mapped accordingly
         const mappedRecords = data.map((item: any) => ({
           period: item.period,
           number: item.number,
-          color: item.result_color || [], // adjust key if different
+          color: item.result_color || [],
         }));
         setGameRecords(mappedRecords);
       }
     };
 
     fetchGameResults();
-
-    const interval = setInterval(fetchGameResults, 30000); // 30 seconds
+    const interval = setInterval(fetchGameResults, 30000);
 
     return () => clearInterval(interval);
   }, []);
@@ -109,15 +104,15 @@ const Index = () => {
 
     switch (type) {
       case 'bet':
-        newTotalBet = totalBetAmount + amount;
+        newTotalBet += amount;
         setTotalBetAmount(newTotalBet);
         break;
       case 'deposit':
-        newTotalDeposit = totalDepositAmount + amount;
+        newTotalDeposit += amount;
         setTotalDepositAmount(newTotalDeposit);
         break;
       case 'withdraw':
-        newTotalWithdraw = totalWithdrawAmount + amount;
+        newTotalWithdraw += amount;
         setTotalWithdrawAmount(newTotalWithdraw);
         break;
     }
@@ -133,25 +128,22 @@ const Index = () => {
   };
 
   if (!isLoggedIn) {
-    return null; // or a loading spinner if you want
+    return null;
   }
 
   return (
-    <>
-      <AutoResultGenerator />
-      <MainGame
-        userBalance={userBalance}
-        userId={userId}
-        onBalanceUpdate={handleBalanceUpdate}
-        onLogout={handleLogout}
-        gameRecords={gameRecords}
-        onGameRecordsUpdate={setGameRecords}
-        totalBetAmount={totalBetAmount}
-        totalDepositAmount={totalDepositAmount}
-        totalWithdrawAmount={totalWithdrawAmount}
-        onStatsUpdate={handleStatsUpdate}
-      />
-    </>
+    <MainGame
+      userBalance={userBalance}
+      userId={userId}
+      onBalanceUpdate={handleBalanceUpdate}
+      onLogout={handleLogout}
+      gameRecords={gameRecords}
+      onGameRecordsUpdate={setGameRecords}
+      totalBetAmount={totalBetAmount}
+      totalDepositAmount={totalDepositAmount}
+      totalWithdrawAmount={totalWithdrawAmount}
+      onStatsUpdate={handleStatsUpdate}
+    />
   );
 };
 
