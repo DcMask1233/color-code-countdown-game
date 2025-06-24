@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,20 +6,21 @@ import { UserBetsTable } from "./UserBetsTable";
 import { useUserBets } from "@/hooks/useUserBets";
 
 interface ModernGameRecordsProps {
-  userBets: any[]; // Keep for compatibility but we'll use the hook instead
   gameType: string;
+  gameMode: "Wingo1min" | "Wingo3min" | "Wingo5min"; // ✅ Add this
   duration: number;
 }
 
 export const ModernGameRecords: React.FC<ModernGameRecordsProps> = ({
   gameType,
+  gameMode,
   duration
 }) => {
   const [activeTab, setActiveTab] = useState(`${gameType}-record`);
-  const { userBets } = useUserBets(); // Use the persistent bets from hook
+  const { userBets } = useUserBets(); // ✅ No longer using userBets prop
 
   const getGameDisplayName = (gameId: string) => {
-    switch (gameId) {
+    switch (gameId.toLowerCase()) {
       case 'parity': return 'Parity';
       case 'sapre': return 'Sapre';
       case 'bcone': return 'Bcone';
@@ -61,6 +61,7 @@ export const ModernGameRecords: React.FC<ModernGameRecordsProps> = ({
             <UserBetsTable 
               userBets={userBets} 
               gameType={gameType}
+              gameMode={gameMode} // Optional to pass for filtering
               title={`My ${gameDisplayName} Records`}
             />
           </TabsContent>
