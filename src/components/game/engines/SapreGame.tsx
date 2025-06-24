@@ -66,7 +66,7 @@ export const SapreGame = ({ userBalance, gameMode }: SapreGameProps) => {
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed} />
 
       {/* Records */}
-      <ModernGameRecords userBets={userBets} gameType="Sapre" gameMode={gameMode} />
+      <ModernGameRecords userBets={userBets} gameType="Sapre" />
 
       {/* Bet popup */}
       <BetPopup
