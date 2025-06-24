@@ -4,6 +4,7 @@ import { NumberGrid } from "@/components/game/NumberGrid";
 import { ModernGameRecords } from "@/components/game/ModernGameRecords";
 import { BetPopup } from "@/components/game/BetPopup";
 import { useGameEngine } from "@/hooks/useGameEngine";
+import { getDurationFromGameMode } from "@/lib/gameUtils"; // ✅ Required
 
 interface SapreGameProps {
   userBalance: number;
@@ -18,7 +19,7 @@ export const SapreGame = ({ userBalance, gameMode }: SapreGameProps) => {
     userBets,
     placeBet,
     formatTime,
-  } = useGameEngine("Sapre", gameMode); // ✅ Pass gameMode
+  } = useGameEngine("Sapre", gameMode); // ✅ Backend logic used
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<"color" | "number">("color");
@@ -66,7 +67,7 @@ export const SapreGame = ({ userBalance, gameMode }: SapreGameProps) => {
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed} />
 
       {/* Records */}
-      <ModernGameRecords userBets={userBets} gameType="Sapre" />
+      <ModernGameRecords gameType="Sapre" duration={getDurationFromGameMode(gameMode)} />
 
       {/* Bet popup */}
       <BetPopup
