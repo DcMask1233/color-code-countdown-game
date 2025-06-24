@@ -66,7 +66,7 @@ export const ParityGame = ({ userBalance, gameMode }: ParityGameProps) => {
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed} />
 
       {/* Bet Records */}
-      <ModernGameRecords userBets={userBets} gameType="Parity" gameMode={gameMode} />
+      <ModernGameRecords userBets={userBets} gameType="Parity" />
 
       {/* Bet Popup */}
       <BetPopup
