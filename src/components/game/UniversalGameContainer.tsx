@@ -1,5 +1,6 @@
-
 import { WingoGamePage } from "@/components/game/WingoGamePage";
+
+type GameMode = "Wingo1min" | "Wingo3min" | "Wingo5min";
 
 interface GameRecord {
   period: string;
@@ -9,7 +10,7 @@ interface GameRecord {
 }
 
 interface UniversalGameContainerProps {
-  gameMode: "Wingo1min" | "Wingo3min" | "Wingo5min"; // ✅ fix here
+  gameMode: GameMode;
   userBalance: number;
   gameRecords: GameRecord[];
   onBackToHome: () => void;
@@ -25,7 +26,7 @@ export const UniversalGameContainer = ({
   onBackToHome,
   onRoundComplete,
   onBalanceUpdate,
-  onGameRecordsUpdate
+  onGameRecordsUpdate,
 }: UniversalGameContainerProps) => {
   return (
     <WingoGamePage
