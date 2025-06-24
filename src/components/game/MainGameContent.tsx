@@ -4,6 +4,7 @@ import { PromotionSection } from "@/components/layout/PromotionSection";
 import { MySection } from "@/components/user/MySection";
 import { UniversalGameContainer } from "@/components/game/UniversalGameContainer";
 import { useToast } from "@/hooks/use-toast";
+import { getNumberColor } from "@/lib/gameUtils"; // ✅ Imported from utils
 
 interface GameRecord {
   period: string;
@@ -13,7 +14,7 @@ interface GameRecord {
 
 interface MainGameContentProps {
   activeBottomTab: string;
-  selectedGameMode: string | null;
+  selectedGameMode: "Wingo1min" | "Wingo3min" | "Wingo5min" | null;
   userBalance: number;
   userId: string;
   totalBetAmount: number;
@@ -44,7 +45,7 @@ export const MainGameContent = ({
   onBalanceUpdate,
   onGameRecordsUpdate,
   onNavigateToPromotion,
-  onLogout
+  onLogout,
 }: MainGameContentProps) => {
   const { toast } = useToast();
 
@@ -69,17 +70,15 @@ export const MainGameContent = ({
     });
   };
 
-  const getNumberColor = (num: number): string[] => {
-    if (num === 0) return ["violet", "red"];
-    if (num === 5) return ["violet", "green"];
-    return num % 2 === 0 ? ["red"] : ["green"];
-  };
-
-  const handleRoundCompleteWithRecords = (newPeriod: string, winningNumber: number, gameType: string) => {
-    const newRecord = {
+  const handleRoundCompleteWithRecords = (
+    newPeriod: string,
+    winningNumber: number,
+    gameType: string
+  ) => {
+    const newRecord: GameRecord = {
       period: newPeriod,
       number: winningNumber,
-      color: getNumberColor(winningNumber)
+      color: getNumberColor(winningNumber), // ✅ From utils
     };
 
     const updatedRecords = [newRecord, ...gameRecords].slice(0, 10);
@@ -87,7 +86,7 @@ export const MainGameContent = ({
     onRoundComplete(newPeriod, winningNumber, gameType);
   };
 
-  if (activeBottomTab === 'home') {
+  if (activeBottomTab === "home") {
     if (selectedGameMode === null) {
       return (
         <HomeSection
@@ -114,7 +113,7 @@ export const MainGameContent = ({
     }
   }
 
-  if (activeBottomTab === 'wallet') {
+  if (activeBottomTab === "wallet") {
     return (
       <WalletSection
         userBalance={userBalance}
@@ -122,20 +121,31 @@ export const MainGameContent = ({
         totalDepositAmount={totalDepositAmount}
         totalWithdrawAmount={totalWithdrawAmount}
         onBack={onBackToHome}
-        onDeposit={() => toast({ title: "Deposit", description: "Deposit functionality coming soon!" })}
-        onWithdraw={() => toast({ title: "Withdraw", description: "Withdraw functionality coming soon!" })}
-        onDepositHistory={() => toast({ title: "Deposit History", description: "History functionality coming soon!" })}
-        onWithdrawHistory={() => toast({ title: "Withdrawal History", description: "History functionality coming soon!" })}
+        onDeposit={() =>
+          toast({ title: "Deposit", description: "Deposit functionality coming soon!" })
+        }
+        onWithdraw={() =>
+          toast({ title: "Withdraw", description: "Withdraw functionality coming soon!" })
+        }
+        onDepositHistory={() =>
+          toast({ title: "Deposit History", description: "History functionality coming soon!" })
+        }
+        onWithdrawHistory={() =>
+          toast({
+            title: "Withdrawal History",
+            description: "History functionality coming soon!",
+          })
+        }
       />
     );
   }
 
-  if (activeBottomTab === 'promotion') {
+  if (activeBottomTab === "promotion") {
     return <PromotionSection />;
   }
 
-  if (activeBottomTab === 'my') {
-    const savedUser = localStorage.getItem('colorGameUser');
+  if (activeBottomTab === "my") {
+    const savedUser = localStorage.getItem("colorGameUser");
     const mobile = savedUser ? JSON.parse(savedUser).mobile : undefined;
 
     return (
