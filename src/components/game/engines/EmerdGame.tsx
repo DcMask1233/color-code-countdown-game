@@ -62,7 +62,7 @@ export const EmerdGame = ({ userBalance, gameMode }: EmerdGameProps) => {
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed} />
 
       {/* Game Records */}
-      <ModernGameRecords userBets={userBets} gameType="Emerd" />
+      <ModernGameRecords userBets={userBets} gameType="Emerd" duration={duration} />
 
       {/* Betting Popup */}
       <BetPopup
