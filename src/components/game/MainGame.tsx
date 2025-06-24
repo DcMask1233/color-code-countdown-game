@@ -1,6 +1,8 @@
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 import { MainGameContent } from "@/components/game/MainGameContent";
-import { useMainGameLogic } from "@/components/game/MainGameLogic";
+import { useMainGameLogic } from "@/hooks/useMainGameLogic";
+
+type GameMode = "Wingo1min" | "Wingo3min" | "Wingo5min";
 
 interface GameRecord {
   period: string;
@@ -18,7 +20,7 @@ interface MainGameProps {
   totalBetAmount: number;
   totalDepositAmount: number;
   totalWithdrawAmount: number;
-  onStatsUpdate: (type: 'bet' | 'deposit' | 'withdraw', amount: number) => void;
+  onStatsUpdate: (type: "bet" | "deposit" | "withdraw", amount: number) => void;
 }
 
 export const MainGame = ({
