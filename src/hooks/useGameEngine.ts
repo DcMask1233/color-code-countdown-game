@@ -1,11 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import {
-  generatePeriod,
-  getPeriodEndTime,
-  GameMode,
-  GameType,
-} from "@/lib/periodUtils";
+import { GameMode, GameType } from "@/lib/periodUtils";
 
 interface UserBet {
   period: string;
@@ -17,29 +12,57 @@ interface UserBet {
   payout?: number;
 }
 
+interface GameResult {
+  period: string;
+  created_at: string;
+  duration: number;
+}
+
 export function useGameEngine(gameType: GameType, gameMode: GameMode) {
-  const [currentPeriod, setCurrentPeriod] = useState("");
-  const [timeLeft, setTimeLeft] = useState(0);
+  const [currentPeriod, setCurrentPeriod] = useState<string>("");
+  const [timeLeft, setTimeLeft] = useState<number>(0);
   const [userBets, setUserBets] = useState<UserBet[]>([]);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Duration map from gameMode
+  const durationMap: Record<GameMode, number> = {
+    Wingo1min: 60,
+    Wingo3min: 180,
+    Wingo5min: 300,
+  };
+
+  const fetchLatestPeriod = async () => {
+    const { data, error } = await supabase
+      .from("game_results")
+      .select("period, created_at")
+      .eq("game_type", gameType)
+      .eq("duration", durationMap[gameMode])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error || !data) {
+      console.error("⚠️ Failed to fetch current period:", error);
+      return;
+    }
+
+    const startTime = new Date(data.created_at).getTime();
+    const endTime = startTime + durationMap[gameMode] * 1000;
+    const now = Date.now();
+
+    setCurrentPeriod(data.period);
+    setTimeLeft(Math.max(0, Math.floor((endTime - now) / 1000)));
+  };
+
   useEffect(() => {
-    const updatePeriod = () => {
-      const now = new Date();
-      const period = generatePeriod(gameMode, now); // ✅ Fixed
-      const end = getPeriodEndTime(gameMode, now);  // ✅ Fixed
-
-      setCurrentPeriod(period);
-      setTimeLeft(Math.max(0, Math.floor((end.getTime() - now.getTime()) / 1000)));
-    };
-
-    updatePeriod();
+    fetchLatestPeriod(); // Initial load
 
     if (countdownRef.current) clearInterval(countdownRef.current);
+
     countdownRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          updatePeriod();
+          fetchLatestPeriod(); // Refresh next period
           return 0;
         }
         return prev - 1;
@@ -68,7 +91,7 @@ export function useGameEngine(gameType: GameType, gameMode: GameMode) {
     });
 
     if (error) {
-      console.error("Failed to place bet:", error);
+      console.error("❌ Failed to place bet:", error);
       return false;
     }
 
