@@ -7,17 +7,16 @@ import { useUserBets } from "@/hooks/useUserBets";
 
 interface ModernGameRecordsProps {
   gameType: string;
-  gameMode: "Wingo1min" | "Wingo3min" | "Wingo5min"; // ✅ Add this
-  duration: number;
+  duration: number;  // keep duration if used internally
+  // Removed gameMode prop
 }
 
 export const ModernGameRecords: React.FC<ModernGameRecordsProps> = ({
   gameType,
-  gameMode,
   duration
 }) => {
   const [activeTab, setActiveTab] = useState(`${gameType}-record`);
-  const { userBets } = useUserBets(); // ✅ No longer using userBets prop
+  const { userBets } = useUserBets();
 
   const getGameDisplayName = (gameId: string) => {
     switch (gameId.toLowerCase()) {
@@ -61,8 +60,8 @@ export const ModernGameRecords: React.FC<ModernGameRecordsProps> = ({
             <UserBetsTable 
               userBets={userBets} 
               gameType={gameType}
-              gameMode={gameMode} // Optional to pass for filtering
               title={`My ${gameDisplayName} Records`}
+              // removed gameMode prop here
             />
           </TabsContent>
         </Tabs>
