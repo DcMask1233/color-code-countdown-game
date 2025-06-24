@@ -26,8 +26,8 @@ export function useGameEngine(gameType: GameType, gameMode: GameMode) {
   useEffect(() => {
     const updatePeriod = () => {
       const now = new Date();
-      const period = generatePeriod(gameType, gameMode, now);
-      const end = getPeriodEndTime(gameType, gameMode, now);
+      const period = generatePeriod(gameMode, now); // ✅ Fixed
+      const end = getPeriodEndTime(gameMode, now);  // ✅ Fixed
 
       setCurrentPeriod(period);
       setTimeLeft(Math.max(0, Math.floor((end.getTime() - now.getTime()) / 1000)));
