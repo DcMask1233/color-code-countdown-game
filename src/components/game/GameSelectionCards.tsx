@@ -1,4 +1,3 @@
-
 import { Crown } from "lucide-react";
 
 interface GameSelectionCardsProps {
@@ -8,19 +7,19 @@ interface GameSelectionCardsProps {
 export const GameSelectionCards = ({ onGameSelect }: GameSelectionCardsProps) => {
   const gameCards = [
     {
-      id: 'wingo-1min',
+      id: 'Wingo1min', // ✅ Correct format
       title: 'WinGo',
       subtitle: '1min',
       icon: Crown
     },
     {
-      id: 'wingo-3min',
+      id: 'Wingo3min',
       title: 'WinGo',
       subtitle: '3min',
       icon: Crown
     },
     {
-      id: 'wingo-5min',
+      id: 'Wingo5min',
       title: 'WinGo',
       subtitle: '5min',
       icon: Crown
