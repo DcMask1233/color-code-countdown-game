@@ -4,8 +4,7 @@ import { NumberGrid } from "@/components/game/NumberGrid";
 import { ModernGameRecords } from "@/components/game/ModernGameRecords";
 import { BetPopup } from "@/components/game/BetPopup";
 import { useGameEngine } from "@/hooks/useGameEngine";
-import { getDurationFromGameMode } from "@/lib/gameUtils";
-
+import { getDurationFromGameMode } from "@/lib/gameUtils"; // ✅ Import here
 
 interface ParityGameProps {
   userBalance: number;
@@ -68,7 +67,10 @@ export const ParityGame = ({ userBalance, gameMode }: ParityGameProps) => {
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed} />
 
       {/* Bet Records */}
-      <ModernGameRecords userBets={userBets} gameType="Parity" />
+      <ModernGameRecords
+        gameType="Parity"
+        duration={getDurationFromGameMode(gameMode)} // ✅ Pass correct duration
+      />
 
       {/* Bet Popup */}
       <BetPopup
