@@ -4,7 +4,7 @@ import { PromotionSection } from "@/components/layout/PromotionSection";
 import { MySection } from "@/components/user/MySection";
 import { UniversalGameContainer } from "@/components/game/UniversalGameContainer";
 import { useToast } from "@/hooks/use-toast";
-import { getNumberColor } from "@/lib/gameUtils"; // ✅ Imported from utils
+import { getNumberColor } from "@/lib/gameUtils";
 
 interface GameRecord {
   period: string;
@@ -13,7 +13,7 @@ interface GameRecord {
 }
 
 interface MainGameContentProps {
-  activeBottomTab: string;
+  activeBottomTab: "home" | "wallet" | "promotion" | "my";
   selectedGameMode: "Wingo1min" | "Wingo3min" | "Wingo5min" | null;
   userBalance: number;
   userId: string;
@@ -50,24 +50,15 @@ export const MainGameContent = ({
   const { toast } = useToast();
 
   const handleRecharge = () => {
-    toast({
-      title: "Recharge",
-      description: "Recharge functionality coming soon!",
-    });
+    toast({ title: "Recharge", description: "Recharge functionality coming soon!" });
   };
 
   const handleWithdraw = () => {
-    toast({
-      title: "Withdraw",
-      description: "Withdraw functionality coming soon!",
-    });
+    toast({ title: "Withdraw", description: "Withdraw functionality coming soon!" });
   };
 
   const handleRefresh = () => {
-    toast({
-      title: "Refreshed",
-      description: "Game data refreshed!",
-    });
+    toast({ title: "Refreshed", description: "Game data refreshed!" });
   };
 
   const handleRoundCompleteWithRecords = (
@@ -78,7 +69,7 @@ export const MainGameContent = ({
     const newRecord: GameRecord = {
       period: newPeriod,
       number: winningNumber,
-      color: getNumberColor(winningNumber), // ✅ From utils
+      color: getNumberColor(winningNumber),
     };
 
     const updatedRecords = [newRecord, ...gameRecords].slice(0, 10);
@@ -86,33 +77,31 @@ export const MainGameContent = ({
     onRoundComplete(newPeriod, winningNumber, gameType);
   };
 
+  // === HOME TAB ===
   if (activeBottomTab === "home") {
-    if (selectedGameMode === null) {
-      return (
-        <HomeSection
-          balance={userBalance}
-          userId={userId}
-          onRecharge={handleRecharge}
-          onWithdraw={handleWithdraw}
-          onRefresh={handleRefresh}
-          onGameSelect={onGameSelect}
-        />
-      );
-    } else {
-      return (
-        <UniversalGameContainer
-          gameMode={selectedGameMode}
-          userBalance={userBalance}
-          gameRecords={gameRecords}
-          onBackToHome={onBackToHome}
-          onRoundComplete={handleRoundCompleteWithRecords}
-          onBalanceUpdate={onBalanceUpdate}
-          onGameRecordsUpdate={onGameRecordsUpdate}
-        />
-      );
-    }
+    return selectedGameMode === null ? (
+      <HomeSection
+        balance={userBalance}
+        userId={userId}
+        onRecharge={handleRecharge}
+        onWithdraw={handleWithdraw}
+        onRefresh={handleRefresh}
+        onGameSelect={onGameSelect}
+      />
+    ) : (
+      <UniversalGameContainer
+        gameMode={selectedGameMode}
+        userBalance={userBalance}
+        gameRecords={gameRecords}
+        onBackToHome={onBackToHome}
+        onRoundComplete={handleRoundCompleteWithRecords}
+        onBalanceUpdate={onBalanceUpdate}
+        onGameRecordsUpdate={onGameRecordsUpdate}
+      />
+    );
   }
 
+  // === WALLET TAB ===
   if (activeBottomTab === "wallet") {
     return (
       <WalletSection
@@ -131,22 +120,21 @@ export const MainGameContent = ({
           toast({ title: "Deposit History", description: "History functionality coming soon!" })
         }
         onWithdrawHistory={() =>
-          toast({
-            title: "Withdrawal History",
-            description: "History functionality coming soon!",
-          })
+          toast({ title: "Withdrawal History", description: "History functionality coming soon!" })
         }
       />
     );
   }
 
+  // === PROMOTION TAB ===
   if (activeBottomTab === "promotion") {
     return <PromotionSection />;
   }
 
+  // === MY TAB ===
   if (activeBottomTab === "my") {
     const savedUser = localStorage.getItem("colorGameUser");
-    const mobile = savedUser ? JSON.parse(savedUser).mobile : undefined;
+    const mobile = savedUser ? JSON.parse(savedUser)?.mobile : undefined;
 
     return (
       <MySection
@@ -160,6 +148,7 @@ export const MainGameContent = ({
     );
   }
 
+  // === FALLBACK ===
   return (
     <div className="container mx-auto px-4 py-4 max-w-md">
       <div className="text-center py-20">
