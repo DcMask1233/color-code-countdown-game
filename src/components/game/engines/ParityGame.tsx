@@ -4,6 +4,8 @@ import { NumberGrid } from "@/components/game/NumberGrid";
 import { ModernGameRecords } from "@/components/game/ModernGameRecords";
 import { BetPopup } from "@/components/game/BetPopup";
 import { useGameEngine } from "@/hooks/useGameEngine";
+import { getDurationFromGameMode } from "@/lib/gameUtils";
+
 
 interface ParityGameProps {
   userBalance: number;
