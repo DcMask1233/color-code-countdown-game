@@ -1,4 +1,4 @@
-import { BottomNavigation } from "@/components/layout/BottomNavigation";
+import { BottomNavigation, BottomTab } from "@/components/layout/BottomNavigation";
 import { MainGameContent } from "@/components/game/MainGameContent";
 import { useMainGameLogic } from "@/hooks/useMainGameLogic";
 
@@ -33,7 +33,7 @@ export const MainGame = ({
   totalBetAmount,
   totalDepositAmount,
   totalWithdrawAmount,
-  onStatsUpdate
+  onStatsUpdate,
 }: MainGameProps) => {
   const {
     activeBottomTab,
@@ -42,13 +42,13 @@ export const MainGame = ({
     handleGameSelect,
     handleBackToHome,
     handleRoundComplete,
-    handleNavigateToPromotion
+    handleNavigateToPromotion,
   } = useMainGameLogic({
     userBalance,
     onBalanceUpdate,
     onStatsUpdate,
     gameRecords,
-    onGameRecordsUpdate
+    onGameRecordsUpdate,
   });
 
   return (
@@ -73,7 +73,7 @@ export const MainGame = ({
 
       <BottomNavigation
         activeTab={activeBottomTab}
-        onTabChange={setActiveBottomTab}
+        onTabChange={(tab: BottomTab) => setActiveBottomTab(tab)} // ✅ force correct type
       />
     </div>
   );
