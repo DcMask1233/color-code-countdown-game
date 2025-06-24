@@ -9,7 +9,7 @@ interface GameRecord {
 }
 
 interface UniversalGameContainerProps {
-  gameMode: string;
+  gameMode: "Wingo1min" | "Wingo3min" | "Wingo5min"; // ✅ fix here
   userBalance: number;
   gameRecords: GameRecord[];
   onBackToHome: () => void;
