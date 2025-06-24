@@ -62,7 +62,7 @@ export const BconeGame = ({ userBalance, gameMode }: BconeGameProps) => {
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed} />
 
       {/* Bet Records */}
-      <ModernGameRecords userBets={userBets} gameType="Bcone" />
+      <ModernGameRecords gameType="Bcone" duration={getDurationFromGameMode(gameMode)} />
 
       {/* Popup */}
       <BetPopup
