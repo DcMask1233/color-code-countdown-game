@@ -4,6 +4,7 @@ import {
   generatePeriod,
   getPeriodEndTime,
   GameMode,
+  GameType,
 } from "@/lib/periodUtils";
 
 interface UserBet {
@@ -16,18 +17,17 @@ interface UserBet {
   payout?: number;
 }
 
-export function useGameEngine(gameMode: GameMode) {
+export function useGameEngine(gameType: GameType, gameMode: GameMode) {
   const [currentPeriod, setCurrentPeriod] = useState("");
   const [timeLeft, setTimeLeft] = useState(0);
   const [userBets, setUserBets] = useState<UserBet[]>([]);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Handle timer and period updates
   useEffect(() => {
     const updatePeriod = () => {
       const now = new Date();
-      const period = generatePeriod(gameMode, now);
-      const end = getPeriodEndTime(gameMode, now);
+      const period = generatePeriod(gameType, gameMode, now);
+      const end = getPeriodEndTime(gameType, gameMode, now);
 
       setCurrentPeriod(period);
       setTimeLeft(Math.max(0, Math.floor((end.getTime() - now.getTime()) / 1000)));
@@ -49,7 +49,7 @@ export function useGameEngine(gameMode: GameMode) {
     return () => {
       if (countdownRef.current) clearInterval(countdownRef.current);
     };
-  }, [gameMode]);
+  }, [gameType, gameMode]);
 
   const placeBet = async (
     betType: "color" | "number",
@@ -60,7 +60,8 @@ export function useGameEngine(gameMode: GameMode) {
 
     const { error } = await supabase.from("user_bets").insert({
       period: currentPeriod,
-      game_type: gameMode,
+      game_type: gameType,
+      game_mode: gameMode,
       bet_type: betType,
       bet_value: betValue,
       amount,
