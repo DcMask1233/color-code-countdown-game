@@ -4,6 +4,7 @@ import { NumberGrid } from "@/components/game/NumberGrid";
 import { ModernGameRecords } from "@/components/game/ModernGameRecords";
 import { BetPopup } from "@/components/game/BetPopup";
 import { useGameEngine } from "@/hooks/useGameEngine";
+import { getDurationFromGameMode } from "@/lib/gameUtils"; // ✅ Required for duration
 
 interface EmerdGameProps {
   userBalance: number;
@@ -18,7 +19,7 @@ export const EmerdGame = ({ userBalance, gameMode }: EmerdGameProps) => {
     userBets,
     placeBet,
     formatTime,
-  } = useGameEngine("Emerd", gameMode); // ✅ Now uses correct backend-driven params
+  } = useGameEngine("Emerd", gameMode);
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<"color" | "number">("color");
@@ -62,7 +63,10 @@ export const EmerdGame = ({ userBalance, gameMode }: EmerdGameProps) => {
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed} />
 
       {/* Game Records */}
-      <ModernGameRecords userBets={userBets} gameType="Emerd" />
+      <ModernGameRecords
+        gameType="Emerd"
+        duration={getDurationFromGameMode(gameMode)} // ✅ Corrected prop
+      />
 
       {/* Betting Popup */}
       <BetPopup
