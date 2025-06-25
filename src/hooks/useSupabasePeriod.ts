@@ -1,3 +1,13 @@
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface UseSupabasePeriodReturn {
+  currentPeriod: string;
+  timeLeft: number;
+  isLoading: boolean;
+  error: string | null;
+}
+
 export const useSupabasePeriod = (duration: number): UseSupabasePeriodReturn => {
   const [currentPeriod, setCurrentPeriod] = useState('');
   const [timeLeft, setTimeLeft] = useState(0);
