@@ -3,12 +3,14 @@ import { supabase } from "@/lib/supabase";
 import {
   generatePeriod,
   getPeriodEndTime,
+  toIST, // ✅ Import IST converter
   GameType,
+  GameMode,
 } from "@/lib/periodUtils";
 
 interface UniversalGameEngineProps {
-  gameType: GameType; // Parity, Sapre, etc.
-  gameMode: "Wingo1min" | "Wingo3min" | "Wingo5min"; // Wingo mode
+  gameType: GameType;
+  gameMode: GameMode;
 }
 
 export default function UniversalGameEngine({ gameType, gameMode }: UniversalGameEngineProps) {
@@ -17,13 +19,13 @@ export default function UniversalGameEngine({ gameType, gameMode }: UniversalGam
   const [resultNumber, setResultNumber] = useState<number | null>(null);
   const countdownInterval = useRef<NodeJS.Timeout | null>(null);
 
-  // Update countdown and currentPeriod based on gameMode
+  // ⏱ Countdown & Period Updater
   useEffect(() => {
     const updateCountdown = () => {
-      const now = new Date();
-      const period = generatePeriod(gameMode, now);
-      const end = getPeriodEndTime(gameMode, now);
-      const timeLeft = Math.max(0, Math.floor((end.getTime() - now.getTime()) / 1000));
+      const nowIST = toIST(new Date()); // ✅ Use IST for both current and end time
+      const period = generatePeriod(gameMode, nowIST);
+      const end = getPeriodEndTime(gameMode, nowIST);
+      const timeLeft = Math.max(0, Math.floor((end.getTime() - nowIST.getTime()) / 1000));
 
       setCurrentPeriod(period);
       setCountdown(timeLeft);
@@ -34,7 +36,7 @@ export default function UniversalGameEngine({ gameType, gameMode }: UniversalGam
     countdownInterval.current = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          updateCountdown();
+          updateCountdown(); // 🔁 Get next period and reset countdown
           return 0;
         }
         return prev - 1;
@@ -46,7 +48,7 @@ export default function UniversalGameEngine({ gameType, gameMode }: UniversalGam
     };
   }, [gameMode]);
 
-  // Subscribe to real-time results
+  // 🔔 Real-time result listener
   useEffect(() => {
     const channel = supabase
       .channel("game_results")
@@ -71,7 +73,7 @@ export default function UniversalGameEngine({ gameType, gameMode }: UniversalGam
     };
   }, [gameType, gameMode, currentPeriod]);
 
-  // Fallback result fetch
+  // 🧾 Fallback fetch for missed result
   useEffect(() => {
     const fetchResult = async () => {
       const { data } = await supabase
@@ -106,7 +108,8 @@ export default function UniversalGameEngine({ gameType, gameMode }: UniversalGam
         <strong>Time Left:</strong> {countdown}s
       </p>
       <p>
-        <strong>Result:</strong> {resultNumber !== null ? resultNumber : "Waiting..."}
+        <strong>Result:</strong>{" "}
+        {resultNumber !== null ? resultNumber : "Waiting..."}
       </p>
     </div>
   );
