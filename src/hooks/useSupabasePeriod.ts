@@ -1,14 +1,3 @@
-
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-
-interface UseSupabasePeriodReturn {
-  currentPeriod: string;
-  timeLeft: number;
-  isLoading: boolean;
-  error: string | null;
-}
-
 export const useSupabasePeriod = (duration: number): UseSupabasePeriodReturn => {
   const [currentPeriod, setCurrentPeriod] = useState('');
   const [timeLeft, setTimeLeft] = useState(0);
@@ -36,16 +25,15 @@ export const useSupabasePeriod = (duration: number): UseSupabasePeriodReturn => 
   }, [duration]);
 
   const calculateTimeLeft = useCallback(() => {
-    // Calculate time left using the same IST logic as Supabase
-    const now = new Date();
-    const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
-    
-    const startOfDay = new Date(istTime);
-    startOfDay.setHours(0, 0, 0, 0);
-    const secondsSinceStart = Math.floor((istTime.getTime() - startOfDay.getTime()) / 1000);
+    const nowUTC = new Date();
+    const startOfDayUTC = new Date(Date.UTC(
+      nowUTC.getUTCFullYear(),
+      nowUTC.getUTCMonth(),
+      nowUTC.getUTCDate()
+    ));
+    const secondsSinceStart = Math.floor((nowUTC.getTime() - startOfDayUTC.getTime()) / 1000);
     const secondsInCurrentRound = secondsSinceStart % duration;
     const remaining = duration - secondsInCurrentRound;
-    
     return remaining;
   }, [duration]);
 
@@ -60,24 +48,20 @@ export const useSupabasePeriod = (duration: number): UseSupabasePeriodReturn => 
         setIsLoading(false);
         setError(null);
       }
-      
+
       const remaining = calculateTimeLeft();
       setTimeLeft(remaining);
     };
 
-    // Initial fetch
     updatePeriodAndTime();
 
-    // Update time every second
     intervalId = setInterval(() => {
       const remaining = calculateTimeLeft();
       setTimeLeft(remaining);
     }, 1000);
 
-    // Check for period changes every 10 seconds or when time is about to reset
     periodCheckInterval = setInterval(async () => {
       const remaining = calculateTimeLeft();
-      // Check for new period when we're close to the end or at the beginning
       if (remaining <= 2 || remaining >= duration - 2) {
         const period = await fetchCurrentPeriod();
         if (period && period !== currentPeriod) {
