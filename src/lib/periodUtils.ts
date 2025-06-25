@@ -8,7 +8,7 @@ const GAME_MODE_INTERVALS: Record<GameMode, number> = {
 };
 
 // ✅ Fixed: Consistent IST conversion
-function toIST(date: Date): Date {
+export function toIST(date: Date): Date {
   const istOffset = 5.5 * 60; // 5.5 hours in minutes
   const utcTime = date.getTime(); // in ms
   return new Date(utcTime + istOffset * 60 * 1000);
