@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import {
   generatePeriod,
   getPeriodEndTime,
+  toIST,
   GameType,
   GameMode,
 } from "@/lib/periodUtils";
@@ -12,19 +13,32 @@ interface UniversalGameEngineProps {
   gameMode: GameMode;
 }
 
-export default function UniversalGameEngine({ gameType, gameMode }: UniversalGameEngineProps) {
+export default function UniversalGameEngine({
+  gameType,
+  gameMode,
+}: UniversalGameEngineProps) {
   const [currentPeriod, setCurrentPeriod] = useState<string>("");
   const [countdown, setCountdown] = useState<number>(0);
   const [resultNumber, setResultNumber] = useState<number | null>(null);
   const countdownInterval = useRef<NodeJS.Timeout | null>(null);
 
-  // ✅ Update countdown and period using UTC only
+  const formatCountdown = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
   useEffect(() => {
     const updateCountdown = () => {
-      const now = new Date(); // UTC
-      const period = generatePeriod(gameMode, now);
-      const end = getPeriodEndTime(gameMode, now);
-      const timeLeft = Math.max(0, Math.floor((end.getTime() - now.getTime()) / 1000));
+      const nowIST = toIST(new Date());
+      const period = generatePeriod(gameMode, nowIST);
+      const end = getPeriodEndTime(gameMode, nowIST);
+      const timeLeft = Math.max(
+        0,
+        Math.floor((end.getTime() - nowIST.getTime()) / 1000)
+      );
 
       setCurrentPeriod(period);
       setCountdown(timeLeft);
@@ -47,7 +61,6 @@ export default function UniversalGameEngine({ gameType, gameMode }: UniversalGam
     };
   }, [gameMode]);
 
-  // 📡 Real-time Supabase result listener
   useEffect(() => {
     const channel = supabase
       .channel("game_results")
@@ -76,7 +89,6 @@ export default function UniversalGameEngine({ gameType, gameMode }: UniversalGam
     };
   }, [gameType, gameMode, currentPeriod]);
 
-  // 🕐 Fallback result fetch
   useEffect(() => {
     const fetchResult = async () => {
       const { data } = await supabase
@@ -99,28 +111,32 @@ export default function UniversalGameEngine({ gameType, gameMode }: UniversalGam
     }
   }, [currentPeriod, gameType, gameMode]);
 
-  // ⏱️ Optional: Format countdown mm:ss
-  const formatCountdown = (seconds: number) => {
-    const m = Math.floor(seconds / 60).toString().padStart(2, "0");
-    const s = (seconds % 60).toString().padStart(2, "0");
-    return `${m}:${s}`;
-  };
-
   return (
-    <div className="p-4 border rounded shadow-md max-w-md mx-auto">
-      <h2 className="text-xl font-bold mb-2">
+    <div className="p-4 border rounded shadow-md max-w-md mx-auto text-center">
+      <h2 className="text-xl font-bold mb-3">
         {gameType} - {gameMode}
       </h2>
-      <p>
-        <strong>Current Period:</strong> {currentPeriod || "Loading..."}
-      </p>
-      <p>
-        <strong>Time Left:</strong> {formatCountdown(countdown)}
-      </p>
-      <p>
-        <strong>Result:</strong> {resultNumber !== null ? resultNumber : "Waiting..."}
-      </p>
+
+      <div className="mb-2">
+        <p className="text-sm font-medium text-gray-600">Period</p>
+        <p className="text-xl font-semibold text-gray-800">
+          {currentPeriod || "Loading..."}
+        </p>
+      </div>
+
+      <div className="mb-2">
+        <p className="text-sm font-medium text-gray-600">Count Down</p>
+        <p className="text-3xl font-bold text-gray-900">
+          {formatCountdown(countdown)}
+        </p>
+      </div>
+
+      <div>
+        <p className="text-sm font-medium text-gray-600">Result</p>
+        <p className="text-xl font-semibold text-gray-800">
+          {resultNumber !== null ? resultNumber : "Waiting..."}
+        </p>
+      </div>
     </div>
   );
 }
-
