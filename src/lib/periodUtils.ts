@@ -7,44 +7,47 @@ const GAME_MODE_INTERVALS: Record<GameMode, number> = {
   Wingo5min: 5,
 };
 
-// ✅ Fixed: Consistent IST conversion
+// 🔄 Optional: use this only in UI display
 export function toIST(date: Date): Date {
-  const istOffset = 5.5 * 60; // 5.5 hours in minutes
-  const utcTime = date.getTime(); // in ms
-  return new Date(utcTime + istOffset * 60 * 1000);
+  const istOffsetMs = 5.5 * 60 * 60 * 1000;
+  return new Date(date.getTime() + istOffsetMs);
 }
 
-// ✅ Generates unique period ID like 20250624135
-export function generatePeriod(gameMode: GameMode, now = new Date()): string {
+// ✅ Generates unique period ID based on UTC (for global consistency)
+export function generatePeriod(gameMode: GameMode, now: Date = new Date()): string {
   const interval = GAME_MODE_INTERVALS[gameMode];
-  const ist = toIST(now);
 
-  const yyyy = ist.getFullYear();
-  const mm = `${ist.getMonth() + 1}`.padStart(2, "0");
-  const dd = `${ist.getDate()}`.padStart(2, "0");
+  const yyyy = now.getUTCFullYear();
+  const mm = String(now.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(now.getUTCDate()).padStart(2, "0");
 
-  const totalMinutes = ist.getHours() * 60 + ist.getMinutes();
-  const periodIndex = Math.floor(totalMinutes / interval)
-    .toString()
-    .padStart(3, "0");
+  const totalMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
+  const periodIndex = Math.floor(totalMinutes / interval).toString().padStart(3, "0");
 
   return `${yyyy}${mm}${dd}${periodIndex}`;
 }
 
-export function getPeriodStartTime(gameMode: GameMode, now = new Date()): Date {
+// ✅ Start time of current period (UTC)
+export function getPeriodStartTime(gameMode: GameMode, now: Date = new Date()): Date {
   const interval = GAME_MODE_INTERVALS[gameMode];
-  const ist = toIST(now);
-  const offset = ist.getMinutes() % interval;
+  const minutes = now.getUTCMinutes();
+  const offset = minutes % interval;
 
-  ist.setMinutes(ist.getMinutes() - offset);
-  ist.setSeconds(0);
-  ist.setMilliseconds(0);
+  const start = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+    now.getUTCHours(),
+    minutes - offset,
+    0,
+    0
+  ));
 
-  return ist;
+  return start;
 }
 
-export function getPeriodEndTime(gameMode: GameMode, now = new Date()): Date {
+// ✅ End time of current period (UTC)
+export function getPeriodEndTime(gameMode: GameMode, now: Date = new Date()): Date {
   const start = getPeriodStartTime(gameMode, now);
-  const interval = GAME_MODE_INTERVALS[gameMode];
-  return new Date(start.getTime() + interval * 60 * 1000);
+  return new Date(start.getTime() + GAME_MODE_INTERVALS[gameMode] * 60 * 1000);
 }
