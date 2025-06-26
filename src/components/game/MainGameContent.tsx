@@ -2,7 +2,7 @@ import { HomeSection } from "@/components/layout/HomeSection";
 import { WalletSection } from "@/components/wallet/WalletSection";
 import { PromotionSection } from "@/components/layout/PromotionSection";
 import { MySection } from "@/components/user/MySection";
-import { UniversalGameContainer } from "@/components/game/UniversalGameContainer";
+import WingoGamePage from "@/components/game/WingoGamePage";
 import { useToast } from "@/hooks/use-toast";
 import { getNumberColor } from "@/lib/gameUtils";
 
@@ -79,25 +79,44 @@ export const MainGameContent = ({
 
   // === HOME TAB ===
   if (activeBottomTab === "home") {
-    return selectedGameMode === null ? (
-      <HomeSection
-        balance={userBalance}
-        userId={userId}
-        onRecharge={handleRecharge}
-        onWithdraw={handleWithdraw}
-        onRefresh={handleRefresh}
-        onGameSelect={onGameSelect}
-      />
-    ) : (
-      <UniversalGameContainer
-        gameMode={selectedGameMode}
-        userBalance={userBalance}
-        gameRecords={gameRecords}
-        onBackToHome={onBackToHome}
-        onRoundComplete={handleRoundCompleteWithRecords}
-        onBalanceUpdate={onBalanceUpdate}
-        onGameRecordsUpdate={onGameRecordsUpdate}
-      />
+    if (selectedGameMode === null) {
+      return (
+        <HomeSection
+          balance={userBalance}
+          userId={userId}
+          onRecharge={handleRecharge}
+          onWithdraw={handleWithdraw}
+          onRefresh={handleRefresh}
+          onGameSelect={onGameSelect}
+        />
+      );
+    }
+
+    // Render WingoGamePage for any selected Wingo game mode
+    if (
+      selectedGameMode === "Wingo1min" ||
+      selectedGameMode === "Wingo3min" ||
+      selectedGameMode === "Wingo5min"
+    ) {
+      return (
+        <WingoGamePage
+          gameType="Wingo"
+          gameMode={selectedGameMode}
+          userBalance={userBalance}
+          gameRecords={gameRecords}
+          onBackToHome={onBackToHome}
+          onRoundComplete={handleRoundCompleteWithRecords}
+          onBalanceUpdate={onBalanceUpdate}
+          onGameRecordsUpdate={onGameRecordsUpdate}
+        />
+      );
+    }
+
+    // Fallback if selectedGameMode is set but not recognized
+    return (
+      <div className="p-6 max-w-md mx-auto text-center text-red-600">
+        Unsupported game mode selected.
+      </div>
     );
   }
 
