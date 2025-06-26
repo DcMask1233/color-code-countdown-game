@@ -1,4 +1,3 @@
-import React, { useEffect, useState } from "react";
 import { HomeSection } from "@/components/layout/HomeSection";
 import { WalletSection } from "@/components/wallet/WalletSection";
 import { PromotionSection } from "@/components/layout/PromotionSection";
@@ -25,8 +24,8 @@ interface MainGameContentProps {
   onGameSelect: (gameMode: string) => void;
   onBackToHome: () => void;
   onRoundComplete: (newPeriod: string, winningNumber: number, gameType: string) => void;
-  onBalanceUpdate: (newBalance: number) => void;
-  onGameRecordsUpdate: (updatedRecords: GameRecord[]) => void;
+  onBalanceUpdate: (amount: number) => void;
+  onGameRecordsUpdate: (records: GameRecord[]) => void;
   onNavigateToPromotion: () => void;
   onLogout: () => void;
 }
@@ -49,35 +48,6 @@ export const MainGameContent = ({
   onLogout,
 }: MainGameContentProps) => {
   const { toast } = useToast();
-
-  // New state for period and time left, fetched from backend
-  const [currentPeriod, setCurrentPeriod] = useState<string>("");
-  const [timeLeft, setTimeLeft] = useState<number>(0);
-
-  // Fetch current period and time left from backend API (replace URL with your actual endpoint)
-  async function fetchPeriod() {
-    try {
-      const res = await fetch("/api/currentPeriod");
-      if (!res.ok) throw new Error("Failed to fetch period info");
-      const data = await res.json();
-
-      setCurrentPeriod(data.currentPeriod);
-      setTimeLeft(data.timeLeft);
-    } catch (error) {
-      console.error("Error fetching period data:", error);
-    }
-  }
-
-  useEffect(() => {
-    fetchPeriod();
-
-    // Refresh every second for countdown
-    const interval = setInterval(() => {
-      fetchPeriod();
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   const handleRecharge = () => {
     toast({ title: "Recharge", description: "Recharge functionality coming soon!" });
@@ -107,7 +77,6 @@ export const MainGameContent = ({
     onRoundComplete(newPeriod, winningNumber, gameType);
   };
 
-  // === HOME TAB ===
   if (activeBottomTab === "home") {
     if (selectedGameMode === null) {
       return (
@@ -122,7 +91,6 @@ export const MainGameContent = ({
       );
     }
 
-    // Render WingoGamePage with all backend props passed down
     if (
       selectedGameMode === "Wingo1min" ||
       selectedGameMode === "Wingo3min" ||
@@ -133,9 +101,6 @@ export const MainGameContent = ({
           gameType="Wingo"
           gameMode={selectedGameMode}
           userBalance={userBalance}
-          currentPeriod={currentPeriod}
-          timeLeft={timeLeft}
-          gameRecords={gameRecords}
           onBackToHome={onBackToHome}
           onRoundComplete={handleRoundCompleteWithRecords}
           onBalanceUpdate={onBalanceUpdate}
@@ -151,7 +116,6 @@ export const MainGameContent = ({
     );
   }
 
-  // === WALLET TAB ===
   if (activeBottomTab === "wallet") {
     return (
       <WalletSection
@@ -176,12 +140,10 @@ export const MainGameContent = ({
     );
   }
 
-  // === PROMOTION TAB ===
   if (activeBottomTab === "promotion") {
     return <PromotionSection />;
   }
 
-  // === MY TAB ===
   if (activeBottomTab === "my") {
     const savedUser = localStorage.getItem("colorGameUser");
     const mobile = savedUser ? JSON.parse(savedUser)?.mobile : undefined;
@@ -198,7 +160,6 @@ export const MainGameContent = ({
     );
   }
 
-  // === FALLBACK ===
   return (
     <div className="container mx-auto px-4 py-4 max-w-md">
       <div className="text-center py-20">
