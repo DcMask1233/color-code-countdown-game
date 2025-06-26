@@ -6,114 +6,75 @@ interface GameSelectionCardsProps {
 }
 
 export const GameSelectionCards = ({ onGameSelect }: GameSelectionCardsProps) => {
-  const gameCards = [
+  const gameTypes = [
     {
-      id: 'parity-1min',
+      id: 'parity',
       title: 'Parity',
-      subtitle: '1min',
       icon: Crown,
       description: 'Predict color or number'
     },
     {
-      id: 'parity-3min',
-      title: 'Parity',
-      subtitle: '3min',
-      icon: Crown,
-      description: 'Predict color or number'
-    },
-    {
-      id: 'parity-5min',
-      title: 'Parity',
-      subtitle: '5min',
-      icon: Crown,
-      description: 'Predict color or number'
-    },
-    {
-      id: 'sapre-1min',
+      id: 'sapre',
       title: 'Sapre',
-      subtitle: '1min',
       icon: Target,
       description: 'Even or odd prediction'
     },
     {
-      id: 'sapre-3min',
-      title: 'Sapre',
-      subtitle: '3min',
-      icon: Target,
-      description: 'Even or odd prediction'
-    },
-    {
-      id: 'sapre-5min',
-      title: 'Sapre',
-      subtitle: '5min',
-      icon: Target,
-      description: 'Even or odd prediction'
-    },
-    {
-      id: 'bcone-1min',
+      id: 'bcone',
       title: 'Bcone',
-      subtitle: '1min',
       icon: TrendingUp,
       description: 'Big or small prediction'
     },
     {
-      id: 'bcone-3min',
-      title: 'Bcone',
-      subtitle: '3min',
-      icon: TrendingUp,
-      description: 'Big or small prediction'
-    },
-    {
-      id: 'bcone-5min',
-      title: 'Bcone',
-      subtitle: '5min',
-      icon: TrendingUp,
-      description: 'Big or small prediction'
-    },
-    {
-      id: 'emerd-1min',
+      id: 'emerd',
       title: 'Emerd',
-      subtitle: '1min',
-      icon: Zap,
-      description: 'Single digit prediction'
-    },
-    {
-      id: 'emerd-3min',
-      title: 'Emerd',
-      subtitle: '3min',
-      icon: Zap,
-      description: 'Single digit prediction'
-    },
-    {
-      id: 'emerd-5min',
-      title: 'Emerd',
-      subtitle: '5min',
       icon: Zap,
       description: 'Single digit prediction'
     }
   ];
 
+  const durations = [
+    { id: '1min', title: 'Wingo1min', subtitle: '1 Minute Games' },
+    { id: '3min', title: 'Wingo3min', subtitle: '3 Minute Games' },
+    { id: '5min', title: 'Wingo5min', subtitle: '5 Minute Games' }
+  ];
+
   return (
-    <div className="p-4 space-y-4">
-      {gameCards.map((card) => {
-        const IconComponent = card.icon;
-        return (
-          <button
-            key={card.id}
-            onClick={() => onGameSelect(card.id)}
-            className="w-full bg-white rounded-lg border border-gray-200 p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors shadow-sm"
-          >
-            <div className="bg-blue-100 p-3 rounded-full">
-              <IconComponent size={24} className="text-blue-600" />
-            </div>
-            <div className="text-left">
-              <h3 className="text-lg font-semibold text-gray-900">{card.title}</h3>
-              <p className="text-sm text-gray-500">{card.subtitle}</p>
-              <p className="text-xs text-gray-400">{card.description}</p>
-            </div>
-          </button>
-        );
-      })}
+    <div className="p-4 space-y-6">
+      {durations.map((duration) => (
+        <div key={duration.id} className="space-y-3">
+          {/* Section Header */}
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-3 rounded-lg">
+            <h2 className="text-lg font-bold">{duration.title}</h2>
+            <p className="text-sm opacity-90">{duration.subtitle}</p>
+          </div>
+          
+          {/* Games in this duration */}
+          <div className="space-y-2">
+            {gameTypes.map((game) => {
+              const IconComponent = game.icon;
+              const gameId = `${game.id}-${duration.id}`;
+              
+              return (
+                <button
+                  key={gameId}
+                  onClick={() => onGameSelect(gameId)}
+                  className="w-full bg-white rounded-lg border border-gray-200 p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors shadow-sm"
+                >
+                  <div className="bg-blue-100 p-3 rounded-full">
+                    <IconComponent size={24} className="text-blue-600" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="text-lg font-semibold text-gray-900">{game.title}</h3>
+                    <p className="text-sm text-gray-500">{duration.id}</p>
+                    <p className="text-xs text-gray-400">{game.description}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 };
