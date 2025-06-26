@@ -4,9 +4,10 @@ import { ColorButtons } from "@/components/game/ColorButtons";
 import { NumberGrid } from "@/components/game/NumberGrid";
 import { ModernGameRecords } from "@/components/game/ModernGameRecords";
 import { BetPopup } from "@/components/game/BetPopup";
-import { useGameEngine } from "@/hooks/useGameEngine";
-import { useSupabasePeriod } from "@/hooks/useSupabasePeriod";
+import { useBackendGameEngine } from "@/hooks/useBackendGameEngine";
+import { useBackendPeriod } from "@/hooks/useBackendPeriod";
 import { getDurationFromGameMode } from "@/lib/gameUtils";
+import { useAuth } from "@/hooks/useAuth";
 
 interface SapreGameProps {
   userBalance: number;
@@ -16,8 +17,9 @@ interface SapreGameProps {
 
 export const SapreGame = ({ userBalance, gameMode, userId }: SapreGameProps) => {
   const duration = getDurationFromGameMode(gameMode);
-  const { currentPeriod, timeLeft, isLoading, error } = useSupabasePeriod(duration);
-  const { userBets, placeBet, isLoading: isBetLoading } = useGameEngine("Sapre", gameMode, userId);
+  const { currentPeriod, timeLeft, isLoading, error } = useBackendPeriod(duration);
+  const { userBets, placeBet, isLoading: isBetLoading } = useBackendGameEngine("Sapre", gameMode);
+  const { userProfile } = useAuth();
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<"color" | "number">("color");
@@ -47,6 +49,7 @@ export const SapreGame = ({ userBalance, gameMode, userId }: SapreGameProps) => 
   };
 
   const isBettingClosed = timeLeft <= 5;
+  const displayBalance = userProfile?.balance || userBalance;
 
   if (isLoading) return <div className="flex justify-center p-4">Loading...</div>;
   if (error) return <div className="flex justify-center p-4 text-red-500">Error: {error}</div>;
@@ -80,7 +83,7 @@ export const SapreGame = ({ userBalance, gameMode, userId }: SapreGameProps) => 
         onClose={() => setShowBetPopup(false)}
         selectedType={selectedBetType}
         selectedValue={selectedBetValue}
-        userBalance={userBalance}
+        userBalance={displayBalance}
         onConfirmBet={handleConfirmBet}
         disabled={isBettingClosed || isBetLoading}
       />

@@ -4,9 +4,10 @@ import { ColorButtons } from "@/components/game/ColorButtons";
 import { NumberGrid } from "@/components/game/NumberGrid";
 import { ModernGameRecords } from "@/components/game/ModernGameRecords";
 import { BetPopup } from "@/components/game/BetPopup";
-import { useGameEngine } from "@/hooks/useGameEngine";
-import { usePeriodCalculation } from "@/hooks/usePeriodCalculation";
+import { useBackendGameEngine } from "@/hooks/useBackendGameEngine";
+import { useBackendPeriod } from "@/hooks/useBackendPeriod";
 import { getDurationFromGameMode } from "@/lib/gameUtils";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ParityGameProps {
   userBalance: number;
@@ -15,9 +16,10 @@ interface ParityGameProps {
 }
 
 export const ParityGame = ({ userBalance, gameMode, userId }: ParityGameProps) => {
-  const durationSeconds = getDurationFromGameMode(gameMode);
-  const { currentPeriod, timeLeft, isLoading, error } = usePeriodCalculation(durationSeconds);
-  const { userBets, placeBet, isLoading: isBetLoading } = useGameEngine("Parity", gameMode, userId);
+  const duration = getDurationFromGameMode(gameMode);
+  const { currentPeriod, timeLeft, isLoading, error } = useBackendPeriod(duration);
+  const { userBets, placeBet, isLoading: isBetLoading } = useBackendGameEngine("Parity", gameMode);
+  const { userProfile } = useAuth();
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<"color" | "number">("color");
@@ -47,6 +49,7 @@ export const ParityGame = ({ userBalance, gameMode, userId }: ParityGameProps) =
   };
 
   const isBettingClosed = timeLeft <= 5;
+  const displayBalance = userProfile?.balance || userBalance;
 
   if (isLoading) return <div className="flex justify-center p-4">Loading...</div>;
   if (error) return <div className="flex justify-center p-4 text-red-500">Error: {error}</div>;
@@ -61,30 +64,26 @@ export const ParityGame = ({ userBalance, gameMode, userId }: ParityGameProps) =
         </div>
         <div className="flex justify-between items-center">
           <span className="text-sm text-gray-950 font-semibold">Count Down</span>
-          <span
-            className={`text-lg font-bold transition-all duration-300 ${
-              isBettingClosed ? "text-black opacity-50 blur-[1px]" : "text-black"
-            }`}
-          >
+          <span className={`text-lg font-bold ${isBettingClosed ? "opacity-50 blur-[1px]" : ""}`}>
             {formatTime(timeLeft)}
           </span>
         </div>
       </div>
 
-      {/* Betting UI */}
+      {/* UI */}
       <ColorButtons onColorSelect={handleColorSelect} disabled={isBettingClosed || isBetLoading} />
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed || isBetLoading} />
 
-      {/* Bet Records */}
-      <ModernGameRecords gameType="Parity" duration={durationSeconds} />
+      {/* Records */}
+      <ModernGameRecords gameType="Parity" duration={duration} />
 
-      {/* Bet Popup */}
+      {/* Bet popup */}
       <BetPopup
         isOpen={showBetPopup}
         onClose={() => setShowBetPopup(false)}
         selectedType={selectedBetType}
         selectedValue={selectedBetValue}
-        userBalance={userBalance}
+        userBalance={displayBalance}
         onConfirmBet={handleConfirmBet}
         disabled={isBettingClosed || isBetLoading}
       />

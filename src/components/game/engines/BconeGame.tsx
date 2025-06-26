@@ -4,9 +4,10 @@ import { ColorButtons } from "@/components/game/ColorButtons";
 import { NumberGrid } from "@/components/game/NumberGrid";
 import { ModernGameRecords } from "@/components/game/ModernGameRecords";
 import { BetPopup } from "@/components/game/BetPopup";
-import { useGameEngine } from "@/hooks/useGameEngine";
-import { useSupabasePeriod } from "@/hooks/useSupabasePeriod";
+import { useBackendGameEngine } from "@/hooks/useBackendGameEngine";
+import { useBackendPeriod } from "@/hooks/useBackendPeriod";
 import { getDurationFromGameMode } from "@/lib/gameUtils";
+import { useAuth } from "@/hooks/useAuth";
 
 interface BconeGameProps {
   userBalance: number;
@@ -16,8 +17,9 @@ interface BconeGameProps {
 
 export const BconeGame = ({ userBalance, gameMode, userId }: BconeGameProps) => {
   const duration = getDurationFromGameMode(gameMode);
-  const { currentPeriod, timeLeft, isLoading, error } = useSupabasePeriod(duration);
-  const { userBets, placeBet, isLoading: isBetLoading } = useGameEngine("Bcone", gameMode, userId);
+  const { currentPeriod, timeLeft, isLoading, error } = useBackendPeriod(duration);
+  const { userBets, placeBet, isLoading: isBetLoading } = useBackendGameEngine("Bcone", gameMode);
+  const { userProfile } = useAuth();
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<"color" | "number">("color");
@@ -47,9 +49,10 @@ export const BconeGame = ({ userBalance, gameMode, userId }: BconeGameProps) => 
   };
 
   const isBettingClosed = timeLeft <= 5;
+  const displayBalance = userProfile?.balance || userBalance;
 
-  if (isLoading) return <div className="flex justify-center p-4">Loading period...</div>;
-  if (error) return <div className="flex justify-center p-4 text-red-500">Error loading period: {error}</div>;
+  if (isLoading) return <div className="flex justify-center p-4">Loading...</div>;
+  if (error) return <div className="flex justify-center p-4 text-red-500">Error: {error}</div>;
 
   return (
     <>
@@ -61,26 +64,26 @@ export const BconeGame = ({ userBalance, gameMode, userId }: BconeGameProps) => 
         </div>
         <div className="flex justify-between items-center">
           <span className="text-sm text-gray-950 font-semibold">Count Down</span>
-          <span className={`text-lg font-bold transition-all duration-300 ${isBettingClosed ? 'text-black opacity-50 blur-[1px]' : 'text-black'}`}>
+          <span className={`text-lg font-bold ${isBettingClosed ? "opacity-50 blur-[1px]" : ""}`}>
             {formatTime(timeLeft)}
           </span>
         </div>
       </div>
 
-      {/* Betting Controls */}
+      {/* UI */}
       <ColorButtons onColorSelect={handleColorSelect} disabled={isBettingClosed || isBetLoading} />
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed || isBetLoading} />
 
-      {/* Bet Records */}
+      {/* Records */}
       <ModernGameRecords gameType="Bcone" duration={duration} />
 
-      {/* Popup */}
+      {/* Bet popup */}
       <BetPopup
         isOpen={showBetPopup}
         onClose={() => setShowBetPopup(false)}
         selectedType={selectedBetType}
         selectedValue={selectedBetValue}
-        userBalance={userBalance}
+        userBalance={displayBalance}
         onConfirmBet={handleConfirmBet}
         disabled={isBettingClosed || isBetLoading}
       />

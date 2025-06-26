@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { BettingHistorySection } from "./BettingHistorySection";
 import { TransactionHistorySection } from "./TransactionHistorySection";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 interface MySectionProps {
   userBalance: number;
@@ -20,13 +21,14 @@ export const MySection = ({
   userBalance, 
   userId, 
   mobile, 
-  onLogout, 
+  onLogout: originalOnLogout, 
   onNavigateToPromotion,
   gameRecords 
 }: MySectionProps) => {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [activeHistoryTab, setActiveHistoryTab] = useState<string | null>(null);
   const { toast } = useToast();
+  const { signOut, userProfile } = useAuth();
 
   const handleSectionToggle = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);
@@ -44,9 +46,14 @@ export const MySection = ({
     });
   };
 
+  const handleLogout = async () => {
+    await signOut();
+    originalOnLogout();
+  };
+
   const getUserInitials = () => {
-    if (mobile) {
-      return mobile.slice(-2).toUpperCase();
+    if (userProfile?.mobile) {
+      return userProfile.mobile.slice(-2).toUpperCase();
     }
     return userId.slice(-2).toUpperCase();
   };
@@ -121,8 +128,8 @@ export const MySection = ({
             </Avatar>
             <div>
               <h2 className="text-xl font-semibold">User ID: {userId}</h2>
-              {mobile && (
-                <p className="text-white/80 text-sm mt-1">Mobile: {mobile}</p>
+              {(userProfile?.mobile || mobile) && (
+                <p className="text-white/80 text-sm mt-1">Mobile: {userProfile?.mobile || mobile}</p>
               )}
             </div>
           </div>
@@ -198,7 +205,7 @@ export const MySection = ({
       {/* Logout Button */}
       <div className="p-4">
         <Button
-          onClick={onLogout}
+          onClick={handleLogout}
           variant="outline"
           className="w-full flex items-center gap-2 text-red-600 border-red-200 hover:bg-red-50"
         >

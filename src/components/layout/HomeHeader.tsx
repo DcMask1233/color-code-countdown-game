@@ -1,6 +1,7 @@
 
-import { RefreshCcw } from "lucide-react";
+import { RefreshCcw, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 interface HomeHeaderProps {
   balance: number;
@@ -17,17 +18,38 @@ export const HomeHeader = ({
   onWithdraw,
   onRefresh
 }: HomeHeaderProps) => {
+  const { signOut, refreshUserProfile } = useAuth();
+
+  const handleRefresh = async () => {
+    await refreshUserProfile();
+    onRefresh();
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+  };
+
   return (
     <div className="bg-white p-4 border-b border-gray-200">
-      <div className="text-sm text-gray-600 mb-3">
-        ID: {userId}
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-sm text-gray-600">
+          ID: {userId}
+        </div>
+        <Button 
+          onClick={handleLogout}
+          size="sm"
+          variant="ghost"
+          className="text-gray-500 hover:text-red-600"
+        >
+          <LogOut size={16} />
+        </Button>
       </div>
       
       <div className="flex items-start justify-between">
         <div className="flex flex-col">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-gray-700 text-sm">Balance</span>
-            <button onClick={onRefresh} className="p-1 hover:bg-gray-100 rounded">
+            <button onClick={handleRefresh} className="p-1 hover:bg-gray-100 rounded">
               <RefreshCcw size={14} className="text-gray-500" />
             </button>
           </div>
