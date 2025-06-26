@@ -22,18 +22,24 @@ export const useGameResults = (gameType: string, duration: number) => {
   const { toast } = useToast();
 
   const RECORDS_PER_PAGE = 10;
+  const MAX_RESULTS = 2500;
 
   const fetchResults = async (page: number = 1) => {
     try {
       setLoading(true);
       const offset = (page - 1) * RECORDS_PER_PAGE;
       
-      // First get total count
+      // Convert gameType to lowercase to match database values
+      const dbGameType = gameType.toLowerCase();
+      
+      // First get total count (limited to MAX_RESULTS)
       const { count, error: countError } = await supabase
         .from('game_results')
         .select('*', { count: 'exact', head: true })
-        .eq('game_type', gameType)
-        .eq('duration', duration);
+        .eq('game_type', dbGameType)
+        .eq('duration', duration)
+        .order('period', { ascending: false })
+        .limit(MAX_RESULTS);
 
       if (countError) {
         console.error('Error counting records:', countError);
@@ -45,14 +51,15 @@ export const useGameResults = (gameType: string, duration: number) => {
         return;
       }
 
-      setTotalCount(count || 0);
-      setTotalPages(Math.ceil((count || 0) / RECORDS_PER_PAGE));
+      const limitedCount = Math.min(count || 0, MAX_RESULTS);
+      setTotalCount(limitedCount);
+      setTotalPages(Math.ceil(limitedCount / RECORDS_PER_PAGE));
       
       // Then get the actual data
       const { data, error } = await supabase
         .from('game_results')
         .select('*')
-        .eq('game_type', gameType)
+        .eq('game_type', dbGameType)
         .eq('duration', duration)
         .order('period', { ascending: false })
         .range(offset, offset + RECORDS_PER_PAGE - 1);
@@ -93,6 +100,18 @@ export const useGameResults = (gameType: string, duration: number) => {
     }
   };
 
+  const goToFirstPage = () => {
+    if (currentPage !== 1) {
+      goToPage(1);
+    }
+  };
+
+  const goToLastPage = () => {
+    if (currentPage !== totalPages) {
+      goToPage(totalPages);
+    }
+  };
+
   useEffect(() => {
     setCurrentPage(1);
     fetchResults(1);
@@ -106,15 +125,15 @@ export const useGameResults = (gameType: string, duration: number) => {
           event: 'INSERT',
           schema: 'public',
           table: 'game_results',
-          filter: `game_type=eq.${gameType} AND duration=eq.${duration}`
+          filter: `game_type=eq.${gameType.toLowerCase()} AND duration=eq.${duration}`
         },
         (payload) => {
           console.log('New game result:', payload.new);
           // If we're on page 1, add the new result to the top
           if (currentPage === 1) {
             setResults(prev => [payload.new as GameResult, ...prev.slice(0, RECORDS_PER_PAGE - 1)]);
-            setTotalCount(prev => prev + 1);
-            setTotalPages(prev => Math.ceil((totalCount + 1) / RECORDS_PER_PAGE));
+            setTotalCount(prev => Math.min(prev + 1, MAX_RESULTS));
+            setTotalPages(prev => Math.ceil(Math.min(totalCount + 1, MAX_RESULTS) / RECORDS_PER_PAGE));
           }
         }
       )
@@ -134,6 +153,8 @@ export const useGameResults = (gameType: string, duration: number) => {
     goToPage,
     nextPage,
     prevPage,
+    goToFirstPage,
+    goToLastPage,
     refetch: () => fetchResults(currentPage)
   };
 };

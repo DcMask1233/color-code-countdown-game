@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -17,7 +18,9 @@ export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
     totalPages, 
     totalCount, 
     nextPage, 
-    prevPage 
+    prevPage,
+    goToFirstPage,
+    goToLastPage
   } = useGameResults(gameType, duration);
 
   const getResultBadge = (colors: string[] | null) => {
@@ -98,6 +101,8 @@ export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
         totalItems={totalCount}
         onNextPage={nextPage}
         onPrevPage={prevPage}
+        onFirstPage={goToFirstPage}
+        onLastPage={goToLastPage}
       />
     </div>
   );
