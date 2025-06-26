@@ -10,12 +10,13 @@ import { getDurationFromGameMode } from "@/lib/gameUtils";
 interface EmerdGameProps {
   userBalance: number;
   gameMode: "Wingo1min" | "Wingo3min" | "Wingo5min";
+  userId: string;
 }
 
-export const EmerdGame = ({ userBalance, gameMode }: EmerdGameProps) => {
+export const EmerdGame = ({ userBalance, gameMode, userId }: EmerdGameProps) => {
   const duration = getDurationFromGameMode(gameMode);
   const { currentPeriod, timeLeft, isLoading, error } = useSupabasePeriod(duration);
-  const { userBets, placeBet } = useGameEngine("Emerd", gameMode);
+  const { userBets, placeBet } = useGameEngine("Emerd", gameMode, userId);
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<"color" | "number">("color");
