@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { GameMode, GameType } from "@/lib/periodUtils";
 
@@ -12,17 +12,10 @@ interface UserBet {
   payout?: number;
 }
 
-interface GameResult {
-  period: string;
-  created_at: string;
-  duration: number;
-}
-
 export function useGameEngine(gameType: GameType, gameMode: GameMode) {
   const [currentPeriod, setCurrentPeriod] = useState<string>("");
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [userBets, setUserBets] = useState<UserBet[]>([]);
-  const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
   // Duration map from gameMode
   const durationMap: Record<GameMode, number> = {
@@ -31,47 +24,29 @@ export function useGameEngine(gameType: GameType, gameMode: GameMode) {
     Wingo5min: 300,
   };
 
-  const fetchLatestPeriod = async () => {
-    const { data, error } = await supabase
-      .from("game_results")
-      .select("period, created_at")
-      .eq("game_type", gameType)
-      .eq("duration", durationMap[gameMode])
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
+  const fetchPeriodInfo = async () => {
+    const { data, error } = await supabase.rpc("generate_period_info", {
+      p_game_type: gameType,
+      p_duration: durationMap[gameMode],
+    });
 
     if (error || !data) {
-      console.error("⚠️ Failed to fetch current period:", error);
+      console.error("❌ Failed to fetch period info:", error);
       return;
     }
 
-    const startTime = new Date(data.created_at).getTime();
-    const endTime = startTime + durationMap[gameMode] * 1000;
-    const now = Date.now();
-
-    setCurrentPeriod(data.period);
-    setTimeLeft(Math.max(0, Math.floor((endTime - now) / 1000)));
+    setCurrentPeriod(data.current_period);
+    setTimeLeft(data.time_left_seconds);
   };
 
   useEffect(() => {
-    fetchLatestPeriod(); // Initial load
+    fetchPeriodInfo();
 
-    if (countdownRef.current) clearInterval(countdownRef.current);
+    const interval = setInterval(() => {
+      fetchPeriodInfo();
+    }, 5000); // Poll every 5 seconds
 
-    countdownRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          fetchLatestPeriod(); // Refresh next period
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => {
-      if (countdownRef.current) clearInterval(countdownRef.current);
-    };
+    return () => clearInterval(interval);
   }, [gameType, gameMode]);
 
   const placeBet = async (
