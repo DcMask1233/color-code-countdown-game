@@ -2,6 +2,8 @@ import React from "react";
 import { useSupabasePeriod } from "@/hooks/useSupabasePeriod";
 import { useGameEngine } from "@/hooks/useGameEngine";
 
+import { getNumberColor } from "@/lib/gameUtils";
+
 type GameType = string;
 type GameMode = "Wingo1min" | "Wingo3min" | "Wingo5min";
 
@@ -14,6 +16,7 @@ interface GameRecord {
 interface WingoGamePageProps {
   gameType: GameType;
   gameMode: GameMode;
+  userId: string;
   userBalance: number;
   onBackToHome: () => void;
   onRoundComplete: (newPeriod: string, winningNumber: number, gameType: string) => void;
@@ -30,6 +33,7 @@ const durationMap: Record<GameMode, number> = {
 export default function WingoGamePage({
   gameType,
   gameMode,
+  userId,
   userBalance,
   onBackToHome,
   onRoundComplete,
@@ -37,7 +41,7 @@ export default function WingoGamePage({
   onGameRecordsUpdate,
 }: WingoGamePageProps) {
   const { currentPeriod, timeLeft, isLoading, error } = useSupabasePeriod(durationMap[gameMode]);
-  const { userBets, placeBet } = useGameEngine(gameType, gameMode);
+  const { userBets, placeBet } = useGameEngine(gameType, gameMode, userId);
 
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
@@ -48,7 +52,7 @@ export default function WingoGamePage({
       return;
     }
 
-    const betAmount = 100; // example fixed bet amount, you can make it dynamic
+    const betAmount = 100;
 
     if (userBalance < betAmount) {
       alert("Insufficient balance");
@@ -60,11 +64,7 @@ export default function WingoGamePage({
       alert("Failed to place bet");
     } else {
       alert("Bet placed! Waiting for result...");
-
-      // Deduct balance locally, actual balance update should come from backend confirmation later
       onBalanceUpdate(-betAmount);
-      
-      // Do NOT generate result here - wait for backend to send new results and update game records accordingly
     }
   };
 
