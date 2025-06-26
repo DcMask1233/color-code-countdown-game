@@ -11,10 +11,7 @@ interface UserBet {
   payout?: number;
 }
 
-type GameType = string;
-type GameMode = string;
-
-export function useGameEngine(gameType: GameType, gameMode: GameMode) {
+export function useGameEngine(gameType: string, gameMode: string) {
   const [userBets, setUserBets] = useState<UserBet[]>([]);
 
   const placeBet = async (
