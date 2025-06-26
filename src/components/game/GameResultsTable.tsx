@@ -23,6 +23,18 @@ export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
     goToLastPage
   } = useGameResults(gameType, duration);
 
+  const formatPeriod = (period: string) => {
+    // Period format is YYYYMMDDRR (e.g., 202406261234)
+    if (period.length >= 11) {
+      const year = period.substring(0, 4);
+      const month = period.substring(4, 6);
+      const day = period.substring(6, 8);
+      const round = period.substring(8);
+      return `${year}${month}${day}${round}`;
+    }
+    return period;
+  };
+
   const getResultBadge = (colors: string[] | null) => {
     if (!colors || colors.length === 0) return null;
     
@@ -62,7 +74,7 @@ export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
     );
   }
 
-  const startIndex = currentPage * 10;
+  const startIndex = (currentPage - 1) * 10;
   const endIndex = Math.min(startIndex + 10, totalCount);
 
   return (
@@ -79,7 +91,7 @@ export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
           <TableBody>
             {results.map((record) => (
               <TableRow key={record.id} className="hover:bg-gray-50">
-                <TableCell className="font-medium">{record.period}</TableCell>
+                <TableCell className="font-medium">{formatPeriod(record.period)}</TableCell>
                 <TableCell>
                   <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-800 font-semibold">
                     {record.number}
