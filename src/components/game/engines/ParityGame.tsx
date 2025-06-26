@@ -1,10 +1,11 @@
+
 import { useState } from "react";
 import { ColorButtons } from "@/components/game/ColorButtons";
 import { NumberGrid } from "@/components/game/NumberGrid";
 import { ModernGameRecords } from "@/components/game/ModernGameRecords";
 import { BetPopup } from "@/components/game/BetPopup";
 import { useGameEngine } from "@/hooks/useGameEngine";
-import { useSupabasePeriod } from "@/hooks/useSupabasePeriod";
+import { usePeriodCalculation } from "@/hooks/usePeriodCalculation";
 import { getDurationFromGameMode } from "@/lib/gameUtils";
 
 interface ParityGameProps {
@@ -14,9 +15,9 @@ interface ParityGameProps {
 }
 
 export const ParityGame = ({ userBalance, gameMode, userId }: ParityGameProps) => {
-  const duration = getDurationFromGameMode(gameMode);
-  const { currentPeriod, timeLeft, isLoading, error } = useSupabasePeriod(duration);
-  const { userBets, placeBet } = useGameEngine("Parity", gameMode, userId);
+  const durationSeconds = getDurationFromGameMode(gameMode);
+  const { currentPeriod, timeLeft, isLoading, error } = usePeriodCalculation(durationSeconds);
+  const { userBets, placeBet, isLoading: isBetLoading } = useGameEngine("Parity", gameMode, userId);
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<"color" | "number">("color");
@@ -47,8 +48,8 @@ export const ParityGame = ({ userBalance, gameMode, userId }: ParityGameProps) =
 
   const isBettingClosed = timeLeft <= 5;
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (isLoading) return <div className="flex justify-center p-4">Loading...</div>;
+  if (error) return <div className="flex justify-center p-4 text-red-500">Error: {error}</div>;
 
   return (
     <>
@@ -71,14 +72,11 @@ export const ParityGame = ({ userBalance, gameMode, userId }: ParityGameProps) =
       </div>
 
       {/* Betting UI */}
-      <ColorButtons onColorSelect={handleColorSelect} disabled={isBettingClosed} />
-      <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed} />
+      <ColorButtons onColorSelect={handleColorSelect} disabled={isBettingClosed || isBetLoading} />
+      <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed || isBetLoading} />
 
       {/* Bet Records */}
-      <ModernGameRecords
-        gameType="Parity"
-        duration={duration}
-      />
+      <ModernGameRecords gameType="Parity" duration={durationSeconds} />
 
       {/* Bet Popup */}
       <BetPopup
@@ -88,7 +86,7 @@ export const ParityGame = ({ userBalance, gameMode, userId }: ParityGameProps) =
         selectedValue={selectedBetValue}
         userBalance={userBalance}
         onConfirmBet={handleConfirmBet}
-        disabled={isBettingClosed}
+        disabled={isBettingClosed || isBetLoading}
       />
     </>
   );

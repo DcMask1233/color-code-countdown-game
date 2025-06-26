@@ -18,11 +18,11 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    console.log('🎮 Starting game result generation...');
+    console.log('🎮 Starting automated game result generation...');
 
     // Generate results for all game types and durations
     const gameTypes = ['parity', 'sapre', 'bcone', 'emerd'];
-    const durations = [60, 180, 300]; // 1min, 3min, 5min
+    const durations = [60, 180, 300]; // 1min, 3min, 5min in seconds
 
     const results = [];
 
@@ -30,29 +30,42 @@ Deno.serve(async (req) => {
       for (const duration of durations) {
         console.log(`🎯 Generating result for ${gameType} ${duration}s`);
         
-        const { data, error } = await supabaseClient.rpc('insert_game_result', {
-          p_game_type: gameType,
-          p_duration: duration
-        });
-
-        if (error) {
-          console.error(`❌ Error for ${gameType} ${duration}s:`, error);
-        } else {
-          console.log(`✅ Result for ${gameType} ${duration}s:`, data);
-          results.push({
-            gameType,
-            duration,
-            result: data[0]
+        try {
+          const { data, error } = await supabaseClient.rpc('insert_game_result', {
+            p_game_type: gameType,
+            p_duration: duration
           });
+
+          if (error) {
+            console.error(`❌ Error for ${gameType} ${duration}s:`, error);
+            continue;
+          }
+
+          if (data && data.length > 0) {
+            const result = data[0];
+            console.log(`✅ Result for ${gameType} ${duration}s:`, result);
+            results.push({
+              gameType,
+              duration,
+              period: result.period,
+              number: result.number,
+              colors: result.result_color
+            });
+          }
+        } catch (funcError) {
+          console.error(`💥 Function error for ${gameType} ${duration}s:`, funcError);
         }
       }
     }
 
+    console.log(`🏁 Generated ${results.length} results successfully`);
+
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'Game results generated successfully',
-        results 
+        message: `Generated ${results.length} game results and settled bets`,
+        results,
+        timestamp: new Date().toISOString()
       }),
       { 
         headers: { 
@@ -63,11 +76,12 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('💥 Error in generate-game-results function:', error);
+    console.error('💥 Critical error in generate-game-results function:', error);
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message 
+        error: error.message,
+        timestamp: new Date().toISOString()
       }),
       { 
         status: 500,
