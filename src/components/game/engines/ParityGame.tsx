@@ -10,12 +10,13 @@ import { getDurationFromGameMode } from "@/lib/gameUtils";
 interface ParityGameProps {
   userBalance: number;
   gameMode: "Wingo1min" | "Wingo3min" | "Wingo5min";
+  userId: string;
 }
 
-export const ParityGame = ({ userBalance, gameMode }: ParityGameProps) => {
+export const ParityGame = ({ userBalance, gameMode, userId }: ParityGameProps) => {
   const duration = getDurationFromGameMode(gameMode);
   const { currentPeriod, timeLeft, isLoading, error } = useSupabasePeriod(duration);
-  const { userBets, placeBet } = useGameEngine("Parity", gameMode);
+  const { userBets, placeBet } = useGameEngine("Parity", gameMode, userId);
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<"color" | "number">("color");
