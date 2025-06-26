@@ -8,88 +8,53 @@ interface UseSupabasePeriodReturn {
   error: string | null;
 }
 
-export const useSupabasePeriod = (duration: number): UseSupabasePeriodReturn => {
+export const useSupabasePeriod = (
+  gameType: string,
+  duration: number
+): UseSupabasePeriodReturn => {
   const [currentPeriod, setCurrentPeriod] = useState('');
   const [timeLeft, setTimeLeft] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCurrentPeriod = useCallback(async () => {
+  const fetchPeriodInfo = useCallback(async () => {
     try {
-      const { data, error } = await supabase.rpc('generate_period', {
-        game_duration: duration
+      const { data, error } = await supabase.rpc("generate_period_info", {
+        p_game_type: gameType,
+        p_duration: duration,
       });
 
-      if (error) {
-        console.error('Error fetching period:', error);
-        setError(error.message);
-        return null;
+      if (error || !data) {
+        console.error("❌ Error fetching period info:", error);
+        setError(error?.message ?? "No data returned");
+        return;
       }
 
-      return data;
+      setCurrentPeriod(data.period);
+      setTimeLeft(data.time_left);
+      setError(null);
+      setIsLoading(false);
     } catch (err) {
-      console.error('Error in fetchCurrentPeriod:', err);
-      setError('Failed to fetch period');
-      return null;
+      console.error("💥 Exception in fetchPeriodInfo:", err);
+      setError("Failed to fetch period info");
+      setIsLoading(false);
     }
-  }, [duration]);
-
-  const calculateTimeLeft = useCallback(() => {
-    const nowUTC = new Date();
-    const startOfDayUTC = new Date(Date.UTC(
-      nowUTC.getUTCFullYear(),
-      nowUTC.getUTCMonth(),
-      nowUTC.getUTCDate()
-    ));
-    const secondsSinceStart = Math.floor((nowUTC.getTime() - startOfDayUTC.getTime()) / 1000);
-    const secondsInCurrentRound = secondsSinceStart % duration;
-    const remaining = duration - secondsInCurrentRound;
-    return remaining;
-  }, [duration]);
+  }, [gameType, duration]);
 
   useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-    let periodCheckInterval: NodeJS.Timeout;
+    fetchPeriodInfo(); // Initial load
 
-    const updatePeriodAndTime = async () => {
-      const period = await fetchCurrentPeriod();
-      if (period) {
-        setCurrentPeriod(period);
-        setIsLoading(false);
-        setError(null);
-      }
+    const interval = setInterval(() => {
+      fetchPeriodInfo(); // Re-poll every 3 seconds
+    }, 3000);
 
-      const remaining = calculateTimeLeft();
-      setTimeLeft(remaining);
-    };
-
-    updatePeriodAndTime();
-
-    intervalId = setInterval(() => {
-      const remaining = calculateTimeLeft();
-      setTimeLeft(remaining);
-    }, 1000);
-
-    periodCheckInterval = setInterval(async () => {
-      const remaining = calculateTimeLeft();
-      if (remaining <= 2 || remaining >= duration - 2) {
-        const period = await fetchCurrentPeriod();
-        if (period && period !== currentPeriod) {
-          setCurrentPeriod(period);
-        }
-      }
-    }, 10000);
-
-    return () => {
-      clearInterval(intervalId);
-      clearInterval(periodCheckInterval);
-    };
-  }, [duration, fetchCurrentPeriod, calculateTimeLeft, currentPeriod]);
+    return () => clearInterval(interval);
+  }, [fetchPeriodInfo]);
 
   return {
     currentPeriod,
     timeLeft,
     isLoading,
-    error
+    error,
   };
 };
