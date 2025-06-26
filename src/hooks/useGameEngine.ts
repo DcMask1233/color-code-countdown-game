@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { GameMode, GameType } from "@/lib/periodUtils";
 
 interface UserBet {
   period: string;
@@ -11,6 +10,9 @@ interface UserBet {
   result?: "win" | "lose";
   payout?: number;
 }
+
+type GameType = string;
+type GameMode = string;
 
 export function useGameEngine(gameType: GameType, gameMode: GameMode) {
   const [userBets, setUserBets] = useState<UserBet[]>([]);
