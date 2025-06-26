@@ -10,12 +10,13 @@ import { getDurationFromGameMode } from "@/lib/gameUtils"; // ✅
 interface BconeGameProps {
   userBalance: number;
   gameMode: "Wingo1min" | "Wingo3min" | "Wingo5min";
+  userId: string;
 }
 
-export const BconeGame = ({ userBalance, gameMode }: BconeGameProps) => {
+export const BconeGame = ({ userBalance, gameMode, userId }: BconeGameProps) => {
   const duration = getDurationFromGameMode(gameMode);
   const { currentPeriod, timeLeft, isLoading, error } = useSupabasePeriod(duration);
-  const { userBets, placeBet } = useGameEngine("Bcone", gameMode);
+  const { userBets, placeBet } = useGameEngine("Bcone", gameMode, userId);
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<"color" | "number">("color");
