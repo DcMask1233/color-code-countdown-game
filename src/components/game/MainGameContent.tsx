@@ -4,7 +4,6 @@ import { PromotionSection } from "@/components/layout/PromotionSection";
 import { MySection } from "@/components/user/MySection";
 import WingoGamePage from "@/components/game/WingoGamePage";
 import { useToast } from "@/hooks/use-toast";
-import { getNumberColor } from "@/lib/gameUtils";
 
 interface GameRecord {
   period: string;
@@ -61,22 +60,7 @@ export const MainGameContent = ({
     toast({ title: "Refreshed", description: "Game data refreshed!" });
   };
 
-  const handleRoundCompleteWithRecords = (
-    newPeriod: string,
-    winningNumber: number,
-    gameType: string
-  ) => {
-    const newRecord: GameRecord = {
-      period: newPeriod,
-      number: winningNumber,
-      color: getNumberColor(winningNumber),
-    };
-
-    const updatedRecords = [newRecord, ...gameRecords].slice(0, 10);
-    onGameRecordsUpdate(updatedRecords);
-    onRoundComplete(newPeriod, winningNumber, gameType);
-  };
-
+  // === HOME TAB ===
   if (activeBottomTab === "home") {
     if (selectedGameMode === null) {
       return (
@@ -91,31 +75,21 @@ export const MainGameContent = ({
       );
     }
 
-    if (
-      selectedGameMode === "Wingo1min" ||
-      selectedGameMode === "Wingo3min" ||
-      selectedGameMode === "Wingo5min"
-    ) {
-      return (
-        <WingoGamePage
-          gameType="Wingo"
-          gameMode={selectedGameMode}
-          userBalance={userBalance}
-          onBackToHome={onBackToHome}
-          onRoundComplete={handleRoundCompleteWithRecords}
-          onBalanceUpdate={onBalanceUpdate}
-          onGameRecordsUpdate={onGameRecordsUpdate}
-        />
-      );
-    }
-
     return (
-      <div className="p-6 max-w-md mx-auto text-center text-red-600">
-        Unsupported game mode selected.
-      </div>
+      <WingoGamePage
+        gameType="Wingo"
+        gameMode={selectedGameMode}
+        userBalance={userBalance}
+        userId={userId}
+        onBackToHome={onBackToHome}
+        onRoundComplete={onRoundComplete}
+        onBalanceUpdate={onBalanceUpdate}
+        onGameRecordsUpdate={onGameRecordsUpdate}
+      />
     );
   }
 
+  // === WALLET TAB ===
   if (activeBottomTab === "wallet") {
     return (
       <WalletSection
@@ -124,26 +98,20 @@ export const MainGameContent = ({
         totalDepositAmount={totalDepositAmount}
         totalWithdrawAmount={totalWithdrawAmount}
         onBack={onBackToHome}
-        onDeposit={() =>
-          toast({ title: "Deposit", description: "Deposit functionality coming soon!" })
-        }
-        onWithdraw={() =>
-          toast({ title: "Withdraw", description: "Withdraw functionality coming soon!" })
-        }
-        onDepositHistory={() =>
-          toast({ title: "Deposit History", description: "History functionality coming soon!" })
-        }
-        onWithdrawHistory={() =>
-          toast({ title: "Withdrawal History", description: "History functionality coming soon!" })
-        }
+        onDeposit={() => toast({ title: "Deposit", description: "Coming soon!" })}
+        onWithdraw={() => toast({ title: "Withdraw", description: "Coming soon!" })}
+        onDepositHistory={() => toast({ title: "Deposit History", description: "Coming soon!" })}
+        onWithdrawHistory={() => toast({ title: "Withdraw History", description: "Coming soon!" })}
       />
     );
   }
 
+  // === PROMOTION TAB ===
   if (activeBottomTab === "promotion") {
     return <PromotionSection />;
   }
 
+  // === MY TAB ===
   if (activeBottomTab === "my") {
     const savedUser = localStorage.getItem("colorGameUser");
     const mobile = savedUser ? JSON.parse(savedUser)?.mobile : undefined;
