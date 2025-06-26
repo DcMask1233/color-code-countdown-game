@@ -1,8 +1,7 @@
+
 import { BottomNavigation, BottomTab } from "@/components/layout/BottomNavigation";
 import { MainGameContent } from "@/components/game/MainGameContent";
 import { useMainGameLogic } from "@/hooks/useMainGameLogic";
-
-type GameMode = "Wingo1min" | "Wingo3min" | "Wingo5min";
 
 interface GameRecord {
   period: string;
@@ -37,7 +36,7 @@ export const MainGame = ({
 }: MainGameProps) => {
   const {
     activeBottomTab,
-    selectedGameMode,
+    selectedGame,
     setActiveBottomTab,
     handleGameSelect,
     handleBackToHome,
@@ -55,7 +54,7 @@ export const MainGame = ({
     <div className="min-h-screen bg-gray-100 pb-20">
       <MainGameContent
         activeBottomTab={activeBottomTab}
-        selectedGameMode={selectedGameMode}
+        selectedGame={selectedGame}
         userBalance={userBalance}
         userId={userId}
         totalBetAmount={totalBetAmount}
@@ -73,7 +72,7 @@ export const MainGame = ({
 
       <BottomNavigation
         activeTab={activeBottomTab}
-        onTabChange={(tab: BottomTab) => setActiveBottomTab(tab)} // ✅ force correct type
+        onTabChange={(tab: BottomTab) => setActiveBottomTab(tab)}
       />
     </div>
   );

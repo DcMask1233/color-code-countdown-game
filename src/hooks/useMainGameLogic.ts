@@ -1,6 +1,5 @@
-import { useState } from "react";
 
-type GameMode = "Wingo1min" | "Wingo3min" | "Wingo5min";
+import { useState } from "react";
 
 interface GameRecord {
   period: string;
@@ -24,24 +23,21 @@ export function useMainGameLogic({
   onGameRecordsUpdate
 }: UseMainGameLogicProps) {
   const [activeBottomTab, setActiveBottomTab] = useState<"home" | "wallet" | "promotion" | "my">("home");
-  const [selectedGameMode, setSelectedGameMode] = useState<GameMode | null>(null);
+  const [selectedGame, setSelectedGame] = useState<string | null>(null);
 
-  const handleGameSelect = (mode: string) => {
-    if (["Wingo1min", "Wingo3min", "Wingo5min"].includes(mode)) {
-      setSelectedGameMode(mode as GameMode);
-      setActiveBottomTab("home"); // ✅ Required to render game interface
-    } else {
-      console.warn("Invalid game mode selected:", mode);
-    }
+  const handleGameSelect = (gameId: string) => {
+    console.log("Game selected:", gameId);
+    setSelectedGame(gameId);
+    setActiveBottomTab("home");
   };
 
   const handleBackToHome = () => {
-    setSelectedGameMode(null);
+    setSelectedGame(null);
   };
 
   const handleRoundComplete = (newPeriod: string, winningNumber: number, gameType: string) => {
     console.log(`Round completed for ${gameType}: Period ${newPeriod}, Winning Number: ${winningNumber}`);
-    // You can handle stats update or balance update here
+    // Handle stats update or balance update here if needed
   };
 
   const handleNavigateToPromotion = () => {
@@ -50,7 +46,7 @@ export function useMainGameLogic({
 
   return {
     activeBottomTab,
-    selectedGameMode,
+    selectedGame,
     setActiveBottomTab,
     handleGameSelect,
     handleBackToHome,

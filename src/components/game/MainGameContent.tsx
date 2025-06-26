@@ -1,8 +1,9 @@
+
 import { HomeSection } from "@/components/layout/HomeSection";
 import { WalletSection } from "@/components/wallet/WalletSection";
 import { PromotionSection } from "@/components/layout/PromotionSection";
 import { MySection } from "@/components/user/MySection";
-import WingoGamePage from "@/components/game/WingoGamePage";
+import { GamePage } from "@/components/game/GamePage";
 import { useToast } from "@/hooks/use-toast";
 
 interface GameRecord {
@@ -13,7 +14,7 @@ interface GameRecord {
 
 interface MainGameContentProps {
   activeBottomTab: "home" | "wallet" | "promotion" | "my";
-  selectedGameMode: "Wingo1min" | "Wingo3min" | "Wingo5min" | null;
+  selectedGame: string | null;
   userBalance: number;
   userId: string;
   totalBetAmount: number;
@@ -31,7 +32,7 @@ interface MainGameContentProps {
 
 export const MainGameContent = ({
   activeBottomTab,
-  selectedGameMode,
+  selectedGame,
   userBalance,
   userId,
   totalBetAmount,
@@ -62,7 +63,7 @@ export const MainGameContent = ({
 
   // === HOME TAB ===
   if (activeBottomTab === "home") {
-    if (selectedGameMode === null) {
+    if (selectedGame === null) {
       return (
         <HomeSection
           balance={userBalance}
@@ -76,15 +77,11 @@ export const MainGameContent = ({
     }
 
     return (
-      <WingoGamePage
-        gameType="Wingo"
-        gameMode={selectedGameMode}
+      <GamePage
+        selectedGame={selectedGame}
         userBalance={userBalance}
         userId={userId}
         onBackToHome={onBackToHome}
-        onRoundComplete={onRoundComplete}
-        onBalanceUpdate={onBalanceUpdate}
-        onGameRecordsUpdate={onGameRecordsUpdate}
       />
     );
   }
