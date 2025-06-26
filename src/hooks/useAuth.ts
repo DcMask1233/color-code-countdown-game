@@ -19,13 +19,8 @@ export const useAuth = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserProfile = async () => {
-    if (!session?.user) {
-      console.log('No session user found, skipping profile fetch');
-      return;
-    }
-    
-    console.log('Fetching user profile for user:', session.user.id);
+  const fetchUserProfile = async (userId: string) => {
+    console.log('Fetching user profile for user:', userId);
     
     try {
       const { data, error } = await supabase.rpc('get_user_info');
@@ -50,10 +45,9 @@ export const useAuth = () => {
           total_withdraw_amount: Number(profile.total_withdraw_amount)
         });
       } else {
-        console.log('No profile data found, user may not have been set up properly');
-        // For now, let's create a minimal profile to avoid blocking the UI
+        console.log('No profile data found, creating fallback profile');
         setUserProfile({
-          user_id: session.user.id,
+          user_id: userId,
           user_code: 'TEMP001',
           mobile: null,
           balance: 1000,
@@ -64,9 +58,8 @@ export const useAuth = () => {
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
-      // Create a fallback profile to avoid blocking the UI
       setUserProfile({
-        user_id: session.user.id,
+        user_id: userId,
         user_code: 'TEMP001',
         mobile: null,
         balance: 1000,
@@ -78,30 +71,32 @@ export const useAuth = () => {
   };
 
   const refreshUserProfile = async () => {
-    await fetchUserProfile();
+    if (user?.id) {
+      await fetchUserProfile(user.id);
+    }
   };
 
   useEffect(() => {
     console.log('Setting up auth state listener');
     
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', { event, session: !!session });
         setSession(session);
         setUser(session?.user ?? null);
-        setLoading(false);
         
         if (session?.user) {
           console.log('User authenticated, fetching profile');
-          // Fetch user profile after successful authentication
+          // Use the user ID from the session directly
           setTimeout(() => {
-            fetchUserProfile();
+            fetchUserProfile(session.user.id);
           }, 100);
         } else {
           console.log('No user session, clearing profile');
           setUserProfile(null);
         }
+        
+        setLoading(false);
       }
     );
 
@@ -111,13 +106,15 @@ export const useAuth = () => {
       console.log('Existing session found:', !!session);
       setSession(session);
       setUser(session?.user ?? null);
-      setLoading(false);
       
       if (session?.user) {
+        console.log('Found existing user, fetching profile');
         setTimeout(() => {
-          fetchUserProfile();
+          fetchUserProfile(session.user.id);
         }, 100);
       }
+      
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();

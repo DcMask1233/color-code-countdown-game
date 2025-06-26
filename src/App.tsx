@@ -38,11 +38,7 @@ function App() {
                   userBalance={userProfile.balance}
                   userId={userProfile.user_code}
                   onBalanceUpdate={() => {}} // No longer needed - handled by backend
-                  onLogout={async () => {
-                    console.log('Logging out...');
-                    const { signOut } = useAuth();
-                    await signOut();
-                  }}
+                  onLogout={() => {}} // Will be handled by MainGame
                   gameRecords={[]}
                   onGameRecordsUpdate={() => {}} // No longer needed
                   totalBetAmount={userProfile.total_bet_amount}
