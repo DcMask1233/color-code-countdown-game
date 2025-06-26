@@ -1,5 +1,3 @@
-
-import { GameSection } from "@/components/game/GameSection";
 import { BetPopup } from "@/components/game/BetPopup";
 import { useToast } from "@/hooks/use-toast";
 
