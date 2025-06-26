@@ -4,7 +4,8 @@ import { NumberGrid } from "@/components/game/NumberGrid";
 import { ModernGameRecords } from "@/components/game/ModernGameRecords";
 import { BetPopup } from "@/components/game/BetPopup";
 import { useGameEngine } from "@/hooks/useGameEngine";
-import { getDurationFromGameMode } from "@/lib/gameUtils"; // ✅ ADD THIS
+import { useSupabasePeriod } from "@/hooks/useSupabasePeriod";
+import { getDurationFromGameMode } from "@/lib/gameUtils"; // ✅
 
 interface BconeGameProps {
   userBalance: number;
@@ -12,14 +13,9 @@ interface BconeGameProps {
 }
 
 export const BconeGame = ({ userBalance, gameMode }: BconeGameProps) => {
-  const {
-    timeLeft,
-    currentPeriod,
-    isBettingClosed,
-    userBets,
-    placeBet,
-    formatTime
-  } = useGameEngine("Bcone", gameMode);
+  const duration = getDurationFromGameMode(gameMode);
+  const { currentPeriod, timeLeft, isLoading, error } = useSupabasePeriod(duration);
+  const { userBets, placeBet } = useGameEngine("Bcone", gameMode);
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<"color" | "number">("color");
@@ -38,9 +34,20 @@ export const BconeGame = ({ userBalance, gameMode }: BconeGameProps) => {
   };
 
   const handleConfirmBet = async (amount: number) => {
-    const success = await placeBet(selectedBetType, selectedBetValue, amount);
+    const success = await placeBet(selectedBetType, selectedBetValue, amount, currentPeriod);
     if (success) setShowBetPopup(false);
   };
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const s = (seconds % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
+
+  const isBettingClosed = timeLeft <= 5;
+
+  if (isLoading) return <div>Loading period...</div>;
+  if (error) return <div>Error loading period: {error}</div>;
 
   return (
     <>
@@ -63,7 +70,7 @@ export const BconeGame = ({ userBalance, gameMode }: BconeGameProps) => {
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed} />
 
       {/* Bet Records */}
-      <ModernGameRecords gameType="Bcone" duration={getDurationFromGameMode(gameMode)} />
+      <ModernGameRecords gameType="Bcone" duration={duration} />
 
       {/* Popup */}
       <BetPopup
