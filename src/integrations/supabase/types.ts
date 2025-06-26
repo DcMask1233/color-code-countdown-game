@@ -251,16 +251,25 @@ export type Database = {
       wallets: {
         Row: {
           balance: number
+          total_bet_amount: number | null
+          total_deposit_amount: number | null
+          total_withdraw_amount: number | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           balance?: number
+          total_bet_amount?: number | null
+          total_deposit_amount?: number | null
+          total_withdraw_amount?: number | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           balance?: number
+          total_bet_amount?: number | null
+          total_deposit_amount?: number | null
+          total_withdraw_amount?: number | null
           updated_at?: string | null
           user_id?: string
         }
