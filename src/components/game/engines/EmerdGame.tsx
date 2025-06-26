@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { ColorButtons } from "@/components/game/ColorButtons";
 import { NumberGrid } from "@/components/game/NumberGrid";
@@ -16,7 +17,7 @@ interface EmerdGameProps {
 export const EmerdGame = ({ userBalance, gameMode, userId }: EmerdGameProps) => {
   const duration = getDurationFromGameMode(gameMode);
   const { currentPeriod, timeLeft, isLoading, error } = useSupabasePeriod(duration);
-  const { userBets, placeBet } = useGameEngine("Emerd", gameMode, userId);
+  const { userBets, placeBet, isLoading: isBetLoading } = useGameEngine("Emerd", gameMode, userId);
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<"color" | "number">("color");
@@ -47,8 +48,8 @@ export const EmerdGame = ({ userBalance, gameMode, userId }: EmerdGameProps) => 
 
   const isBettingClosed = timeLeft <= 5;
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (isLoading) return <div className="flex justify-center p-4">Loading...</div>;
+  if (error) return <div className="flex justify-center p-4 text-red-500">Error: {error}</div>;
 
   return (
     <>
@@ -67,8 +68,8 @@ export const EmerdGame = ({ userBalance, gameMode, userId }: EmerdGameProps) => 
       </div>
 
       {/* Betting UI */}
-      <ColorButtons onColorSelect={handleColorSelect} disabled={isBettingClosed} />
-      <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed} />
+      <ColorButtons onColorSelect={handleColorSelect} disabled={isBettingClosed || isBetLoading} />
+      <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed || isBetLoading} />
 
       {/* Game Records */}
       <ModernGameRecords
@@ -84,7 +85,7 @@ export const EmerdGame = ({ userBalance, gameMode, userId }: EmerdGameProps) => 
         selectedValue={selectedBetValue}
         userBalance={userBalance}
         onConfirmBet={handleConfirmBet}
-        disabled={isBettingClosed}
+        disabled={isBettingClosed || isBetLoading}
       />
     </>
   );

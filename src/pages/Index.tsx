@@ -11,7 +11,8 @@ interface GameRecord {
 }
 
 const generateUserId = (): string => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  // Generate a proper UUID format
+  return crypto.randomUUID();
 };
 
 const Index = () => {
@@ -32,7 +33,17 @@ const Index = () => {
       setIsLoggedIn(true);
       const userData = JSON.parse(savedUser);
       setUserBalance(userData.balance || 1000);
-      setUserId(userData.userId || generateUserId());
+      
+      // Ensure userId is a proper UUID
+      let currentUserId = userData.userId;
+      if (!currentUserId || !currentUserId.includes('-')) {
+        currentUserId = generateUserId();
+        // Update localStorage with new UUID
+        const updatedUserData = { ...userData, userId: currentUserId };
+        localStorage.setItem('colorGameUser', JSON.stringify(updatedUserData));
+      }
+      
+      setUserId(currentUserId);
       setTotalBetAmount(userData.totalBetAmount || 0);
       setTotalDepositAmount(userData.totalDepositAmount || 0);
       setTotalWithdrawAmount(userData.totalWithdrawAmount || 0);

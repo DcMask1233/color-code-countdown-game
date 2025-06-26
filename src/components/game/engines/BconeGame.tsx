@@ -5,7 +5,7 @@ import { NumberGrid } from "@/components/game/NumberGrid";
 import { ModernGameRecords } from "@/components/game/ModernGameRecords";
 import { BetPopup } from "@/components/game/BetPopup";
 import { useGameEngine } from "@/hooks/useGameEngine";
-import { usePeriodCalculation } from "@/hooks/usePeriodCalculation";
+import { useSupabasePeriod } from "@/hooks/useSupabasePeriod";
 import { getDurationFromGameMode } from "@/lib/gameUtils";
 
 interface BconeGameProps {
@@ -15,8 +15,8 @@ interface BconeGameProps {
 }
 
 export const BconeGame = ({ userBalance, gameMode, userId }: BconeGameProps) => {
-  const durationSeconds = getDurationFromGameMode(gameMode);
-  const { currentPeriod, timeLeft, isLoading, error } = usePeriodCalculation(durationSeconds);
+  const duration = getDurationFromGameMode(gameMode);
+  const { currentPeriod, timeLeft, isLoading, error } = useSupabasePeriod(duration);
   const { userBets, placeBet, isLoading: isBetLoading } = useGameEngine("Bcone", gameMode, userId);
 
   const [showBetPopup, setShowBetPopup] = useState(false);
@@ -72,7 +72,7 @@ export const BconeGame = ({ userBalance, gameMode, userId }: BconeGameProps) => 
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed || isBetLoading} />
 
       {/* Bet Records */}
-      <ModernGameRecords gameType="Bcone" duration={durationSeconds} />
+      <ModernGameRecords gameType="Bcone" duration={duration} />
 
       {/* Popup */}
       <BetPopup

@@ -1,5 +1,5 @@
 
-import { GameRouter } from "@/components/game/GameRouter";
+import { DurationGamePage } from "@/components/game/DurationGamePage";
 
 interface GamePageProps {
   selectedGame: string;
@@ -9,7 +9,19 @@ interface GamePageProps {
 }
 
 export const GamePage = ({ selectedGame, userBalance, userId, onBackToHome }: GamePageProps) => {
-  // Parse the game selection (e.g., "parity-1min" -> gameType: "parity", gameMode: "Wingo1min")
+  // Check if it's a duration selection (1min, 3min, 5min) or old format
+  if (selectedGame === '1min' || selectedGame === '3min' || selectedGame === '5min') {
+    return (
+      <DurationGamePage
+        duration={selectedGame}
+        userBalance={userBalance}
+        userId={userId}
+        onBackToHome={onBackToHome}
+      />
+    );
+  }
+
+  // Handle legacy format (game-duration) for backward compatibility
   const [gameType, duration] = selectedGame.split('-');
   
   const gameMode = duration === '1min' ? 'Wingo1min' : 
@@ -37,12 +49,16 @@ export const GamePage = ({ selectedGame, userBalance, userId, onBackToHome }: Ga
       </div>
 
       <div className="container mx-auto px-4 py-4 max-w-md">
-        <GameRouter
-          gameType={gameType}
-          gameMode={gameMode}
-          userBalance={userBalance}
-          userId={userId}
-        />
+        {/* Legacy single game view - redirect to duration page */}
+        <div className="text-center py-8">
+          <p className="text-gray-600 mb-4">Redirecting to game tabs...</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Go to Game Tabs
+          </button>
+        </div>
       </div>
     </div>
   );
