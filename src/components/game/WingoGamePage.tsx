@@ -1,13 +1,25 @@
 import React from "react";
 import { useSupabasePeriod } from "@/hooks/useSupabasePeriod";
 import { useGameEngine } from "@/hooks/useGameEngine";
+import { getNumberColor } from "@/lib/gameUtils";
 
 type GameType = string;
 type GameMode = "Wingo1min" | "Wingo3min" | "Wingo5min";
 
+interface GameRecord {
+  period: string;
+  number: number;
+  color: string[];
+}
+
 interface WingoGamePageProps {
   gameType: GameType;
   gameMode: GameMode;
+  userBalance: number;
+  onBackToHome: () => void;
+  onRoundComplete: (newPeriod: string, winningNumber: number, gameType: string) => void;
+  onBalanceUpdate: (amount: number) => void;
+  onGameRecordsUpdate: (records: GameRecord[]) => void;
 }
 
 const durationMap: Record<GameMode, number> = {
@@ -16,7 +28,15 @@ const durationMap: Record<GameMode, number> = {
   Wingo5min: 300,
 };
 
-export default function WingoGamePage({ gameType, gameMode }: WingoGamePageProps) {
+export default function WingoGamePage({
+  gameType,
+  gameMode,
+  userBalance,
+  onBackToHome,
+  onRoundComplete,
+  onBalanceUpdate,
+  onGameRecordsUpdate,
+}: WingoGamePageProps) {
   const { currentPeriod, timeLeft, isLoading, error } = useSupabasePeriod(durationMap[gameMode]);
   const { userBets, placeBet } = useGameEngine(gameType, gameMode);
 
@@ -25,15 +45,34 @@ export default function WingoGamePage({ gameType, gameMode }: WingoGamePageProps
 
   const handleBet = async () => {
     const success = await placeBet("color", "red", 100, currentPeriod);
-    if (!success) alert("Failed to place bet");
-    else alert("Bet placed!");
+    if (!success) {
+      alert("Failed to place bet");
+    } else {
+      alert("Bet placed!");
+      onBalanceUpdate(-100); // Deduct ₹100 from balance
+
+      // Optional: simulate result generation (can be replaced by backend logic)
+      const winningNumber = Math.floor(Math.random() * 10);
+      const newRecord: GameRecord = {
+        period: currentPeriod,
+        number: winningNumber,
+        color: getNumberColor(winningNumber),
+      };
+
+      onGameRecordsUpdate([newRecord]);
+      onRoundComplete(currentPeriod, winningNumber, gameType);
+    }
   };
 
   return (
     <div className="p-6 max-w-md mx-auto">
+      <button onClick={onBackToHome} className="text-blue-600 underline mb-4">← Back</button>
+
       <h1 className="text-2xl font-bold mb-4">{gameType} - {gameMode}</h1>
+      <p><strong>Balance:</strong> ₹{userBalance}</p>
       <p>Current Period: {currentPeriod}</p>
       <p>Time Left: {Math.floor(timeLeft / 60)}m {timeLeft % 60}s</p>
+
       <button
         onClick={handleBet}
         disabled={timeLeft <= 5}
