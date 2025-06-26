@@ -4,7 +4,8 @@ import { NumberGrid } from "@/components/game/NumberGrid";
 import { ModernGameRecords } from "@/components/game/ModernGameRecords";
 import { BetPopup } from "@/components/game/BetPopup";
 import { useGameEngine } from "@/hooks/useGameEngine";
-import { getDurationFromGameMode } from "@/lib/gameUtils"; // ✅ Import here
+import { useSupabasePeriod } from "@/hooks/useSupabasePeriod";
+import { getDurationFromGameMode } from "@/lib/gameUtils";
 
 interface ParityGameProps {
   userBalance: number;
@@ -12,14 +13,9 @@ interface ParityGameProps {
 }
 
 export const ParityGame = ({ userBalance, gameMode }: ParityGameProps) => {
-  const {
-    currentPeriod,
-    timeLeft,
-    userBets,
-    placeBet,
-    isBettingClosed,
-    formatTime,
-  } = useGameEngine("Parity", gameMode); // ✅ Pass gameMode into engine
+  const duration = getDurationFromGameMode(gameMode);
+  const { currentPeriod, timeLeft, isLoading, error } = useSupabasePeriod(duration);
+  const { userBets, placeBet } = useGameEngine("Parity", gameMode);
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<"color" | "number">("color");
@@ -38,9 +34,20 @@ export const ParityGame = ({ userBalance, gameMode }: ParityGameProps) => {
   };
 
   const handleConfirmBet = async (amount: number) => {
-    const success = await placeBet(selectedBetType, selectedBetValue, amount);
+    const success = await placeBet(selectedBetType, selectedBetValue, amount, currentPeriod);
     if (success) setShowBetPopup(false);
   };
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const s = (seconds % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
+
+  const isBettingClosed = timeLeft <= 5;
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <>
@@ -69,7 +76,7 @@ export const ParityGame = ({ userBalance, gameMode }: ParityGameProps) => {
       {/* Bet Records */}
       <ModernGameRecords
         gameType="Parity"
-        duration={getDurationFromGameMode(gameMode)} // ✅ Pass correct duration
+        duration={duration}
       />
 
       {/* Bet Popup */}
