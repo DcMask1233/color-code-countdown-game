@@ -1,5 +1,7 @@
 import { BetPopup } from "@/components/game/BetPopup";
 import { useToast } from "@/hooks/use-toast";
+// ✅ Make sure this component exists:
+import { GameSection } from "@/components/game/GameSection";
 
 interface GameRecord {
   period: string;
@@ -44,6 +46,8 @@ export const GameContainer = ({
   onNumberSelect,
   onConfirmBet
 }: GameContainerProps) => {
+  const { toast } = useToast(); // ✅ if you plan to show any toasts
+
   const getGameModeTitle = (mode: string) => {
     switch (mode) {
       case 'wingo-1min':
@@ -73,6 +77,7 @@ export const GameContainer = ({
             </h1>
           </div>
         </div>
+
         <div className="container mx-auto px-4 py-4 max-w-md">
           <GameSection
             activeGameTab={activeGameTab}
