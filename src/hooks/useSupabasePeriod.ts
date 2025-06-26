@@ -1,100 +1,60 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
-interface UseSupabasePeriodReturn {
-  currentPeriod: string;
-  timeLeft: number;
-  isLoading: boolean;
-  error: string | null;
-}
-
-export const useSupabasePeriod = (duration: number): UseSupabasePeriodReturn => {
-  const [currentPeriod, setCurrentPeriod] = useState('');
-  const currentPeriodRef = useRef(currentPeriod);
-  const [timeLeft, setTimeLeft] = useState(0);
+export function useSupabasePeriod(durationSeconds: number) {
+  const [currentPeriod, setCurrentPeriod] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState<number>(durationSeconds);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCurrentPeriod = useCallback(async (): Promise<string | null> => {
-    try {
-      const { data, error } = await supabase.rpc('generate_period', {
-        game_duration: duration
-      });
-
-      if (error) {
-        console.error('Error fetching period:', error);
-        setError(error.message);
-        return null;
-      }
-
-      return data as string; // Adjust type if needed
-    } catch (err) {
-      console.error('Error in fetchCurrentPeriod:', err);
-      setError('Failed to fetch period');
-      return null;
-    }
-  }, [duration]);
-
-  const calculateTimeLeft = useCallback(() => {
-    const nowUTC = new Date();
-    const startOfDayUTC = new Date(Date.UTC(
-      nowUTC.getUTCFullYear(),
-      nowUTC.getUTCMonth(),
-      nowUTC.getUTCDate()
-    ));
-    const secondsSinceStart = Math.floor((nowUTC.getTime() - startOfDayUTC.getTime()) / 1000);
-    const secondsInCurrentRound = secondsSinceStart % duration;
-    const remaining = duration - secondsInCurrentRound;
-    return remaining;
-  }, [duration]);
-
   useEffect(() => {
-    currentPeriodRef.current = currentPeriod;
-  }, [currentPeriod]);
+    let timer: NodeJS.Timeout;
 
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-    let periodCheckInterval: NodeJS.Timeout;
+    async function fetchCurrentPeriod() {
+      try {
+        setIsLoading(true);
+        const now = Math.floor(Date.now() / 1000);
+        // Calculate the period based on current time and duration, or fetch from your backend
 
-    const updatePeriodAndTime = async () => {
-      const period = await fetchCurrentPeriod();
-      if (period) {
-        setCurrentPeriod(period);
+        // Example: fetch latest period from Supabase game_results table
+        const { data, error } = await supabase
+          .from("game_results")
+          .select("period")
+          .order("period", { ascending: false })
+          .limit(1)
+          .single();
+
+        if (error) {
+          throw error;
+        }
+
+        if (data?.period) {
+          setCurrentPeriod(data.period);
+          // calculate timeLeft based on your backend logic, here just a placeholder
+          setTimeLeft(durationSeconds - (now % durationSeconds));
+        }
+
         setIsLoading(false);
-        setError(null);
+      } catch (err: any) {
+        setError(err.message || "Failed to fetch period");
+        setIsLoading(false);
       }
+    }
 
-      const remaining = calculateTimeLeft();
-      setTimeLeft(remaining);
-    };
+    fetchCurrentPeriod();
 
-    updatePeriodAndTime();
-
-    intervalId = setInterval(() => {
-      const remaining = calculateTimeLeft();
-      setTimeLeft(remaining);
+    timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          fetchCurrentPeriod(); // refresh period when countdown ends
+          return durationSeconds;
+        }
+        return prev - 1;
+      });
     }, 1000);
 
-    periodCheckInterval = setInterval(async () => {
-      const remaining = calculateTimeLeft();
-      if (remaining <= 2 || remaining >= duration - 2) {
-        const period = await fetchCurrentPeriod();
-        if (period && period !== currentPeriodRef.current) {
-          setCurrentPeriod(period);
-        }
-      }
-    }, 10000);
+    return () => clearInterval(timer);
+  }, [durationSeconds]);
 
-    return () => {
-      clearInterval(intervalId);
-      clearInterval(periodCheckInterval);
-    };
-  }, [duration, fetchCurrentPeriod, calculateTimeLeft]);
-
-  return {
-    currentPeriod,
-    timeLeft,
-    isLoading,
-    error
-  };
-};
+  return { currentPeriod, timeLeft, isLoading, error };
+}
