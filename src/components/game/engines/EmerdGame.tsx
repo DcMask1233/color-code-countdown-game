@@ -4,7 +4,8 @@ import { NumberGrid } from "@/components/game/NumberGrid";
 import { ModernGameRecords } from "@/components/game/ModernGameRecords";
 import { BetPopup } from "@/components/game/BetPopup";
 import { useGameEngine } from "@/hooks/useGameEngine";
-import { getDurationFromGameMode } from "@/lib/gameUtils"; // ✅ Required for duration
+import { useSupabasePeriod } from "@/hooks/useSupabasePeriod";
+import { getDurationFromGameMode } from "@/lib/gameUtils";
 
 interface EmerdGameProps {
   userBalance: number;
@@ -12,14 +13,9 @@ interface EmerdGameProps {
 }
 
 export const EmerdGame = ({ userBalance, gameMode }: EmerdGameProps) => {
-  const {
-    timeLeft,
-    currentPeriod,
-    isBettingClosed,
-    userBets,
-    placeBet,
-    formatTime,
-  } = useGameEngine("Emerd", gameMode);
+  const duration = getDurationFromGameMode(gameMode);
+  const { currentPeriod, timeLeft, isLoading, error } = useSupabasePeriod(duration);
+  const { userBets, placeBet } = useGameEngine("Emerd", gameMode);
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<"color" | "number">("color");
@@ -38,9 +34,20 @@ export const EmerdGame = ({ userBalance, gameMode }: EmerdGameProps) => {
   };
 
   const handleConfirmBet = async (amount: number) => {
-    const success = await placeBet(selectedBetType, selectedBetValue, amount);
+    const success = await placeBet(selectedBetType, selectedBetValue, amount, currentPeriod);
     if (success) setShowBetPopup(false);
   };
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const s = (seconds % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
+
+  const isBettingClosed = timeLeft <= 5;
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <>
@@ -65,7 +72,7 @@ export const EmerdGame = ({ userBalance, gameMode }: EmerdGameProps) => {
       {/* Game Records */}
       <ModernGameRecords
         gameType="Emerd"
-        duration={getDurationFromGameMode(gameMode)} // ✅ Corrected prop
+        duration={duration}
       />
 
       {/* Betting Popup */}
