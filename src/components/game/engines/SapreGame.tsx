@@ -10,12 +10,13 @@ import { getDurationFromGameMode } from "@/lib/gameUtils";
 interface SapreGameProps {
   userBalance: number;
   gameMode: "Wingo1min" | "Wingo3min" | "Wingo5min"; // ✅ Now supports all
+  userId: string;
 }
 
-export const SapreGame = ({ userBalance, gameMode }: SapreGameProps) => {
+export const SapreGame = ({ userBalance, gameMode, userId }: SapreGameProps) => {
   const duration = getDurationFromGameMode(gameMode);
   const { currentPeriod, timeLeft, isLoading, error } = useSupabasePeriod(duration);
-  const { userBets, placeBet } = useGameEngine("Sapre", gameMode);
+  const { userBets, placeBet } = useGameEngine("Sapre", gameMode, userId);
 
   const [showBetPopup, setShowBetPopup] = useState(false);
   const [selectedBetType, setSelectedBetType] = useState<"color" | "number">("color");
