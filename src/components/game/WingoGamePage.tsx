@@ -1,20 +1,22 @@
 import React from "react";
-import { GameType, GameMode } from "@/lib/periodUtils";
 import { useSupabasePeriod } from "@/hooks/useSupabasePeriod";
 import { useGameEngine } from "@/hooks/useGameEngine";
+
+type GameType = string;
+type GameMode = "Wingo1min" | "Wingo3min" | "Wingo5min";
 
 interface WingoGamePageProps {
   gameType: GameType;
   gameMode: GameMode;
 }
 
-export default function WingoGamePage({ gameType, gameMode }: WingoGamePageProps) {
-  const durationMap: Record<GameMode, number> = {
-    Wingo1min: 60,
-    Wingo3min: 180,
-    Wingo5min: 300,
-  };
+const durationMap: Record<GameMode, number> = {
+  Wingo1min: 60,
+  Wingo3min: 180,
+  Wingo5min: 300,
+};
 
+export default function WingoGamePage({ gameType, gameMode }: WingoGamePageProps) {
   const { currentPeriod, timeLeft, isLoading, error } = useSupabasePeriod(durationMap[gameMode]);
   const { userBets, placeBet } = useGameEngine(gameType, gameMode);
 
@@ -22,7 +24,6 @@ export default function WingoGamePage({ gameType, gameMode }: WingoGamePageProps
   if (error) return <div>Error: {error}</div>;
 
   const handleBet = async () => {
-    // Example bet placement
     const success = await placeBet("color", "red", 100, currentPeriod);
     if (!success) alert("Failed to place bet");
     else alert("Bet placed!");
@@ -33,7 +34,11 @@ export default function WingoGamePage({ gameType, gameMode }: WingoGamePageProps
       <h1 className="text-2xl font-bold mb-4">{gameType} - {gameMode}</h1>
       <p>Current Period: {currentPeriod}</p>
       <p>Time Left: {Math.floor(timeLeft / 60)}m {timeLeft % 60}s</p>
-      <button onClick={handleBet} disabled={timeLeft <= 5} className="mt-4 p-2 bg-blue-600 text-white rounded disabled:opacity-50">
+      <button
+        onClick={handleBet}
+        disabled={timeLeft <= 5}
+        className="mt-4 p-2 bg-blue-600 text-white rounded disabled:opacity-50"
+      >
         Place Bet
       </button>
 
