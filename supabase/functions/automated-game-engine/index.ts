@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
         
         try {
           // Get current period using consistent calculation
-          const currentPeriod = await getCurrentPeriodConsistent(duration);
+          const currentPeriod = await getCurrentPeriodFormatted(duration);
           const timeLeft = await getTimeLeftInPeriod(duration);
 
           console.log(`📅 Current period for ${gameType} ${duration}s: ${currentPeriod}, time left: ${timeLeft}s`);
@@ -161,8 +161,8 @@ Deno.serve(async (req) => {
   }
 });
 
-// Consistent period calculation function
-async function getCurrentPeriodConsistent(durationSeconds: number): Promise<string> {
+// FIXED: Formatted period calculation function
+async function getCurrentPeriodFormatted(durationSeconds: number): Promise<string> {
   // Get current time in IST (UTC + 5.5 hours)
   const now = new Date();
   const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
@@ -177,11 +177,11 @@ async function getCurrentPeriodConsistent(durationSeconds: number): Promise<stri
   // Calculate current period number (1-based)
   const periodNumber = Math.floor(secondsSinceStart / durationSeconds) + 1;
   
-  // Format date as YYYYMMDD
-  const yearMonthDay = istTime.toISOString().slice(0, 10).replace(/-/g, '');
+  // Format date as YYYY-MM-DD
+  const yearMonthDay = istTime.toISOString().slice(0, 10);
   
-  // Create period string with 3-digit padding
-  const period = yearMonthDay + periodNumber.toString().padStart(3, '0');
+  // Create readable period string: YYYY-MM-DD-XXX
+  const period = yearMonthDay + '-' + periodNumber.toString().padStart(3, '0');
   
   return period;
 }
@@ -274,7 +274,7 @@ async function settleBetsForResult(
         continue;
       }
 
-      // Credit winnings to wallet if won - FIXED: Use proper balance update
+      // Credit winnings to wallet if won
       if (payout > 0) {
         // Get current balance first
         const { data: currentWallet, error: walletFetchError } = await supabaseClient
