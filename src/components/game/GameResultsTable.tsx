@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PaginationControls } from "./PaginationControls";
 import { useGameResults } from "@/hooks/useGameResults";
-import { formatPeriodForDisplay } from "@/lib/periodFormatter";
 
 interface Props {
   gameType: string;
@@ -81,7 +80,7 @@ export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
             {results.map((record) => (
               <TableRow key={record.id} className="hover:bg-gray-50">
                 <TableCell className="font-medium">
-                  {formatPeriodForDisplay(record.period).fullDisplay}
+                  {record.period}
                 </TableCell>
                 <TableCell>
                   <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-800 font-semibold">

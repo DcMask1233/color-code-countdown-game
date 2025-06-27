@@ -3,7 +3,6 @@ import React, { useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { PaginationControls } from "./PaginationControls";
-import { formatPeriodForDisplay } from "@/lib/periodFormatter";
 
 interface UserBet {
   id: string;
@@ -133,13 +132,13 @@ export const UserBetsTable: React.FC<UserBetsTableProps> = ({
               <TableHead className="font-semibold text-gray-700">Bet</TableHead>
               <TableHead className="font-semibold text-gray-700">Amount</TableHead>
               <TableHead className="font-semibold text-gray-700">Status</TableHead>
-            </TableRow>
+            </tr>
           </TableHeader>
           <TableBody>
             {currentBets.map((bet, index) => (
               <TableRow key={`${bet.period}-${bet.betType}-${bet.betValue}-${index}`} className="hover:bg-gray-50">
                 <TableCell className="font-medium">
-                  {formatPeriodForDisplay(bet.period).fullDisplay}
+                  {bet.period}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">

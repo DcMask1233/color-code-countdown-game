@@ -1,6 +1,4 @@
 
-import { formatPeriodForDisplay } from "@/lib/periodFormatter";
-
 interface GameRecord {
   period: string;
   number: number;
@@ -61,13 +59,12 @@ export const ParityRecord = ({ records }: ParityRecordProps) => {
           </thead>
           <tbody>
             {displayRecords.map((record, index) => {
-              const formattedPeriod = formatPeriodForDisplay(record.period);
-              console.log('📊 Displaying record:', record.period, '→', formattedPeriod.display);
+              console.log('📊 Displaying raw period:', record.period);
               
               return (
                 <tr key={record.period} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                   <td className="px-4 py-3 text-sm text-gray-900">
-                    {formattedPeriod.display}
+                    {record.period}
                   </td>
                   <td className="px-4 py-3 text-sm font-semibold text-gray-900">
                     {record.number}
