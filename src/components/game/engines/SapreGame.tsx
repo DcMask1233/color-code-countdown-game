@@ -70,14 +70,14 @@ export const SapreGame = ({ userBalance, gameMode, userId }: SapreGameProps) => 
         </div>
       </div>
 
-      {/* UI */}
+      {/* Game Controls */}
       <ColorButtons onColorSelect={handleColorSelect} disabled={isBettingClosed || isBetLoading} />
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed || isBetLoading} />
 
-      {/* Records */}
+      {/* Game Records */}
       <ModernGameRecords gameType="Sapre" duration={duration} />
 
-      {/* Bet popup */}
+      {/* Bet Popup */}
       <BetPopup
         isOpen={showBetPopup}
         onClose={() => setShowBetPopup(false)}

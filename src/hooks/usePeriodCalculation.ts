@@ -25,8 +25,8 @@ export function usePeriodCalculation(durationSeconds: number) {
 
   // Memoize the timer interval to prevent unnecessary re-creation
   const timerInterval = useMemo(() => {
-    return Math.min(1000, durationSeconds * 100); // Update every second, but not more frequently than needed
-  }, [durationSeconds]);
+    return 1000; // Update every second for accurate countdown
+  }, []);
 
   useEffect(() => {
     setIsLoading(true);
@@ -35,7 +35,7 @@ export function usePeriodCalculation(durationSeconds: number) {
     calculatePeriod();
     setIsLoading(false);
 
-    // Update periodically
+    // Update every second for accurate countdown
     const timer = setInterval(calculatePeriod, timerInterval);
 
     return () => clearInterval(timer);

@@ -70,14 +70,14 @@ export const ParityGame = ({ userBalance, gameMode, userId }: ParityGameProps) =
         </div>
       </div>
 
-      {/* UI */}
+      {/* Game Controls */}
       <ColorButtons onColorSelect={handleColorSelect} disabled={isBettingClosed || isBetLoading} />
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed || isBetLoading} />
 
-      {/* Records */}
+      {/* Game Records */}
       <ModernGameRecords gameType="Parity" duration={duration} />
 
-      {/* Bet popup */}
+      {/* Bet Popup */}
       <BetPopup
         isOpen={showBetPopup}
         onClose={() => setShowBetPopup(false)}

@@ -32,17 +32,19 @@ export const AutomatedGameSystem: React.FC = () => {
     setSystemStatus('running');
     
     try {
-      console.log('🤖 Running automated game engine...');
-      
       const { data, error } = await supabase.functions.invoke('automated-game-engine');
       
       if (error) {
         console.error('❌ Automated engine error:', error);
         setSystemStatus('error');
+        toast({
+          title: "Error",
+          description: "Failed to run automated engine",
+          variant: "destructive"
+        });
         return;
       }
 
-      console.log('✅ Automated engine response:', data);
       setLastRun(new Date().toISOString());
       setSystemStatus('idle');
       
@@ -56,6 +58,11 @@ export const AutomatedGameSystem: React.FC = () => {
     } catch (error) {
       console.error('💥 Automated engine error:', error);
       setSystemStatus('error');
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
     } finally {
       setIsRunning(false);
     }
@@ -82,8 +89,6 @@ export const AutomatedGameSystem: React.FC = () => {
         return;
       }
 
-      console.log('✅ Period sync fix response:', data);
-      
       toast({
         title: "Success",
         description: `Fixed period sync: ${data?.settled_count || 0} bets settled`,
