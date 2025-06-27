@@ -37,7 +37,7 @@ export const useUserBets = () => {
           table: 'user_bets'
         },
         (payload) => {
-          console.log('Bet settlement update:', payload.new);
+          console.log('🔄 Bet settlement update received:', payload.new);
           // Update local storage with settlement results
           updateBetFromDatabase(payload.new);
         }
@@ -55,9 +55,17 @@ export const useUserBets = () => {
   }, [userBets]);
 
   const updateBetFromDatabase = (dbBet: any) => {
+    console.log('📊 Updating bet from database:', dbBet);
     setUserBets(prev => prev.map(bet => {
       // Match by period and game type since we don't have database IDs in localStorage bets
       if (bet.period === dbBet.period && bet.gameType === dbBet.game_type) {
+        console.log('✅ Found matching bet, updating result:', {
+          period: bet.period,
+          gameType: bet.gameType,
+          oldResult: bet.result,
+          newResult: dbBet.win ? 'win' : 'lose',
+          payout: dbBet.payout || 0
+        });
         return {
           ...bet,
           result: dbBet.win ? 'win' : 'lose',
@@ -69,10 +77,12 @@ export const useUserBets = () => {
   };
 
   const addBet = (newBet: UserBet) => {
+    console.log('➕ Adding new bet:', newBet);
     setUserBets(prev => [newBet, ...prev]);
   };
 
   const updateBetResult = (period: string, gameType: string, result: 'win' | 'lose', payout?: number) => {
+    console.log('🎯 Manually updating bet result:', { period, gameType, result, payout });
     setUserBets(prev => prev.map(bet => 
       bet.period === period && bet.gameType === gameType 
         ? { ...bet, result, payout }
@@ -86,6 +96,7 @@ export const useUserBets = () => {
 
   // Function to sync bets with database for settlement status
   const syncBetsWithDatabase = async () => {
+    console.log('🔄 Syncing bets with database...');
     try {
       const { data: dbBets, error } = await supabase
         .from('user_bets')
@@ -95,15 +106,38 @@ export const useUserBets = () => {
         .limit(100);
 
       if (error) {
-        console.error('Error syncing bets:', error);
+        console.error('❌ Error syncing bets:', error);
         return;
       }
 
-      if (dbBets) {
+      if (dbBets && dbBets.length > 0) {
+        console.log(`📊 Found ${dbBets.length} settled bets from database`);
         dbBets.forEach(updateBetFromDatabase);
+      } else {
+        console.log('🔍 No settled bets found in database');
       }
     } catch (error) {
-      console.error('Error syncing bets with database:', error);
+      console.error('💥 Error syncing bets with database:', error);
+    }
+  };
+
+  // Function to manually settle unsettled bets
+  const settlePendingBets = async () => {
+    console.log('🔧 Attempting to settle pending bets...');
+    try {
+      const { data, error } = await supabase.functions.invoke('settle-existing-bets');
+      
+      if (error) {
+        console.error('❌ Error calling settle function:', error);
+        return;
+      }
+
+      console.log('✅ Settlement function response:', data);
+      
+      // Refresh bets after settlement
+      await syncBetsWithDatabase();
+    } catch (error) {
+      console.error('💥 Error settling pending bets:', error);
     }
   };
 
@@ -112,6 +146,7 @@ export const useUserBets = () => {
     addBet,
     updateBetResult,
     getBetsByGameType,
-    syncBetsWithDatabase
+    syncBetsWithDatabase,
+    settlePendingBets
   };
 };

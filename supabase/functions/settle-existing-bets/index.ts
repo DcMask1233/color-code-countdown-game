@@ -48,9 +48,10 @@ Deno.serve(async (req) => {
       );
     }
 
+    console.log(`📊 Found ${unsettledBets.length} unsettled bets`);
     let settledCount = 0;
 
-    // Group bets by period and game type
+    // Group bets by period and game type for efficient processing
     const betGroups = new Map();
     unsettledBets.forEach(bet => {
       const key = `${bet.game_type}-${bet.period}`;
@@ -60,11 +61,13 @@ Deno.serve(async (req) => {
       betGroups.get(key).push(bet);
     });
 
+    console.log(`🎯 Processing ${betGroups.size} unique game periods`);
+
     // Process each group
     for (const [key, bets] of betGroups) {
       const [gameType, period] = key.split('-');
       
-      console.log(`🎯 Processing ${bets.length} bets for ${gameType} period ${period}`);
+      console.log(`🎮 Processing ${bets.length} bets for ${gameType} period ${period}`);
 
       // Get the result for this period and game type
       const { data: results, error: resultError } = await supabaseClient
@@ -88,20 +91,26 @@ Deno.serve(async (req) => {
       const winningNumber = result.number;
       const winningColors = result.result_color;
 
-      console.log(`🎲 Result for ${gameType} ${period}: number=${winningNumber}, colors=${winningColors}`);
+      console.log(`🎲 Result for ${gameType} ${period}: number=${winningNumber}, colors=${JSON.stringify(winningColors)}`);
 
-      // Process each bet
+      // Process each bet in this group
       for (const bet of bets) {
         let payout = 0;
         let isWin = false;
+
+        console.log(`🎯 Processing bet: type=${bet.bet_type}, value=${bet.bet_value}, amount=${bet.amount}`);
 
         // Calculate payout based on bet type
         if (bet.bet_type === 'number' && parseInt(bet.bet_value) === winningNumber) {
           payout = bet.amount * 9;
           isWin = true;
+          console.log(`🎊 Number bet WON! ${bet.bet_value} === ${winningNumber}, payout: ${payout}`);
         } else if (bet.bet_type === 'color' && winningColors.includes(bet.bet_value)) {
           payout = bet.amount * 2;
           isWin = true;
+          console.log(`🎊 Color bet WON! ${bet.bet_value} in ${JSON.stringify(winningColors)}, payout: ${payout}`);
+        } else {
+          console.log(`❌ Bet LOST: ${bet.bet_type}=${bet.bet_value} vs winning ${winningNumber}/${JSON.stringify(winningColors)}`);
         }
 
         // Update the bet record
@@ -131,6 +140,8 @@ Deno.serve(async (req) => {
 
           if (walletError) {
             console.error(`❌ Error updating wallet for user ${bet.user_id}:`, walletError);
+          } else {
+            console.log(`💰 Credited ${payout} to user ${bet.user_id} wallet`);
           }
         }
 
@@ -139,13 +150,14 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`🏁 Settlement complete: ${settledCount} bets settled`);
+    console.log(`🏁 Settlement complete: ${settledCount} bets settled out of ${unsettledBets.length} total`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: `Settlement complete: ${settledCount} bets settled`,
         settled_count: settledCount,
+        total_unsettled: unsettledBets.length,
         timestamp: new Date().toISOString()
       }),
       { 

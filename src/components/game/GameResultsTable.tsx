@@ -24,8 +24,8 @@ export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
   } = useGameResults(gameType, duration);
 
   const formatPeriod = (period: string) => {
-    // Period format is YYYYMMDDRR (e.g., 202406261234)
-    if (period.length >= 11) {
+    // Period format is YYYYMMDDRR (e.g., 2024062612345)
+    if (period.length >= 10) {
       const year = period.substring(0, 4);
       const month = period.substring(4, 6);
       const day = period.substring(6, 8);
