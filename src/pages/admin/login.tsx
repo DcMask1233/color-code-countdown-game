@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
 const ADMIN_EMAIL = "dcmask21@gmail.com";
-const ADMIN_PASSWORD = "12345678";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -39,11 +38,28 @@ export default function AdminLogin() {
       });
 
       if (error) {
-        toast({
-          title: "Login Failed",
-          description: error.message,
-          variant: "destructive"
-        });
+        console.error("Admin login error:", error);
+        
+        // Handle specific error cases
+        if (error.message.includes("Invalid login credentials")) {
+          toast({
+            title: "Login Failed",
+            description: "Invalid email or password. Please check your credentials.",
+            variant: "destructive"
+          });
+        } else if (error.message.includes("Email not confirmed")) {
+          toast({
+            title: "Email Not Verified",
+            description: "Please verify your email address before logging in.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Login Failed",
+            description: error.message,
+            variant: "destructive"
+          });
+        }
       } else if (data?.user?.email === ADMIN_EMAIL) {
         toast({
           title: "Success",
@@ -57,10 +73,55 @@ export default function AdminLogin() {
           variant: "destructive"
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Unexpected admin login error:", error);
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateAdminAccount = async () => {
+    setLoading(true);
+    
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: ADMIN_EMAIL,
+        password: "12345678",
+        options: {
+          emailRedirectTo: `${window.location.origin}/admin`
+        }
+      });
+
+      if (error) {
+        if (error.message.includes("already registered")) {
+          toast({
+            title: "Account Exists",
+            description: "Admin account already exists. Try logging in instead.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Creation Failed",
+            description: error.message,
+            variant: "destructive"
+          });
+        }
+      } else {
+        toast({
+          title: "Admin Account Created",
+          description: "Admin account created successfully. You can now login.",
+        });
+      }
+    } catch (error: any) {
+      console.error("Admin account creation error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create admin account",
         variant: "destructive"
       });
     } finally {
@@ -113,9 +174,26 @@ export default function AdminLogin() {
               {loading ? "Logging in..." : "Login"}
             </Button>
           </form>
+          
+          <div className="mt-4 space-y-2">
+            <Button 
+              onClick={handleCreateAdminAccount}
+              variant="outline"
+              className="w-full"
+              disabled={loading}
+            >
+              Create Admin Account
+            </Button>
+          </div>
+          
           <div className="mt-4 p-3 bg-blue-50 rounded-lg">
             <p className="text-sm text-blue-700">
-              <strong>Note:</strong> Only authorized administrators can access this panel.
+              <strong>Default Credentials:</strong><br />
+              Email: dcmask21@gmail.com<br />
+              Password: 12345678
+            </p>
+            <p className="text-xs text-blue-600 mt-2">
+              Click "Create Admin Account" if this is your first time accessing the admin panel.
             </p>
           </div>
         </CardContent>

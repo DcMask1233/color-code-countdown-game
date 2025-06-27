@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,12 +32,16 @@ export default function AdminPanel() {
     try {
       const { data, error } = await supabase.auth.getUser();
       
+      console.log("Admin access check:", { data, error });
+      
       if (error || !data?.user) {
+        console.log("No user found, redirecting to admin login");
         navigate("/admin/login");
         return;
       }
 
       if (data.user.email !== ADMIN_EMAIL) {
+        console.log("Unauthorized user:", data.user.email);
         toast({
           title: "Access Denied",
           description: "Unauthorized access attempt",
@@ -47,6 +51,7 @@ export default function AdminPanel() {
         return;
       }
 
+      console.log("Admin access granted for:", data.user.email);
       setUser(data.user);
     } catch (error) {
       console.error("Admin access check failed:", error);
@@ -147,6 +152,35 @@ export default function AdminPanel() {
       toast({
         title: "Error",
         description: "Failed to run game engine",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleFixPeriodSync = async () => {
+    try {
+      toast({
+        title: "Processing",
+        description: "Fixing period synchronization...",
+      });
+
+      const { data, error } = await supabase.functions.invoke('fix-period-sync');
+      
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Success",
+        description: `Period sync complete: ${data?.fixed_count || 0} bets synchronized`,
+      });
+      
+      fetchStats(); // Refresh stats
+    } catch (error) {
+      console.error("Period sync failed:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fix period synchronization",
         variant: "destructive"
       });
     }
@@ -266,6 +300,13 @@ export default function AdminPanel() {
                   disabled={stats.pendingBets === 0}
                 >
                   Settle Pending Bets ({stats.pendingBets})
+                </Button>
+                <Button 
+                  onClick={handleFixPeriodSync}
+                  className="w-full"
+                  variant="outline"
+                >
+                  Fix Period Sync
                 </Button>
               </div>
             </CardContent>
