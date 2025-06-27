@@ -4,6 +4,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthPage } from "@/components/auth/AuthPage";
 import { MainGame } from "@/components/game/MainGame";
+import AdminLogin from "@/pages/admin/login";
+import AdminPanel from "@/pages/admin/index";
 import { Loader2 } from "lucide-react";
 
 function App() {
@@ -25,10 +27,17 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Admin Routes */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin" element={<AdminPanel />} />
+        
+        {/* Auth Route */}
         <Route 
           path="/auth" 
           element={user ? <Navigate to="/" replace /> : <AuthPage />} 
         />
+        
+        {/* Main App Routes */}
         <Route 
           path="/*" 
           element={

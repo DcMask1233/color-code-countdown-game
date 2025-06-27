@@ -1,0 +1,17 @@
+
+name: Automated Game Engine
+
+on:
+  schedule:
+    - cron: '*/1 * * * *'  # Every minute
+  workflow_dispatch:       # Manual trigger
+
+jobs:
+  run-game-engine:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call Automated Game Engine
+        run: |
+          curl -X POST "https://rdhfmkqxkycdjkystkbt.supabase.co/functions/v1/automated-game-engine" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json"

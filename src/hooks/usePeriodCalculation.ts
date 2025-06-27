@@ -20,13 +20,13 @@ export function usePeriodCalculation(durationSeconds: number) {
       // Calculate seconds since start of day
       const secondsSinceStart = Math.floor((istTime.getTime() - startOfDay.getTime()) / 1000);
       
-      // Calculate current period number (1-based, like backend)
+      // Calculate current period number (1-based, consistent with backend)
       const periodNumber = Math.floor(secondsSinceStart / durationSeconds) + 1;
       
-      // Format date as YYYYMMDD
+      // Format date as YYYYMMDD (consistent with backend)
       const yearMonthDay = istTime.toISOString().slice(0, 10).replace(/-/g, '');
       
-      // Create period string with 3-digit padding (matching backend)
+      // Create period string with 3-digit padding (consistent with backend)
       const period = yearMonthDay + periodNumber.toString().padStart(3, '0');
       
       // Calculate time left in current period

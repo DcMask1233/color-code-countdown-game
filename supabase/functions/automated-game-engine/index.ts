@@ -31,23 +31,9 @@ Deno.serve(async (req) => {
         console.log(`🎯 Processing ${gameType} ${duration}s`);
         
         try {
-          // First get current period using fixed function
-          const { data: periodData, error: periodError } = await supabaseClient.rpc('get_current_period_fixed', {
-            p_duration: duration
-          });
-
-          if (periodError) {
-            console.error(`❌ Error getting period for ${gameType} ${duration}s:`, periodError);
-            continue;
-          }
-
-          if (!periodData || periodData.length === 0) {
-            console.log(`⚠️ No period data for ${gameType} ${duration}s`);
-            continue;
-          }
-
-          const currentPeriod = periodData[0].period;
-          const timeLeft = periodData[0].time_left;
+          // Get current period using consistent calculation
+          const currentPeriod = await getCurrentPeriodConsistent(duration);
+          const timeLeft = await getTimeLeftInPeriod(duration);
 
           console.log(`📅 Current period for ${gameType} ${duration}s: ${currentPeriod}, time left: ${timeLeft}s`);
 
@@ -174,6 +160,51 @@ Deno.serve(async (req) => {
     );
   }
 });
+
+// Consistent period calculation function
+async function getCurrentPeriodConsistent(durationSeconds: number): Promise<string> {
+  // Get current time in IST (UTC + 5.5 hours)
+  const now = new Date();
+  const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+  
+  // Get start of day in IST
+  const startOfDay = new Date(istTime);
+  startOfDay.setHours(0, 0, 0, 0);
+  
+  // Calculate seconds since start of day
+  const secondsSinceStart = Math.floor((istTime.getTime() - startOfDay.getTime()) / 1000);
+  
+  // Calculate current period number (1-based)
+  const periodNumber = Math.floor(secondsSinceStart / durationSeconds) + 1;
+  
+  // Format date as YYYYMMDD
+  const yearMonthDay = istTime.toISOString().slice(0, 10).replace(/-/g, '');
+  
+  // Create period string with 3-digit padding
+  const period = yearMonthDay + periodNumber.toString().padStart(3, '0');
+  
+  return period;
+}
+
+// Get time left in current period
+async function getTimeLeftInPeriod(durationSeconds: number): Promise<number> {
+  // Get current time in IST (UTC + 5.5 hours)
+  const now = new Date();
+  const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+  
+  // Get start of day in IST
+  const startOfDay = new Date(istTime);
+  startOfDay.setHours(0, 0, 0, 0);
+  
+  // Calculate seconds since start of day
+  const secondsSinceStart = Math.floor((istTime.getTime() - startOfDay.getTime()) / 1000);
+  
+  // Calculate time left in current period
+  const secondsInCurrentPeriod = secondsSinceStart % durationSeconds;
+  const timeLeftInPeriod = durationSeconds - secondsInCurrentPeriod;
+  
+  return timeLeftInPeriod;
+}
 
 async function settleBetsForResult(
   supabaseClient: any, 
