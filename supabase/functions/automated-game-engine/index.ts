@@ -274,12 +274,26 @@ async function settleBetsForResult(
         continue;
       }
 
-      // Credit winnings to wallet if won
+      // Credit winnings to wallet if won - FIXED: Use proper balance update
       if (payout > 0) {
+        // Get current balance first
+        const { data: currentWallet, error: walletFetchError } = await supabaseClient
+          .from('wallets')
+          .select('balance')
+          .eq('user_id', bet.user_id)
+          .single();
+
+        if (walletFetchError) {
+          console.error(`❌ Error fetching wallet for user ${bet.user_id}:`, walletFetchError);
+          continue;
+        }
+
+        // Update balance with calculated amount
+        const newBalance = (currentWallet.balance || 0) + payout;
         const { error: walletError } = await supabaseClient
           .from('wallets')
           .update({
-            balance: supabaseClient.raw(`balance + ${payout}`),
+            balance: newBalance,
             updated_at: new Date().toISOString()
           })
           .eq('user_id', bet.user_id);
@@ -287,7 +301,7 @@ async function settleBetsForResult(
         if (walletError) {
           console.error(`❌ Error updating wallet for user ${bet.user_id}:`, walletError);
         } else {
-          console.log(`💰 Credited ${payout} to user ${bet.user_id} wallet`);
+          console.log(`💰 Credited ${payout} to user ${bet.user_id} wallet (new balance: ${newBalance})`);
           totalPayout += payout;
         }
       }
