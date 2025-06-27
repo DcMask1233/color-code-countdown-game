@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
 const ADMIN_EMAIL = "dcmask21@gmail.com";
+const ADMIN_PASSWORD = "12345678";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
