@@ -120,7 +120,7 @@ export const useUserBets = () => {
     return filtered;
   };
 
-  // Function to sync bets with database for settlement status
+  // Enhanced function to sync bets with database for settlement status
   const syncBetsWithDatabase = async () => {
     console.log('🔄 Syncing bets with database...');
     try {
@@ -147,23 +147,49 @@ export const useUserBets = () => {
     }
   };
 
-  // Function to manually settle unsettled bets
-  const settlePendingBets = async () => {
-    console.log('🔧 Attempting to settle pending bets...');
+  // Enhanced function to manually trigger automated settlement
+  const triggerAutomatedSettlement = async () => {
+    console.log('🤖 Triggering automated settlement...');
     try {
-      const { data, error } = await supabase.functions.invoke('settle-existing-bets');
+      const { data, error } = await supabase.functions.invoke('automated-game-engine');
       
       if (error) {
-        console.error('❌ Error calling settle function:', error);
-        return;
+        console.error('❌ Error calling automated engine:', error);
+        return { success: false, error: error.message };
       }
 
-      console.log('✅ Settlement function response:', data);
+      console.log('✅ Automated engine response:', data);
       
-      // Refresh bets after settlement
+      // Refresh bets after automated settlement
       await syncBetsWithDatabase();
+      
+      return { success: true, data };
     } catch (error) {
-      console.error('💥 Error settling pending bets:', error);
+      console.error('💥 Error triggering automated settlement:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Function to fix period synchronization issues
+  const fixPeriodSync = async () => {
+    console.log('🔧 Fixing period synchronization...');
+    try {
+      const { data, error } = await supabase.functions.invoke('fix-period-sync');
+      
+      if (error) {
+        console.error('❌ Error calling period sync fix:', error);
+        return { success: false, error: error.message };
+      }
+
+      console.log('✅ Period sync fix response:', data);
+      
+      // Refresh bets after sync fix
+      await syncBetsWithDatabase();
+      
+      return { success: true, data };
+    } catch (error) {
+      console.error('💥 Error fixing period sync:', error);
+      return { success: false, error: error.message };
     }
   };
 
@@ -173,6 +199,7 @@ export const useUserBets = () => {
     updateBetResult,
     getBetsByGameType,
     syncBetsWithDatabase,
-    settlePendingBets
+    triggerAutomatedSettlement,
+    fixPeriodSync
   };
 };

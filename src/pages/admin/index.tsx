@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, RefreshCw, Database, Users, TrendingUp } from "lucide-react";
+import { LogOut, RefreshCw, Database, Users, TrendingUp, Zap } from "lucide-react";
+import { AutomatedGameSystem } from "@/components/game/AutomatedGameSystem";
 
 const ADMIN_EMAIL = "dcmask21@gmail.com";
 
@@ -122,6 +123,35 @@ export default function AdminPanel() {
     }
   };
 
+  const runGameEngine = async () => {
+    try {
+      toast({
+        title: "Processing",
+        description: "Running automated game engine...",
+      });
+
+      const { data, error } = await supabase.functions.invoke('automated-game-engine');
+      
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Success",
+        description: `Game engine complete: ${data?.results?.length || 0} results generated`,
+      });
+      
+      fetchStats(); // Refresh stats
+    } catch (error) {
+      console.error("Game engine failed:", error);
+      toast({
+        title: "Error",
+        description: "Failed to run game engine",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -206,23 +236,38 @@ export default function AdminPanel() {
           </Card>
         </div>
 
+        {/* Automated Game System */}
+        <div className="mb-8">
+          <AutomatedGameSystem />
+        </div>
+
         {/* Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Bet Management</CardTitle>
+              <CardTitle>Manual Controls</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-gray-600">
-                Manage pending bets and settlement processes.
+                Manual controls for game management and bet settlement.
               </p>
-              <Button 
-                onClick={handleSettleBets}
-                className="w-full"
-                disabled={stats.pendingBets === 0}
-              >
-                Settle Pending Bets ({stats.pendingBets})
-              </Button>
+              <div className="space-y-2">
+                <Button 
+                  onClick={runGameEngine}
+                  className="w-full flex items-center gap-2"
+                >
+                  <Zap size={16} />
+                  Run Game Engine Now
+                </Button>
+                <Button 
+                  onClick={handleSettleBets}
+                  className="w-full"
+                  variant="outline"
+                  disabled={stats.pendingBets === 0}
+                >
+                  Settle Pending Bets ({stats.pendingBets})
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
@@ -243,6 +288,10 @@ export default function AdminPanel() {
                 <div className="flex justify-between">
                   <span>Settlement Service:</span>
                   <Badge variant="secondary">Online</Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span>Automated System:</span>
+                  <Badge className="bg-green-500">Active</Badge>
                 </div>
               </div>
               <Button 
