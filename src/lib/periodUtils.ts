@@ -48,7 +48,7 @@ export function getCurrentPeriod(durationSeconds: number): PeriodInfo {
       dateString
     };
   } catch (error) {
-    console.error('❌ Error in period calculation:', error);
+    console.error('Error in period calculation:', error);
     // Return safe defaults
     return {
       period: 'ERROR',
@@ -85,24 +85,32 @@ export function isValidPeriod(period: string): boolean {
 }
 
 /**
- * Format period for display
- */
-export function formatPeriodForDisplay(period: string): string {
-  if (!isValidPeriod(period)) return period;
-  
-  const year = period.substring(0, 4);
-  const month = period.substring(4, 6);
-  const day = period.substring(6, 8);
-  const round = period.substring(8);
-  
-  return `${year}${month}${day}${round}`;
-}
-
-/**
  * Get IST time string for logging
  */
 export function getISTTimeString(): string {
   const now = new Date();
   const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
   return istTime.toISOString();
+}
+
+/**
+ * Compare two periods to check if they're the same
+ */
+export function periodsMatch(period1: string, period2: string): boolean {
+  return period1 === period2;
+}
+
+/**
+ * Get period for a specific timestamp
+ */
+export function getPeriodForTimestamp(timestamp: Date, durationSeconds: number): string {
+  const istTime = new Date(timestamp.getTime() + (5.5 * 60 * 60 * 1000));
+  const startOfDay = new Date(istTime);
+  startOfDay.setHours(0, 0, 0, 0);
+  
+  const secondsSinceStart = Math.floor((istTime.getTime() - startOfDay.getTime()) / 1000);
+  const periodNumber = Math.floor(secondsSinceStart / durationSeconds) + 1;
+  const dateString = istTime.toISOString().slice(0, 10).replace(/-/g, '');
+  
+  return dateString + periodNumber.toString().padStart(3, '0');
 }

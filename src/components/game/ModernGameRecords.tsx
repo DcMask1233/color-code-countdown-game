@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GameResultsTable } from "./GameResultsTable";
@@ -11,40 +11,28 @@ interface ModernGameRecordsProps {
   duration: number;
 }
 
-export const ModernGameRecords: React.FC<ModernGameRecordsProps> = ({
+export const ModernGameRecords: React.FC<ModernGameRecordsProps> = React.memo(({
   gameType,
   duration
 }) => {
   const [activeTab, setActiveTab] = useState(`${gameType}-record`);
   const { userBets, syncBetsWithDatabase } = useUserBets();
 
-  // Sync bets when component mounts or gameType changes
-  useEffect(() => {
-    console.log(`🔄 ModernGameRecords mounted for ${gameType}, syncing bets...`);
-    syncBetsWithDatabase();
-  }, [gameType, syncBetsWithDatabase]);
-
-  // Log current state for debugging
-  useEffect(() => {
-    console.log(`📊 ModernGameRecords state for ${gameType}:`, {
-      totalBets: userBets.length,
-      gameTypeBets: userBets.filter(bet => bet.gameType?.toLowerCase() === gameType.toLowerCase()).length,
-      allGameTypes: [...new Set(userBets.map(bet => bet.gameType))],
-      userBets: userBets
-    });
-  }, [userBets, gameType]);
-
-  const getGameDisplayName = (gameId: string) => {
-    switch (gameId.toLowerCase()) {
+  // Memoize game display name to prevent recalculation
+  const gameDisplayName = useMemo(() => {
+    switch (gameType.toLowerCase()) {
       case 'parity': return 'Parity';
       case 'sapre': return 'Sapre';
       case 'bcone': return 'Bcone';
       case 'emerd': return 'Emerd';
-      default: return gameId.charAt(0).toUpperCase() + gameId.slice(1);
+      default: return gameType.charAt(0).toUpperCase() + gameType.slice(1);
     }
-  };
+  }, [gameType]);
 
-  const gameDisplayName = getGameDisplayName(gameType);
+  // Sync bets when component mounts or gameType changes
+  useEffect(() => {
+    syncBetsWithDatabase();
+  }, [gameType, syncBetsWithDatabase]);
 
   return (
     <Card className="w-full mt-4">
@@ -85,4 +73,6 @@ export const ModernGameRecords: React.FC<ModernGameRecordsProps> = ({
       </CardContent>
     </Card>
   );
-};
+});
+
+ModernGameRecords.displayName = 'ModernGameRecords';

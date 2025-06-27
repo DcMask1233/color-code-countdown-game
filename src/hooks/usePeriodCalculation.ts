@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { getCurrentPeriod, type PeriodInfo } from "@/lib/periodUtils";
 
 export function usePeriodCalculation(durationSeconds: number) {
@@ -12,22 +12,21 @@ export function usePeriodCalculation(durationSeconds: number) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const calculatePeriod = () => {
+  const calculatePeriod = useCallback(() => {
     try {
       const info = getCurrentPeriod(durationSeconds);
       setPeriodInfo(info);
       setError(null);
-      
-      console.log(`🕐 Period calculation for ${durationSeconds}s:`, {
-        period: info.period,
-        timeLeft: info.timeLeft,
-        periodNumber: info.periodNumber
-      });
     } catch (err: any) {
-      console.error('❌ Error in period calculation:', err);
+      console.error('Error in period calculation:', err);
       setError(err.message);
     }
-  };
+  }, [durationSeconds]);
+
+  // Memoize the timer interval to prevent unnecessary re-creation
+  const timerInterval = useMemo(() => {
+    return Math.min(1000, durationSeconds * 100); // Update every second, but not more frequently than needed
+  }, [durationSeconds]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -36,13 +35,11 @@ export function usePeriodCalculation(durationSeconds: number) {
     calculatePeriod();
     setIsLoading(false);
 
-    // Update every second
-    const timer = setInterval(() => {
-      calculatePeriod();
-    }, 1000);
+    // Update periodically
+    const timer = setInterval(calculatePeriod, timerInterval);
 
     return () => clearInterval(timer);
-  }, [durationSeconds]);
+  }, [calculatePeriod, timerInterval]);
 
   return { 
     currentPeriod: periodInfo.period, 

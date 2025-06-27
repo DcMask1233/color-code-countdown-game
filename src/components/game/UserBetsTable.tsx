@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { PaginationControls } from "./PaginationControls";
 import { UserBet } from "@/types/UserBet";
+import { formatPeriodForDisplay } from "@/lib/periodFormatter";
 
 interface UserBetsTableProps {
   userBets: UserBet[];
@@ -19,24 +20,16 @@ export const UserBetsTable: React.FC<UserBetsTableProps> = ({
   const [currentPage, setCurrentPage] = useState(0);
   const RECORDS_PER_PAGE = 10;
 
-  // Filter bets by game type with better matching
+  // Filter bets by game type with optimized matching
   const filteredBets = useMemo(() => {
-    console.log('🔍 Filtering bets for gameType:', gameType);
-    console.log('📊 All user bets:', userBets);
-    
     const filtered = userBets
       .filter(bet => {
-        // Normalize game types for comparison (lowercase)
         const betGameType = bet.gameType?.toLowerCase();
         const filterGameType = gameType.toLowerCase();
-        
-        console.log(`🎯 Comparing bet gameType: "${betGameType}" with filter: "${filterGameType}"`);
-        
         return betGameType === filterGameType;
       })
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     
-    console.log(`✅ Filtered bets for ${gameType}:`, filtered);
     return filtered;
   }, [userBets, gameType]);
 
@@ -44,36 +37,6 @@ export const UserBetsTable: React.FC<UserBetsTableProps> = ({
   const startIndex = currentPage * RECORDS_PER_PAGE;
   const endIndex = Math.min(startIndex + RECORDS_PER_PAGE, filteredBets.length);
   const currentBets = filteredBets.slice(startIndex, endIndex);
-
-  const formatPeriod = (period: string) => {
-    console.log('🕐 Formatting period:', period);
-    
-    if (!period) return '';
-    
-    // Handle different period formats
-    // Expected format: YYYYMMDDRRRR where RRRR is the round number
-    if (period.length >= 11) {
-      const year = period.substring(0, 4);
-      const month = period.substring(4, 6);
-      const day = period.substring(6, 8);
-      const round = period.substring(8);
-      const formatted = `${day}/${month}/${year}-${round}`;
-      console.log(`📅 Formatted period from ${period} to ${formatted}`);
-      return formatted;
-    } else if (period.length >= 8) {
-      // Fallback for shorter periods
-      const year = period.substring(0, 4);
-      const month = period.substring(4, 6);
-      const day = period.substring(6, 8);
-      const round = period.substring(8) || '001';
-      const formatted = `${day}/${month}/${year}-${round}`;
-      console.log(`📅 Formatted short period from ${period} to ${formatted}`);
-      return formatted;
-    }
-    
-    console.log(`⚠️ Unable to format period: ${period}`);
-    return period;
-  };
 
   const getResultDisplay = (betValue: string | number, betType: 'color' | 'number') => {
     if (betType === 'number') {
@@ -98,8 +61,6 @@ export const UserBetsTable: React.FC<UserBetsTableProps> = ({
   };
 
   const getResultBadge = (bet: UserBet) => {
-    console.log('🏷️ Getting result badge for bet:', bet);
-    
     if (bet.result === 'win') {
       return (
         <Badge className="bg-green-500 hover:bg-green-600 text-white">
@@ -137,9 +98,6 @@ export const UserBetsTable: React.FC<UserBetsTableProps> = ({
     return (
       <div className="text-center py-8">
         <p className="text-gray-500">No betting history found for {gameType}.</p>
-        <p className="text-sm text-gray-400 mt-2">
-          Total bets in system: {userBets.length}
-        </p>
       </div>
     );
   }
@@ -166,7 +124,9 @@ export const UserBetsTable: React.FC<UserBetsTableProps> = ({
           <TableBody>
             {currentBets.map((bet, index) => (
               <TableRow key={`${bet.period}-${index}`} className="hover:bg-gray-50">
-                <TableCell className="font-medium">{formatPeriod(bet.period)}</TableCell>
+                <TableCell className="font-medium">
+                  {formatPeriodForDisplay(bet.period).shortDisplay}
+                </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     {getResultDisplay(bet.betValue, bet.betType)}
