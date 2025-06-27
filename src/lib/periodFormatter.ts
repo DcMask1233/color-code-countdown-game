@@ -2,7 +2,7 @@
 /**
  * Unified Period Formatting Utilities
  * Ensures consistent period display across all components
- * Format: YYYYMMDDRR (10 characters)
+ * Format: YYYYMMDD + variable length round number (flexible)
  */
 
 export interface FormattedPeriod {
@@ -13,11 +13,11 @@ export interface FormattedPeriod {
 }
 
 /**
- * Format period for display with consistent formatting
- * Expected format: YYYYMMDDRR (e.g., 2025062761)
+ * Format period for display with flexible length support
+ * Handles both YYYYMMDDRR (10 chars) and YYYYMMDDRRRR (11+ chars)
  */
 export function formatPeriodForDisplay(period: string): FormattedPeriod {
-  if (!period || period.length !== 10) {
+  if (!period || period.length < 9) {
     console.warn('Invalid period format:', period);
     return {
       display: period || 'Invalid',
@@ -28,16 +28,16 @@ export function formatPeriodForDisplay(period: string): FormattedPeriod {
   }
 
   try {
-    // Parse YYYYMMDDRR format
+    // Parse flexible format: YYYYMMDD + variable round digits
     const year = period.substring(0, 4);
     const month = period.substring(4, 6);
     const day = period.substring(6, 8);
-    const round = period.substring(8, 10);
+    const round = period.substring(8); // Take remaining characters as round number
 
-    // Full display: YYYYMMDDRR
+    // Full display: show exactly what backend provides
     const fullDisplay = period;
     
-    // Readable display: DD/MM/YYYY-RR
+    // Readable display: DD/MM/YYYY-ROUND
     const display = `${day}/${month}/${year}-${round}`;
     
     return {
@@ -58,15 +58,15 @@ export function formatPeriodForDisplay(period: string): FormattedPeriod {
 }
 
 /**
- * Validate if a period string is valid YYYYMMDDRR format
+ * Validate if a period string is valid flexible format
  */
 export function isValidPeriod(period: string): boolean {
-  if (!period || period.length !== 10) return false;
+  if (!period || period.length < 9) return false;
   
   const year = parseInt(period.substring(0, 4));
   const month = parseInt(period.substring(4, 6));
   const day = parseInt(period.substring(6, 8));
-  const round = parseInt(period.substring(8, 10));
+  const round = parseInt(period.substring(8));
   
   // Basic validation
   if (year < 2024 || year > 2030) return false;
@@ -81,7 +81,7 @@ export function isValidPeriod(period: string): boolean {
  * Get period parts for advanced formatting
  */
 export function getPeriodParts(period: string) {
-  if (!period || period.length !== 10) {
+  if (!period || period.length < 9) {
     return null;
   }
 
@@ -89,6 +89,6 @@ export function getPeriodParts(period: string) {
     year: period.substring(0, 4),
     month: period.substring(4, 6),
     day: period.substring(6, 8),
-    round: period.substring(8, 10)
+    round: period.substring(8)
   };
 }
