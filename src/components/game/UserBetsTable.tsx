@@ -132,7 +132,7 @@ export const UserBetsTable: React.FC<UserBetsTableProps> = ({
               <TableHead className="font-semibold text-gray-700">Bet</TableHead>
               <TableHead className="font-semibold text-gray-700">Amount</TableHead>
               <TableHead className="font-semibold text-gray-700">Status</TableHead>
-            </tr>
+            </TableRow>
           </TableHeader>
           <TableBody>
             {currentBets.map((bet, index) => (

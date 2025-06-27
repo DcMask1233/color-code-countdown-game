@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MainGame } from "@/components/game/MainGame";
@@ -11,7 +12,6 @@ interface GameRecord {
 }
 
 const generateUserId = (): string => {
-  // Generate a proper UUID format
   return crypto.randomUUID();
 };
 
@@ -34,11 +34,9 @@ const Index = () => {
       const userData = JSON.parse(savedUser);
       setUserBalance(userData.balance || 1000);
       
-      // Ensure userId is a proper UUID
       let currentUserId = userData.userId;
       if (!currentUserId || !currentUserId.includes('-')) {
         currentUserId = generateUserId();
-        // Update localStorage with new UUID
         const updatedUserData = { ...userData, userId: currentUserId };
         localStorage.setItem('colorGameUser', JSON.stringify(updatedUserData));
       }
@@ -52,6 +50,7 @@ const Index = () => {
     }
   }, [navigate]);
 
+  // Fetch game results from backend - no frontend logic
   useEffect(() => {
     const fetchGameResults = async () => {
       const { data, error } = await supabase
@@ -67,7 +66,7 @@ const Index = () => {
 
       if (data) {
         const mappedRecords = data.map((item: any) => ({
-          period: item.period,
+          period: item.period, // Use exactly what backend provides
           number: item.number,
           color: item.result_color || [],
         }));

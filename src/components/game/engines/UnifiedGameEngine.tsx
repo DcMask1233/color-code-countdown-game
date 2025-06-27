@@ -57,7 +57,7 @@ export const UnifiedGameEngine = ({ gameType, userBalance, gameMode, userId }: U
 
   return (
     <>
-      {/* Game Header */}
+      {/* Game Header - All data from backend */}
       <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm text-gray-950 font-semibold">Period</span>
@@ -75,7 +75,7 @@ export const UnifiedGameEngine = ({ gameType, userBalance, gameMode, userId }: U
       <ColorButtons onColorSelect={handleColorSelect} disabled={isBettingClosed || isBetLoading} />
       <NumberGrid onNumberSelect={handleNumberSelect} disabled={isBettingClosed || isBetLoading} />
 
-      {/* Game Records */}
+      {/* Game Records - All data from backend */}
       <ModernGameRecords gameType={gameType} duration={duration} />
 
       {/* Bet Popup */}

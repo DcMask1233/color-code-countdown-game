@@ -7,6 +7,8 @@ export interface UserBet {
   result?: 'win' | 'lose';
   payout?: number;
   timestamp: Date;
-  gameType: string; // Added gameType for better filtering
-  gameMode?: string; // Added gameMode to distinguish between different time intervals
+  gameType: string;
+  gameMode?: string;
+  id: string;
+  settled: boolean;
 }
