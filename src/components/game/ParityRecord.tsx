@@ -42,6 +42,8 @@ export const ParityRecord = ({ records }: ParityRecordProps) => {
   // Show only the latest 10 records (assuming records are oldest to newest)
   const displayRecords = records.slice(-10).reverse();
 
+  console.log('🎯 ParityRecord rendering with records:', displayRecords.length);
+  
   return (
     <div className="bg-white rounded-lg shadow-sm mb-4">
       <div className="p-4 border-b">
@@ -58,19 +60,24 @@ export const ParityRecord = ({ records }: ParityRecordProps) => {
             </tr>
           </thead>
           <tbody>
-            {displayRecords.map((record, index) => (
-              <tr key={record.period} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                <td className="px-4 py-3 text-sm text-gray-900">
-                  {formatPeriodForDisplay(record.period).fullDisplay}
-                </td>
-                <td className="px-4 py-3 text-sm font-semibold text-gray-900">
-                  {record.number}
-                </td>
-                <td className="px-4 py-3">
-                  {getColorDot(record.color)}
-                </td>
-              </tr>
-            ))}
+            {displayRecords.map((record, index) => {
+              const formattedPeriod = formatPeriodForDisplay(record.period);
+              console.log('📊 Displaying record:', record.period, '→', formattedPeriod.display);
+              
+              return (
+                <tr key={record.period} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                  <td className="px-4 py-3 text-sm text-gray-900">
+                    {formattedPeriod.display}
+                  </td>
+                  <td className="px-4 py-3 text-sm font-semibold text-gray-900">
+                    {record.number}
+                  </td>
+                  <td className="px-4 py-3">
+                    {getColorDot(record.color)}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

@@ -17,6 +17,8 @@ export interface FormattedPeriod {
  * Handles both YYYYMMDDRR (10 chars) and YYYYMMDDRRRR (11+ chars)
  */
 export function formatPeriodForDisplay(period: string): FormattedPeriod {
+  console.log('🔍 Formatting period:', period, 'Length:', period?.length);
+  
   if (!period || period.length < 9) {
     console.warn('Invalid period format:', period);
     return {
@@ -39,6 +41,13 @@ export function formatPeriodForDisplay(period: string): FormattedPeriod {
     
     // Readable display: DD/MM/YYYY-ROUND
     const display = `${day}/${month}/${year}-${round}`;
+    
+    console.log('✅ Period formatted:', { 
+      original: period, 
+      display, 
+      fullDisplay, 
+      parts: { year, month, day, round } 
+    });
     
     return {
       display,
