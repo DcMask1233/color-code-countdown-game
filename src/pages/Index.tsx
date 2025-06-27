@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MainGame } from "@/components/game/MainGame";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 interface GameRecord {
   period: string;
@@ -49,36 +48,6 @@ const Index = () => {
       navigate('/login');
     }
   }, [navigate]);
-
-  // Fetch game results from backend - no frontend logic
-  useEffect(() => {
-    const fetchGameResults = async () => {
-      const { data, error } = await supabase
-        .from('game_results')
-        .select('*')
-        .order('period', { ascending: false })
-        .limit(50);
-
-      if (error) {
-        console.error('Failed to fetch game results:', error);
-        return;
-      }
-
-      if (data) {
-        const mappedRecords = data.map((item: any) => ({
-          period: item.period, // Use exactly what backend provides
-          number: item.number,
-          color: item.result_color || [],
-        }));
-        setGameRecords(mappedRecords);
-      }
-    };
-
-    fetchGameResults();
-    const interval = setInterval(fetchGameResults, 30000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('colorGameUser');

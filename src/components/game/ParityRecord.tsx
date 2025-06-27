@@ -1,15 +1,13 @@
 
-interface GameRecord {
-  period: string;
-  number: number;
-  color: string[];
-}
+import { useGameResults } from "@/hooks/useGameResults";
 
 interface ParityRecordProps {
-  records: GameRecord[];
+  duration: number;
 }
 
-export const ParityRecord = ({ records }: ParityRecordProps) => {
+export const ParityRecord = ({ duration }: ParityRecordProps) => {
+  const { results, loading } = useGameResults("parity", duration);
+
   const getColorDot = (colors: string[]) => {
     if (colors.length === 1) {
       return (
@@ -37,8 +35,19 @@ export const ParityRecord = ({ records }: ParityRecordProps) => {
     );
   };
 
-  // Show only the latest 10 records (assuming records are oldest to newest)
-  const displayRecords = records.slice(-10).reverse();
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm mb-4">
+        <div className="p-4 border-b">
+          <h3 className="font-semibold text-gray-800">Parity Record</h3>
+        </div>
+        <div className="p-4 text-center text-gray-500">Loading...</div>
+      </div>
+    );
+  }
+
+  // Show only the latest 10 records
+  const displayRecords = results.slice(0, 10);
 
   console.log('🎯 ParityRecord rendering with records:', displayRecords.length);
   
@@ -59,18 +68,18 @@ export const ParityRecord = ({ records }: ParityRecordProps) => {
           </thead>
           <tbody>
             {displayRecords.map((record, index) => {
-              console.log('📊 Displaying raw period:', record.period);
+              console.log('📊 Displaying backend period:', record.period);
               
               return (
-                <tr key={record.period} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                <tr key={record.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                   <td className="px-4 py-3 text-sm text-gray-900">
-                    {record.period}
+                    <div className="truncate">{record.period}</div>
                   </td>
                   <td className="px-4 py-3 text-sm font-semibold text-gray-900">
                     {record.number}
                   </td>
                   <td className="px-4 py-3">
-                    {getColorDot(record.color)}
+                    {getColorDot(record.result_color || [])}
                   </td>
                 </tr>
               );
