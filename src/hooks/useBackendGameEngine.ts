@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -42,6 +42,8 @@ export function useBackendGameEngine(gameType: string, gameMode: string) {
     setIsLoading(true);
     
     try {
+      console.log('🎯 Placing bet:', { gameType, gameMode, period, betType, betValue, amount });
+      
       const { data, error } = await supabase.rpc('place_bet_with_wallet', {
         p_game_type: gameType.toLowerCase(),
         p_game_mode: gameMode,
@@ -52,7 +54,7 @@ export function useBackendGameEngine(gameType: string, gameMode: string) {
       });
 
       if (error) {
-        console.error("Failed to place bet:", error);
+        console.error("❌ Failed to place bet:", error);
         toast({
           title: "Error",
           description: "Failed to place bet. Please try again.",
@@ -64,6 +66,7 @@ export function useBackendGameEngine(gameType: string, gameMode: string) {
       if (data && data.length > 0) {
         const result = data[0];
         if (result.success) {
+          console.log('✅ Bet placed successfully');
           toast({
             title: "Success",
             description: "Bet placed successfully!",
@@ -72,7 +75,7 @@ export function useBackendGameEngine(gameType: string, gameMode: string) {
           // Refresh user profile to update balance
           await refreshUserProfile();
           
-          // Refresh bets
+          // Refresh bets immediately
           await fetchUserBets();
           return true;
         } else {
@@ -87,7 +90,7 @@ export function useBackendGameEngine(gameType: string, gameMode: string) {
 
       return false;
     } catch (error) {
-      console.error("Error placing bet:", error);
+      console.error("💥 Error placing bet:", error);
       toast({
         title: "Error",
         description: "An unexpected error occurred",
@@ -99,10 +102,12 @@ export function useBackendGameEngine(gameType: string, gameMode: string) {
     }
   };
 
-  const fetchUserBets = async () => {
+  const fetchUserBets = useCallback(async () => {
     if (!user) return;
 
     try {
+      console.log('📊 Fetching user bets for:', { gameType, gameMode, userId: user.id });
+      
       const { data, error } = await supabase
         .from("user_bets")
         .select("*")
@@ -110,14 +115,15 @@ export function useBackendGameEngine(gameType: string, gameMode: string) {
         .eq("game_type", gameType.toLowerCase())
         .eq("game_mode", gameMode)
         .order("created_at", { ascending: false })
-        .limit(50);
+        .limit(100);
 
       if (error) {
-        console.error("Failed to fetch user bets:", error);
+        console.error("❌ Failed to fetch user bets:", error);
         return;
       }
 
       if (data) {
+        console.log('📈 Fetched bets:', data.length);
         const mappedBets: UserBet[] = data.map((bet: any) => ({
           id: bet.id,
           period: bet.period,
@@ -135,17 +141,18 @@ export function useBackendGameEngine(gameType: string, gameMode: string) {
         setUserBets(mappedBets);
       }
     } catch (error) {
-      console.error("Error fetching user bets:", error);
+      console.error("💥 Error fetching user bets:", error);
     }
-  };
+  }, [user, gameType, gameMode]);
 
   useEffect(() => {
     if (user && gameType && gameMode) {
+      // Initial fetch
       fetchUserBets();
       
       // Set up real-time subscription for bet updates
       const channel = supabase
-        .channel('user_bets_changes')
+        .channel(`user_bets_${gameType}_${gameMode}`)
         .on(
           'postgres_changes',
           {
@@ -155,7 +162,7 @@ export function useBackendGameEngine(gameType: string, gameMode: string) {
             filter: `user_id=eq.${user.id}`
           },
           (payload) => {
-            console.log('Bet update received:', payload);
+            console.log('🔄 Real-time bet update:', payload);
             fetchUserBets();
             refreshUserProfile(); // Refresh balance on bet updates
           }
@@ -166,7 +173,7 @@ export function useBackendGameEngine(gameType: string, gameMode: string) {
         supabase.removeChannel(channel);
       };
     }
-  }, [user, gameType, gameMode]);
+  }, [user, gameType, gameMode, fetchUserBets, refreshUserProfile]);
 
   return {
     userBets,

@@ -3,8 +3,21 @@ import React, { useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { PaginationControls } from "./PaginationControls";
-import { UserBet } from "@/types/UserBet";
 import { formatPeriodForDisplay } from "@/lib/periodFormatter";
+
+interface UserBet {
+  id: string;
+  period: string;
+  betType: "color" | "number";
+  betValue: string | number;
+  amount: number;
+  timestamp: Date;
+  result?: "win" | "lose";
+  payout?: number;
+  settled: boolean;
+  gameType: string;
+  gameMode: string;
+}
 
 interface UserBetsTableProps {
   userBets: UserBet[];
@@ -98,6 +111,7 @@ export const UserBetsTable: React.FC<UserBetsTableProps> = ({
     return (
       <div className="text-center py-8">
         <p className="text-gray-500">No betting history found for {gameType}.</p>
+        <p className="text-sm text-gray-400 mt-2">Place some bets to see them here!</p>
       </div>
     );
   }
@@ -123,7 +137,7 @@ export const UserBetsTable: React.FC<UserBetsTableProps> = ({
           </TableHeader>
           <TableBody>
             {currentBets.map((bet, index) => (
-              <TableRow key={`${bet.period}-${index}`} className="hover:bg-gray-50">
+              <TableRow key={`${bet.period}-${bet.betType}-${bet.betValue}-${index}`} className="hover:bg-gray-50">
                 <TableCell className="font-medium">
                   {formatPeriodForDisplay(bet.period).shortDisplay}
                 </TableCell>

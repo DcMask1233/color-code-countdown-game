@@ -8,7 +8,7 @@ const USER_BETS_STORAGE_KEY = 'userBets';
 export const useUserBets = () => {
   const [userBets, setUserBets] = useState<UserBet[]>([]);
 
-  // Load bets from localStorage on mount
+  // Load bets from localStorage on mount (for backward compatibility)
   useEffect(() => {
     const savedBets = localStorage.getItem(USER_BETS_STORAGE_KEY);
     if (savedBets) {
@@ -24,54 +24,18 @@ export const useUserBets = () => {
         setUserBets([]);
       }
     }
-
-    // Subscribe to real-time bet settlement updates
-    const channel = supabase
-      .channel('user_bet_settlements')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'user_bets'
-        },
-        (payload) => {
-          updateBetFromDatabase(payload.new);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
 
   // Save bets to localStorage whenever userBets changes (debounced)
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      localStorage.setItem(USER_BETS_STORAGE_KEY, JSON.stringify(userBets));
+      if (userBets.length > 0) {
+        localStorage.setItem(USER_BETS_STORAGE_KEY, JSON.stringify(userBets));
+      }
     }, 500);
 
     return () => clearTimeout(timeoutId);
   }, [userBets]);
-
-  const updateBetFromDatabase = useCallback((dbBet: any) => {
-    setUserBets(prev => prev.map(bet => {
-      const periodMatch = bet.period === dbBet.period;
-      const gameTypeMatch = bet.gameType?.toLowerCase() === dbBet.game_type?.toLowerCase();
-      const betTypeMatch = bet.betType === dbBet.bet_type;
-      const betValueMatch = bet.betValue?.toString() === dbBet.bet_value?.toString();
-      
-      if (periodMatch && gameTypeMatch && betTypeMatch && betValueMatch) {
-        return {
-          ...bet,
-          result: dbBet.win ? 'win' : 'lose',
-          payout: dbBet.payout || 0
-        };
-      }
-      return bet;
-    }));
-  }, []);
 
   const addBet = useCallback((newBet: UserBet) => {
     const normalizedBet = {
@@ -115,13 +79,11 @@ export const useUserBets = () => {
         return;
       }
 
-      if (dbBets && dbBets.length > 0) {
-        dbBets.forEach(updateBetFromDatabase);
-      }
+      console.log('📊 Synced bets from database:', dbBets?.length || 0);
     } catch (error) {
       console.error('Error syncing bets with database:', error);
     }
-  }, [updateBetFromDatabase]);
+  }, []);
 
   const triggerAutomatedSettlement = useCallback(async () => {
     try {

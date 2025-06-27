@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PaginationControls } from "./PaginationControls";
 import { useGameResults } from "@/hooks/useGameResults";
+import { formatPeriodForDisplay } from "@/lib/periodFormatter";
 
 interface Props {
   gameType: string;
@@ -22,18 +23,6 @@ export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
     goToFirstPage,
     goToLastPage
   } = useGameResults(gameType, duration);
-
-  const formatPeriod = (period: string) => {
-    // Period format is YYYYMMDDRR (e.g., 2024062612345)
-    if (period.length >= 10) {
-      const year = period.substring(0, 4);
-      const month = period.substring(4, 6);
-      const day = period.substring(6, 8);
-      const round = period.substring(8);
-      return `${year}${month}${day}${round}`;
-    }
-    return period;
-  };
 
   const getResultBadge = (colors: string[] | null) => {
     if (!colors || colors.length === 0) return null;
@@ -91,7 +80,9 @@ export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
           <TableBody>
             {results.map((record) => (
               <TableRow key={record.id} className="hover:bg-gray-50">
-                <TableCell className="font-medium">{formatPeriod(record.period)}</TableCell>
+                <TableCell className="font-medium">
+                  {formatPeriodForDisplay(record.period).shortDisplay}
+                </TableCell>
                 <TableCell>
                   <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-800 font-semibold">
                     {record.number}

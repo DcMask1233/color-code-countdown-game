@@ -41,6 +41,15 @@ export function getCurrentPeriod(durationSeconds: number): PeriodInfo {
     const secondsInCurrentPeriod = secondsSinceStart % durationSeconds;
     const timeLeft = durationSeconds - secondsInCurrentPeriod;
     
+    console.log('📅 Period calculation:', {
+      istTime: istTime.toISOString(),
+      dateString,
+      periodNumber,
+      period,
+      timeLeft,
+      durationSeconds
+    });
+    
     return {
       period,
       timeLeft,
@@ -48,7 +57,7 @@ export function getCurrentPeriod(durationSeconds: number): PeriodInfo {
       dateString
     };
   } catch (error) {
-    console.error('Error in period calculation:', error);
+    console.error('💥 Error in period calculation:', error);
     // Return safe defaults
     return {
       period: 'ERROR',

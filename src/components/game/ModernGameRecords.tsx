@@ -1,10 +1,11 @@
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GameResultsTable } from "./GameResultsTable";
 import { UserBetsTable } from "./UserBetsTable";
-import { useUserBets } from "@/hooks/useUserBets";
+import { useBackendGameEngine } from "@/hooks/useBackendGameEngine";
+import { getDurationFromGameMode } from "@/lib/gameUtils";
 
 interface ModernGameRecordsProps {
   gameType: string;
@@ -16,7 +17,17 @@ export const ModernGameRecords: React.FC<ModernGameRecordsProps> = React.memo(({
   duration
 }) => {
   const [activeTab, setActiveTab] = useState(`${gameType}-record`);
-  const { userBets, syncBetsWithDatabase } = useUserBets();
+  
+  // Get the correct game mode from duration
+  const gameMode = useMemo(() => {
+    if (duration === 60) return "Wingo1min";
+    if (duration === 180) return "Wingo3min";
+    if (duration === 300) return "Wingo5min";
+    return "Wingo1min";
+  }, [duration]);
+
+  // Use backend game engine to get actual database bets
+  const { userBets } = useBackendGameEngine(gameType, gameMode);
 
   // Memoize game display name to prevent recalculation
   const gameDisplayName = useMemo(() => {
@@ -28,11 +39,6 @@ export const ModernGameRecords: React.FC<ModernGameRecordsProps> = React.memo(({
       default: return gameType.charAt(0).toUpperCase() + gameType.slice(1);
     }
   }, [gameType]);
-
-  // Sync bets when component mounts or gameType changes
-  useEffect(() => {
-    syncBetsWithDatabase();
-  }, [gameType, syncBetsWithDatabase]);
 
   return (
     <Card className="w-full mt-4">
