@@ -20,6 +20,7 @@ export const useUserBets = () => {
           timestamp: new Date(bet.timestamp)
         }));
         setUserBets(betsWithDates);
+        console.log('📦 Loaded bets from localStorage:', betsWithDates);
       } catch (error) {
         console.error('Failed to parse saved bets:', error);
         setUserBets([]);
@@ -38,7 +39,6 @@ export const useUserBets = () => {
         },
         (payload) => {
           console.log('🔄 Bet settlement update received:', payload.new);
-          // Update local storage with settlement results
           updateBetFromDatabase(payload.new);
         }
       )
@@ -52,16 +52,24 @@ export const useUserBets = () => {
   // Save bets to localStorage whenever userBets changes
   useEffect(() => {
     localStorage.setItem(USER_BETS_STORAGE_KEY, JSON.stringify(userBets));
+    console.log('💾 Saved bets to localStorage:', userBets);
   }, [userBets]);
 
   const updateBetFromDatabase = (dbBet: any) => {
     console.log('📊 Updating bet from database:', dbBet);
     setUserBets(prev => prev.map(bet => {
-      // Match by period and game type since we don't have database IDs in localStorage bets
-      if (bet.period === dbBet.period && bet.gameType === dbBet.game_type) {
-        console.log('✅ Found matching bet, updating result:', {
+      // Enhanced matching: try multiple approaches
+      const periodMatch = bet.period === dbBet.period;
+      const gameTypeMatch = bet.gameType?.toLowerCase() === dbBet.game_type?.toLowerCase();
+      const betTypeMatch = bet.betType === dbBet.bet_type;
+      const betValueMatch = bet.betValue?.toString() === dbBet.bet_value?.toString();
+      
+      if (periodMatch && gameTypeMatch && betTypeMatch && betValueMatch) {
+        console.log('✅ Found exact matching bet:', {
           period: bet.period,
           gameType: bet.gameType,
+          betType: bet.betType,
+          betValue: bet.betValue,
           oldResult: bet.result,
           newResult: dbBet.win ? 'win' : 'lose',
           payout: dbBet.payout || 0
@@ -78,20 +86,38 @@ export const useUserBets = () => {
 
   const addBet = (newBet: UserBet) => {
     console.log('➕ Adding new bet:', newBet);
-    setUserBets(prev => [newBet, ...prev]);
+    
+    // Ensure gameType is properly set and normalized
+    const normalizedBet = {
+      ...newBet,
+      gameType: newBet.gameType?.toLowerCase() || 'unknown',
+      timestamp: new Date()
+    };
+    
+    console.log('📝 Normalized bet before adding:', normalizedBet);
+    setUserBets(prev => [normalizedBet, ...prev]);
   };
 
   const updateBetResult = (period: string, gameType: string, result: 'win' | 'lose', payout?: number) => {
     console.log('🎯 Manually updating bet result:', { period, gameType, result, payout });
-    setUserBets(prev => prev.map(bet => 
-      bet.period === period && bet.gameType === gameType 
-        ? { ...bet, result, payout }
-        : bet
-    ));
+    setUserBets(prev => prev.map(bet => {
+      const periodMatch = bet.period === period;
+      const gameTypeMatch = bet.gameType?.toLowerCase() === gameType.toLowerCase();
+      
+      if (periodMatch && gameTypeMatch) {
+        console.log('✅ Updated bet result:', { bet, result, payout });
+        return { ...bet, result, payout };
+      }
+      return bet;
+    }));
   };
 
   const getBetsByGameType = (gameType: string) => {
-    return userBets.filter(bet => bet.gameType === gameType);
+    const filtered = userBets.filter(bet => 
+      bet.gameType?.toLowerCase() === gameType.toLowerCase()
+    );
+    console.log(`🎮 Getting bets for gameType "${gameType}":`, filtered);
+    return filtered;
   };
 
   // Function to sync bets with database for settlement status

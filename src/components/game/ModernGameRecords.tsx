@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GameResultsTable } from "./GameResultsTable";
@@ -7,8 +8,7 @@ import { useUserBets } from "@/hooks/useUserBets";
 
 interface ModernGameRecordsProps {
   gameType: string;
-  duration: number;  // keep duration if used internally
-  // Removed gameMode prop
+  duration: number;
 }
 
 export const ModernGameRecords: React.FC<ModernGameRecordsProps> = ({
@@ -16,7 +16,23 @@ export const ModernGameRecords: React.FC<ModernGameRecordsProps> = ({
   duration
 }) => {
   const [activeTab, setActiveTab] = useState(`${gameType}-record`);
-  const { userBets } = useUserBets();
+  const { userBets, syncBetsWithDatabase } = useUserBets();
+
+  // Sync bets when component mounts or gameType changes
+  useEffect(() => {
+    console.log(`🔄 ModernGameRecords mounted for ${gameType}, syncing bets...`);
+    syncBetsWithDatabase();
+  }, [gameType, syncBetsWithDatabase]);
+
+  // Log current state for debugging
+  useEffect(() => {
+    console.log(`📊 ModernGameRecords state for ${gameType}:`, {
+      totalBets: userBets.length,
+      gameTypeBets: userBets.filter(bet => bet.gameType?.toLowerCase() === gameType.toLowerCase()).length,
+      allGameTypes: [...new Set(userBets.map(bet => bet.gameType))],
+      userBets: userBets
+    });
+  }, [userBets, gameType]);
 
   const getGameDisplayName = (gameId: string) => {
     switch (gameId.toLowerCase()) {
@@ -24,7 +40,7 @@ export const ModernGameRecords: React.FC<ModernGameRecordsProps> = ({
       case 'sapre': return 'Sapre';
       case 'bcone': return 'Bcone';
       case 'emerd': return 'Emerd';
-      default: return 'Game';
+      default: return gameId.charAt(0).toUpperCase() + gameId.slice(1);
     }
   };
 
@@ -33,7 +49,9 @@ export const ModernGameRecords: React.FC<ModernGameRecordsProps> = ({
   return (
     <Card className="w-full mt-4">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold text-gray-800">{gameDisplayName} Record</CardTitle>
+        <CardTitle className="text-lg font-semibold text-gray-800">
+          {gameDisplayName} Record
+        </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -61,7 +79,6 @@ export const ModernGameRecords: React.FC<ModernGameRecordsProps> = ({
               userBets={userBets} 
               gameType={gameType}
               title={`My ${gameDisplayName} Records`}
-              // removed gameMode prop here
             />
           </TabsContent>
         </Tabs>
