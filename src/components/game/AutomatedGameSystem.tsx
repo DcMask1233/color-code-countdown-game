@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { RefreshCw, Play, Zap } from 'lucide-react';
+import { RefreshCw, Play, Zap, Trash2 } from 'lucide-react';
 
 export const AutomatedGameSystem: React.FC = () => {
   const [isRunning, setIsRunning] = useState(false);
@@ -58,6 +58,44 @@ export const AutomatedGameSystem: React.FC = () => {
     } catch (error) {
       console.error('💥 Automated engine error:', error);
       setSystemStatus('error');
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  const clearOldData = async () => {
+    setIsRunning(true);
+    
+    try {
+      toast({
+        title: "Clearing Old Data",
+        description: "Removing old unformatted period data...",
+      });
+
+      const { data, error } = await supabase.functions.invoke('clear-old-data');
+      
+      if (error) {
+        console.error('❌ Data cleanup error:', error);
+        toast({
+          title: "Error",
+          description: "Failed to clear old data",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Success",
+        description: `Cleared ${data?.deletedResults || 0} old results and ${data?.deletedBets || 0} old bets`,
+      });
+      
+    } catch (error) {
+      console.error('💥 Data cleanup error:', error);
       toast({
         title: "Error",
         description: "An unexpected error occurred",
@@ -153,6 +191,16 @@ export const AutomatedGameSystem: React.FC = () => {
               {isRunning ? 'Running...' : 'Run Now'}
             </Button>
             <Button
+              onClick={clearOldData}
+              disabled={isRunning}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Clear Old Data
+            </Button>
+            <Button
               onClick={fixPeriodSync}
               disabled={isRunning}
               variant="outline"
@@ -167,9 +215,10 @@ export const AutomatedGameSystem: React.FC = () => {
           <strong>How it works:</strong>
           <ul className="mt-1 space-y-1">
             <li>• Checks all game types (Parity, Sapre, Bcone, Emerd) every minute</li>
-            <li>• Generates results when countdown reaches 0</li>
+            <li>• Generates results when countdown reaches 0 with new YYYY-MM-DD-XXX format</li>
             <li>• Automatically settles all bets and credits winnings</li>
             <li>• Updates "My Records" with win/lose status in real-time</li>
+            <li>• "Clear Old Data" removes incompatible old period formats</li>
           </ul>
         </div>
       </CardContent>
