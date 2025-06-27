@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
-const ADMIN_EMAIL = "dcmask21@gmail.com";
+const ADMIN_EMAIL = "dcmask@gmail.com";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -85,50 +85,6 @@ export default function AdminLogin() {
     }
   };
 
-  const handleCreateAdminAccount = async () => {
-    setLoading(true);
-    
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: ADMIN_EMAIL,
-        password: "12345678",
-        options: {
-          emailRedirectTo: `${window.location.origin}/admin`
-        }
-      });
-
-      if (error) {
-        if (error.message.includes("already registered")) {
-          toast({
-            title: "Account Exists",
-            description: "Admin account already exists. Try logging in instead.",
-            variant: "destructive"
-          });
-        } else {
-          toast({
-            title: "Creation Failed",
-            description: error.message,
-            variant: "destructive"
-          });
-        }
-      } else {
-        toast({
-          title: "Admin Account Created",
-          description: "Admin account created successfully. You can now login.",
-        });
-      }
-    } catch (error: any) {
-      console.error("Admin account creation error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create admin account",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
@@ -175,25 +131,11 @@ export default function AdminLogin() {
             </Button>
           </form>
           
-          <div className="mt-4 space-y-2">
-            <Button 
-              onClick={handleCreateAdminAccount}
-              variant="outline"
-              className="w-full"
-              disabled={loading}
-            >
-              Create Admin Account
-            </Button>
-          </div>
-          
           <div className="mt-4 p-3 bg-blue-50 rounded-lg">
             <p className="text-sm text-blue-700">
               <strong>Default Credentials:</strong><br />
-              Email: dcmask21@gmail.com<br />
+              Email: dcmask@gmail.com<br />
               Password: 12345678
-            </p>
-            <p className="text-xs text-blue-600 mt-2">
-              Click "Create Admin Account" if this is your first time accessing the admin panel.
             </p>
           </div>
         </CardContent>

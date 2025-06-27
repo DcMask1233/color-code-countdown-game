@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { LogOut, RefreshCw, Database, Users, TrendingUp, Zap } from "lucide-react";
 import { AutomatedGameSystem } from "@/components/game/AutomatedGameSystem";
 
-const ADMIN_EMAIL = "dcmask21@gmail.com";
+const ADMIN_EMAIL = "dcmask@gmail.com";
 
 export default function AdminPanel() {
   const [user, setUser] = useState<any>(null);
