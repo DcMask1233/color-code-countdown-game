@@ -2,6 +2,7 @@
 /**
  * Unified Period Generation System
  * This ensures consistent period calculation across frontend and backend
+ * Format: YYYYMMDDRR (10 characters)
  */
 
 export interface PeriodInfo {
@@ -14,6 +15,7 @@ export interface PeriodInfo {
 /**
  * Generate current period using consistent IST calculation
  * This matches the backend logic exactly
+ * Format: YYYYMMDDRR
  */
 export function getCurrentPeriod(durationSeconds: number): PeriodInfo {
   try {
@@ -34,8 +36,8 @@ export function getCurrentPeriod(durationSeconds: number): PeriodInfo {
     // Format date as YYYYMMDD (consistent with backend)
     const dateString = istTime.toISOString().slice(0, 10).replace(/-/g, '');
     
-    // Create period string with 3-digit padding (consistent with backend)
-    const period = dateString + periodNumber.toString().padStart(3, '0');
+    // Create period string with 2-digit padding for YYYYMMDDRR format
+    const period = dateString + periodNumber.toString().padStart(2, '0');
     
     // Calculate time left in current period
     const secondsInCurrentPeriod = secondsSinceStart % durationSeconds;
@@ -47,7 +49,8 @@ export function getCurrentPeriod(durationSeconds: number): PeriodInfo {
       periodNumber,
       period,
       timeLeft,
-      durationSeconds
+      durationSeconds,
+      format: 'YYYYMMDDRR'
     });
     
     return {
@@ -60,7 +63,7 @@ export function getCurrentPeriod(durationSeconds: number): PeriodInfo {
     console.error('💥 Error in period calculation:', error);
     // Return safe defaults
     return {
-      period: 'ERROR',
+      period: 'ERROR00000',
       timeLeft: 0,
       periodNumber: 0,
       dateString: ''
@@ -69,10 +72,10 @@ export function getCurrentPeriod(durationSeconds: number): PeriodInfo {
 }
 
 /**
- * Validate if a period string is valid
+ * Validate if a period string is valid YYYYMMDDRR format
  */
 export function isValidPeriod(period: string): boolean {
-  if (!period || period.length !== 11) return false;
+  if (!period || period.length !== 10) return false;
   
   const dateStr = period.substring(0, 8);
   const periodNum = period.substring(8);
@@ -86,9 +89,9 @@ export function isValidPeriod(period: string): boolean {
   if (month < 1 || month > 12) return false;
   if (day < 1 || day > 31) return false;
   
-  // Check period number (3 digits)
+  // Check period number (2 digits for RR format)
   const periodNumber = parseInt(periodNum);
-  if (isNaN(periodNumber) || periodNumber < 1 || periodNumber > 999) return false;
+  if (isNaN(periodNumber) || periodNumber < 1 || periodNumber > 99) return false;
   
   return true;
 }
