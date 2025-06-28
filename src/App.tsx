@@ -50,15 +50,15 @@ function App() {
                 userProfile ? (
                   <MainGame
                     userBalance={userProfile.balance}
-                    userId={userProfile.user_code}
-                    onBalanceUpdate={() => {}} // No longer needed - handled by backend
+                    userId={userProfile.id}
+                    onBalanceUpdate={() => {}} // Handled by secure backend
                     onLogout={() => {}} // Will be handled by MainGame
                     gameRecords={[]}
                     onGameRecordsUpdate={() => {}} // No longer needed
-                    totalBetAmount={userProfile.total_bet_amount}
-                    totalDepositAmount={userProfile.total_deposit_amount}
-                    totalWithdrawAmount={userProfile.total_withdraw_amount}
-                    onStatsUpdate={() => {}} // No longer needed - handled by backend
+                    totalBetAmount={0} // Will be calculated from transactions
+                    totalDepositAmount={0} // Will be calculated from transactions
+                    totalWithdrawAmount={0} // Will be calculated from transactions
+                    onStatsUpdate={() => {}} // Handled by secure backend
                   />
                 ) : (
                   <div className="min-h-screen bg-gray-100 flex items-center justify-center">

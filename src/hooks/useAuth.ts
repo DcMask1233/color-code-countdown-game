@@ -4,13 +4,10 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
 interface UserProfile {
-  user_id: string;
-  user_code: string;
-  mobile: string | null;
+  id: string;
   balance: number;
-  total_bet_amount: number;
-  total_deposit_amount: number;
-  total_withdraw_amount: number;
+  is_admin: boolean;
+  created_at: string;
 }
 
 export const useAuth = () => {
@@ -23,7 +20,11 @@ export const useAuth = () => {
     console.log('Fetching user profile for user:', userId);
     
     try {
-      const { data, error } = await supabase.rpc('get_user_info');
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
       
       console.log('User profile fetch result:', { data, error });
       
@@ -32,41 +33,12 @@ export const useAuth = () => {
         return;
       }
       
-      if (data && data.length > 0) {
-        const profile = data[0];
-        console.log('Setting user profile:', profile);
-        setUserProfile({
-          user_id: profile.user_id,
-          user_code: profile.user_code,
-          mobile: profile.mobile,
-          balance: Number(profile.balance),
-          total_bet_amount: Number(profile.total_bet_amount),
-          total_deposit_amount: Number(profile.total_deposit_amount),
-          total_withdraw_amount: Number(profile.total_withdraw_amount)
-        });
-      } else {
-        console.log('No profile data found, creating fallback profile');
-        setUserProfile({
-          user_id: userId,
-          user_code: 'TEMP001',
-          mobile: null,
-          balance: 1000,
-          total_bet_amount: 0,
-          total_deposit_amount: 0,
-          total_withdraw_amount: 0
-        });
+      if (data) {
+        console.log('Setting user profile:', data);
+        setUserProfile(data);
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
-      setUserProfile({
-        user_id: userId,
-        user_code: 'TEMP001',
-        mobile: null,
-        balance: 1000,
-        total_bet_amount: 0,
-        total_deposit_amount: 0,
-        total_withdraw_amount: 0
-      });
     }
   };
 
@@ -87,7 +59,6 @@ export const useAuth = () => {
         
         if (session?.user) {
           console.log('User authenticated, fetching profile');
-          // Use the user ID from the session directly
           setTimeout(() => {
             fetchUserProfile(session.user.id);
           }, 100);

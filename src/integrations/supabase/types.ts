@@ -9,117 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      admin_results: {
+      game_periods: {
         Row: {
           created_at: string | null
+          end_time: string
+          game_mode: string
           game_type: string
-          id: string
-          next_result_number: number
+          id: number
+          is_locked: boolean | null
           period: string
+          result: Json | null
+          start_time: string
         }
         Insert: {
           created_at?: string | null
+          end_time: string
+          game_mode: string
           game_type: string
-          id?: string
-          next_result_number: number
+          id?: number
+          is_locked?: boolean | null
           period: string
+          result?: Json | null
+          start_time: string
         }
         Update: {
           created_at?: string | null
+          end_time?: string
+          game_mode?: string
           game_type?: string
-          id?: string
-          next_result_number?: number
+          id?: number
+          is_locked?: boolean | null
           period?: string
-        }
-        Relationships: []
-      }
-      bets: {
-        Row: {
-          amount: number
-          bet_number: number
-          created_at: string | null
-          game_type: string
-          id: string
-          period: string
-          status: string
-          user_id: string
-        }
-        Insert: {
-          amount: number
-          bet_number: number
-          created_at?: string | null
-          game_type: string
-          id?: string
-          period: string
-          status?: string
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          bet_number?: number
-          created_at?: string | null
-          game_type?: string
-          id?: string
-          period?: string
-          status?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      game_results: {
-        Row: {
-          created_at: string
-          duration: number
-          game_type: string
-          id: string
-          number: number
-          period: string
-          result_color: string[]
-        }
-        Insert: {
-          created_at?: string
-          duration: number
-          game_type: string
-          id?: string
-          number: number
-          period: string
-          result_color: string[]
-        }
-        Update: {
-          created_at?: string
-          duration?: number
-          game_type?: string
-          id?: string
-          number?: number
-          period?: string
-          result_color?: string[]
-        }
-        Relationships: []
-      }
-      profiles: {
-        Row: {
-          created_at: string | null
-          full_name: string | null
-          id: string
-          mobile: string | null
-          updated_at: string | null
-          user_code: string
-        }
-        Insert: {
-          created_at?: string | null
-          full_name?: string | null
-          id: string
-          mobile?: string | null
-          updated_at?: string | null
-          user_code: string
-        }
-        Update: {
-          created_at?: string | null
-          full_name?: string | null
-          id?: string
-          mobile?: string | null
-          updated_at?: string | null
-          user_code?: string
+          result?: Json | null
+          start_time?: string
         }
         Relationships: []
       }
@@ -128,7 +50,7 @@ export type Database = {
           amount: number
           created_at: string | null
           id: string
-          reference_id: string | null
+          metadata: Json | null
           type: string
           user_id: string
         }
@@ -136,7 +58,7 @@ export type Database = {
           amount: number
           created_at?: string | null
           id?: string
-          reference_id?: string | null
+          metadata?: Json | null
           type: string
           user_id: string
         }
@@ -144,134 +66,89 @@ export type Database = {
           amount?: number
           created_at?: string | null
           id?: string
-          reference_id?: string | null
+          metadata?: Json | null
           type?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_bets: {
         Row: {
           amount: number
           bet_type: string
           bet_value: string
-          created_at: string
-          game_mode: string
-          game_type: string
+          created_at: string | null
           id: string
           payout: number | null
-          period: string
-          settled: boolean
+          period_id: number
+          result: string | null
           user_id: string
-          win: boolean | null
         }
         Insert: {
           amount: number
           bet_type: string
           bet_value: string
-          created_at?: string
-          game_mode: string
-          game_type: string
+          created_at?: string | null
           id?: string
           payout?: number | null
-          period: string
-          settled?: boolean
+          period_id: number
+          result?: string | null
           user_id: string
-          win?: boolean | null
         }
         Update: {
           amount?: number
           bet_type?: string
           bet_value?: string
-          created_at?: string
-          game_mode?: string
-          game_type?: string
+          created_at?: string | null
           id?: string
           payout?: number | null
-          period?: string
-          settled?: boolean
+          period_id?: number
+          result?: string | null
           user_id?: string
-          win?: boolean | null
         }
         Relationships: [
+          {
+            foreignKeyName: "user_bets_period_id_fkey"
+            columns: ["period_id"]
+            isOneToOne: false
+            referencedRelation: "game_periods"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_bets_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
       }
-      user_wallets: {
+      users: {
         Row: {
-          balance: number
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          balance?: number
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          balance?: number
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      wallet_transactions: {
-        Row: {
-          amount: number
+          balance: number | null
           created_at: string | null
-          description: string | null
           id: string
-          type: string | null
-          user_id: string | null
+          is_admin: boolean | null
         }
         Insert: {
-          amount: number
+          balance?: number | null
           created_at?: string | null
-          description?: string | null
-          id?: string
-          type?: string | null
-          user_id?: string | null
+          id: string
+          is_admin?: boolean | null
         }
         Update: {
-          amount?: number
+          balance?: number | null
           created_at?: string | null
-          description?: string | null
           id?: string
-          type?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      wallets: {
-        Row: {
-          balance: number
-          total_bet_amount: number | null
-          total_deposit_amount: number | null
-          total_withdraw_amount: number | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          balance?: number
-          total_bet_amount?: number | null
-          total_deposit_amount?: number | null
-          total_withdraw_amount?: number | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          balance?: number
-          total_bet_amount?: number | null
-          total_deposit_amount?: number | null
-          total_withdraw_amount?: number | null
-          updated_at?: string | null
-          user_id?: string
+          is_admin?: boolean | null
         }
         Relationships: []
       }
@@ -280,6 +157,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_new_period: {
+        Args: { p_game_type: string; p_game_mode: string; p_duration: number }
+        Returns: number
+      }
+      generate_and_settle_result: {
+        Args: { p_period_id: number }
+        Returns: undefined
+      }
       generate_period: {
         Args: { game_duration: number }
         Returns: string
@@ -352,13 +237,20 @@ export type Database = {
         Returns: undefined
       }
       place_bet_secure: {
-        Args: {
-          p_game_type: string
-          p_period: string
-          p_bet_type: string
-          p_bet_value: string
-          p_amount: number
-        }
+        Args:
+          | {
+              p_game_type: string
+              p_period: string
+              p_bet_type: string
+              p_bet_value: string
+              p_amount: number
+            }
+          | {
+              p_period_id: number
+              p_bet_type: string
+              p_bet_value: string
+              p_amount: number
+            }
         Returns: undefined
       }
       place_bet_with_wallet: {

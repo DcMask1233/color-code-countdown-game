@@ -1,25 +1,25 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 
 interface GameResult {
-  id: string;
-  period: string;
-  number: number;
-  result_color: string[];
+  id: number;
   game_type: string;
-  duration: number;
+  game_mode: string;
+  period: string;
+  result: {
+    number: number;
+    colors: string[];
+  };
   created_at: string;
 }
 
-export const useGameResults = (gameType: string, duration: number) => {
+export const useGameResults = (gameType: string, gameMode: string) => {
   const [results, setResults] = useState<GameResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
-  const { toast } = useToast();
 
   const RECORDS_PER_PAGE = 10;
   const MAX_RESULTS = 2500;
@@ -29,25 +29,18 @@ export const useGameResults = (gameType: string, duration: number) => {
       setLoading(true);
       const offset = (page - 1) * RECORDS_PER_PAGE;
       
-      // Convert gameType to lowercase to match database values
-      const dbGameType = gameType.toLowerCase();
-      
-      // First get total count (limited to MAX_RESULTS)
+      // Get total count (limited to MAX_RESULTS)
       const { count, error: countError } = await supabase
-        .from('game_results')
+        .from('game_periods')
         .select('*', { count: 'exact', head: true })
-        .eq('game_type', dbGameType)
-        .eq('duration', duration)
-        .order('period', { ascending: false })
+        .eq('game_type', gameType.toLowerCase())
+        .eq('game_mode', gameMode.toLowerCase())
+        .not('result', 'is', null)
+        .order('created_at', { ascending: false })
         .limit(MAX_RESULTS);
 
       if (countError) {
         console.error('Error counting records:', countError);
-        toast({
-          title: "Error",
-          description: "Failed to count game results",
-          variant: "destructive"
-        });
         return;
       }
 
@@ -55,22 +48,18 @@ export const useGameResults = (gameType: string, duration: number) => {
       setTotalCount(limitedCount);
       setTotalPages(Math.ceil(limitedCount / RECORDS_PER_PAGE));
       
-      // Then get the actual data
+      // Get the actual data
       const { data, error } = await supabase
-        .from('game_results')
+        .from('game_periods')
         .select('*')
-        .eq('game_type', dbGameType)
-        .eq('duration', duration)
-        .order('period', { ascending: false })
+        .eq('game_type', gameType.toLowerCase())
+        .eq('game_mode', gameMode.toLowerCase())
+        .not('result', 'is', null)
+        .order('created_at', { ascending: false })
         .range(offset, offset + RECORDS_PER_PAGE - 1);
 
       if (error) {
         console.error('Error fetching game results:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch game results",
-          variant: "destructive"
-        });
       } else {
         setResults(data || []);
       }
@@ -122,18 +111,16 @@ export const useGameResults = (gameType: string, duration: number) => {
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: 'UPDATE',
           schema: 'public',
-          table: 'game_results',
-          filter: `game_type=eq.${gameType.toLowerCase()} AND duration=eq.${duration}`
+          table: 'game_periods',
+          filter: `game_type=eq.${gameType.toLowerCase()} AND game_mode=eq.${gameMode.toLowerCase()}`
         },
         (payload) => {
           console.log('New game result:', payload.new);
-          // If we're on page 1, add the new result to the top
+          // If we're on page 1, refresh to show new result
           if (currentPage === 1) {
-            setResults(prev => [payload.new as GameResult, ...prev.slice(0, RECORDS_PER_PAGE - 1)]);
-            setTotalCount(prev => Math.min(prev + 1, MAX_RESULTS));
-            setTotalPages(prev => Math.ceil(Math.min(totalCount + 1, MAX_RESULTS) / RECORDS_PER_PAGE));
+            fetchResults(1);
           }
         }
       )
@@ -142,7 +129,7 @@ export const useGameResults = (gameType: string, duration: number) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [gameType, duration]);
+  }, [gameType, gameMode]);
 
   return { 
     results, 
