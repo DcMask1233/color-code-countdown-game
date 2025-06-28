@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GameResultsTable } from "./GameResultsTable";
 import { UserBetsTable } from "./UserBetsTable";
 import { useBackendGameEngine } from "@/hooks/useBackendGameEngine";
-import { getDurationFromGameMode } from "@/lib/gameUtils";
 
 interface ModernGameRecordsProps {
   gameType: string;
@@ -26,10 +25,10 @@ export const ModernGameRecords: React.FC<ModernGameRecordsProps> = React.memo(({
     return "Wingo1min";
   }, [duration]);
 
-  // Use backend game engine to get actual database bets
+  // Use backend game engine to get user bets
   const { userBets } = useBackendGameEngine(gameType, gameMode);
 
-  // Memoize game display name to prevent recalculation
+  // Memoize game display name
   const gameDisplayName = useMemo(() => {
     switch (gameType.toLowerCase()) {
       case 'parity': return 'Parity';
@@ -39,6 +38,8 @@ export const ModernGameRecords: React.FC<ModernGameRecordsProps> = React.memo(({
       default: return gameType.charAt(0).toUpperCase() + gameType.slice(1);
     }
   }, [gameType]);
+
+  console.log(`🎮 ModernGameRecords for ${gameType} with duration ${duration}`);
 
   return (
     <Card className="w-full mt-4">

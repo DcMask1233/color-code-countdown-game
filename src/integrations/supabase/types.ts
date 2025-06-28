@@ -299,6 +299,13 @@ export type Database = {
           time_left: number
         }[]
       }
+      get_current_period_info: {
+        Args: { p_duration: number }
+        Returns: {
+          period: string
+          time_left: number
+        }[]
+      }
       get_result_colors: {
         Args: { winning_number: number }
         Returns: string[]

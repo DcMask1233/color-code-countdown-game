@@ -1,9 +1,10 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PaginationControls } from "./PaginationControls";
 import { useGameResults } from "@/hooks/useGameResults";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   gameType: string;
@@ -20,8 +21,33 @@ export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
     nextPage, 
     prevPage,
     goToFirstPage,
-    goToLastPage
+    goToLastPage,
+    refetch
   } = useGameResults(gameType, duration);
+
+  // Set up real-time subscription for new results
+  useEffect(() => {
+    const channel = supabase
+      .channel(`${gameType}_results_realtime`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'game_results',
+          filter: `game_type=eq.${gameType.toLowerCase()} AND duration=eq.${duration}`
+        },
+        (payload) => {
+          console.log('🔄 New result received:', payload.new);
+          refetch(); // Refresh when new data comes in
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [gameType, duration, refetch]);
 
   const getResultBadge = (colors: string[] | null) => {
     if (!colors || colors.length === 0) return null;
@@ -77,19 +103,22 @@ export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {results.map((record) => (
-              <TableRow key={record.id} className="hover:bg-gray-50">
-                <TableCell className="font-medium">
-                  {record.period}
-                </TableCell>
-                <TableCell>
-                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-800 font-semibold">
-                    {record.number}
-                  </span>
-                </TableCell>
-                <TableCell>{getResultBadge(record.result_color)}</TableCell>
-              </TableRow>
-            ))}
+            {results.map((record) => {
+              console.log('📊 Displaying period:', record.period);
+              return (
+                <TableRow key={record.id} className="hover:bg-gray-50">
+                  <TableCell className="font-medium">
+                    {record.period}
+                  </TableCell>
+                  <TableCell>
+                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-800 font-semibold">
+                      {record.number}
+                    </span>
+                  </TableCell>
+                  <TableCell>{getResultBadge(record.result_color)}</TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>

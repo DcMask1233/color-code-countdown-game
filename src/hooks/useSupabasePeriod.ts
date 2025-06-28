@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-export const useBackendPeriod = (duration: number) => {
+export const useSupabasePeriod = (duration: number) => {
   const [currentPeriod, setCurrentPeriod] = useState<string>('');
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -25,13 +25,11 @@ export const useBackendPeriod = (duration: number) => {
           setCurrentPeriod(data[0].period);
           setTimeLeft(data[0].time_left);
           setError(null);
-          setIsLoading(false);
-          
-          console.log(`🕐 Backend period info: ${data[0].period}, time left: ${data[0].time_left}s`);
         }
       } catch (err) {
         console.error('Error in fetchPeriodInfo:', err);
         setError('Failed to fetch period information');
+      } finally {
         setIsLoading(false);
       }
     };

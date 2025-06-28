@@ -1,12 +1,38 @@
 
 import { useGameResults } from "@/hooks/useGameResults";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ParityRecordProps {
   duration: number;
 }
 
 export const ParityRecord = ({ duration }: ParityRecordProps) => {
-  const { results, loading } = useGameResults("parity", duration);
+  const { results, loading, refetch } = useGameResults("parity", duration);
+
+  // Set up real-time subscription for new results
+  useEffect(() => {
+    const channel = supabase
+      .channel('parity_results_realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'game_results',
+          filter: `game_type=eq.parity AND duration=eq.${duration}`
+        },
+        (payload) => {
+          console.log('🔄 New parity result received:', payload.new);
+          refetch(); // Refresh the results when new data comes in
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [duration, refetch]);
 
   const getColorDot = (colors: string[]) => {
     if (colors.length === 1) {
@@ -49,7 +75,7 @@ export const ParityRecord = ({ duration }: ParityRecordProps) => {
   // Show only the latest 10 records
   const displayRecords = results.slice(0, 10);
 
-  console.log('🎯 ParityRecord rendering with records:', displayRecords.length);
+  console.log('🎯 ParityRecord displaying records with new format:', displayRecords.length);
   
   return (
     <div className="bg-white rounded-lg shadow-sm mb-4">
@@ -68,7 +94,7 @@ export const ParityRecord = ({ duration }: ParityRecordProps) => {
           </thead>
           <tbody>
             {displayRecords.map((record, index) => {
-              console.log('📊 Displaying backend period:', record.period);
+              console.log('📊 Backend period format:', record.period);
               
               return (
                 <tr key={record.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>

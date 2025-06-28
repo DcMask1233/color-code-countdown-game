@@ -44,6 +44,7 @@ const Index = () => {
       setTotalBetAmount(userData.totalBetAmount || 0);
       setTotalDepositAmount(userData.totalDepositAmount || 0);
       setTotalWithdrawAmount(userData.totalWithdrawAmount || 0);
+      console.log('🔑 User loaded with backend-driven data only');
     } else {
       navigate('/login');
     }
@@ -109,6 +110,8 @@ const Index = () => {
   if (!isLoggedIn) {
     return null;
   }
+
+  console.log('🏠 Index page loaded - all data now backend-driven');
 
   return (
     <MainGame
