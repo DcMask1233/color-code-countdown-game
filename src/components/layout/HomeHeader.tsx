@@ -1,6 +1,8 @@
+
 import { RefreshCcw, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 interface HomeHeaderProps {
   balance: number;
@@ -18,13 +20,29 @@ export const HomeHeader = ({
   onRefresh
 }: HomeHeaderProps) => {
   const { signOut, refreshProfile } = useAuth();
+  const { toast } = useToast();
 
   const handleRefresh = async () => {
-    await refreshProfile();
-    onRefresh();
+    console.log('🔄 Refresh button clicked');
+    try {
+      await refreshProfile();
+      onRefresh();
+      toast({
+        title: "Success",
+        description: "Profile refreshed successfully!",
+      });
+    } catch (error) {
+      console.error('Error refreshing profile:', error);
+      toast({
+        title: "Error",
+        description: "Failed to refresh profile. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleLogout = async () => {
+    console.log('👋 Logout button clicked');
     await signOut();
   };
 
@@ -48,7 +66,11 @@ export const HomeHeader = ({
         <div className="flex flex-col">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-gray-700 text-sm">Balance</span>
-            <button onClick={handleRefresh} className="p-1 hover:bg-gray-100 rounded">
+            <button 
+              onClick={handleRefresh} 
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              title="Refresh balance"
+            >
               <RefreshCcw size={14} className="text-gray-500" />
             </button>
           </div>
