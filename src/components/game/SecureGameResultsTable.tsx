@@ -50,7 +50,7 @@ export const SecureGameResultsTable = ({ gameType, gameMode }: SecureGameResults
                 <td className="p-2 font-mono text-xs">{result.period}</td>
                 <td className="p-2">
                   <Badge variant="outline" className="font-semibold">
-                    {result.result?.number}
+                    {result.result?.number || 0}
                   </Badge>
                 </td>
                 <td className="p-2">
@@ -74,10 +74,10 @@ export const SecureGameResultsTable = ({ gameType, gameMode }: SecureGameResults
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={goToPage}
-          onNext={nextPage}
-          onPrev={prevPage}
-          onFirst={goToFirstPage}
-          onLast={goToLastPage}
+          onNextPage={nextPage}
+          onPrevPage={prevPage}
+          onFirstPage={goToFirstPage}
+          onLastPage={goToLastPage}
         />
       )}
     </div>

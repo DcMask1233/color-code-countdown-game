@@ -52,8 +52,8 @@ export const MySection = ({
   };
 
   const getUserInitials = () => {
-    if (userProfile?.mobile) {
-      return userProfile.mobile.slice(-2).toUpperCase();
+    if (mobile) {
+      return mobile.slice(-2).toUpperCase();
     }
     return userId.slice(-2).toUpperCase();
   };
@@ -128,8 +128,8 @@ export const MySection = ({
             </Avatar>
             <div>
               <h2 className="text-xl font-semibold">User ID: {userId}</h2>
-              {(userProfile?.mobile || mobile) && (
-                <p className="text-white/80 text-sm mt-1">Mobile: {userProfile?.mobile || mobile}</p>
+              {mobile && (
+                <p className="text-white/80 text-sm mt-1">Mobile: {mobile}</p>
               )}
             </div>
           </div>

@@ -8,7 +8,12 @@ interface ParityRecordProps {
 }
 
 export const ParityRecord = ({ duration }: ParityRecordProps) => {
-  const { results, loading, refetch } = useGameResults("parity", duration);
+  // Convert duration to game mode
+  const gameMode = duration === 60 ? 'wingo1min' : 
+                   duration === 180 ? 'wingo3min' : 
+                   duration === 300 ? 'wingo5min' : 'wingo1min';
+
+  const { results, loading, refetch } = useGameResults("parity", gameMode);
 
   // Set up real-time subscription for new results
   useEffect(() => {
@@ -17,10 +22,10 @@ export const ParityRecord = ({ duration }: ParityRecordProps) => {
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: 'UPDATE',
           schema: 'public',
-          table: 'game_results',
-          filter: `game_type=eq.parity AND duration=eq.${duration}`
+          table: 'game_periods',
+          filter: `game_type=eq.parity AND game_mode=eq.${gameMode}`
         },
         (payload) => {
           console.log('🔄 New parity result received:', payload.new);
@@ -32,7 +37,7 @@ export const ParityRecord = ({ duration }: ParityRecordProps) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [duration, refetch]);
+  }, [gameMode, refetch]);
 
   const getColorDot = (colors: string[]) => {
     if (colors.length === 1) {
@@ -102,10 +107,10 @@ export const ParityRecord = ({ duration }: ParityRecordProps) => {
                     <div className="truncate">{record.period}</div>
                   </td>
                   <td className="px-4 py-3 text-sm font-semibold text-gray-900">
-                    {record.number}
+                    {record.result?.number || 0}
                   </td>
                   <td className="px-4 py-3">
-                    {getColorDot(record.result_color || [])}
+                    {getColorDot(record.result?.colors || [])}
                   </td>
                 </tr>
               );

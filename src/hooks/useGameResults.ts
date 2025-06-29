@@ -10,7 +10,7 @@ interface GameResult {
   result: {
     number: number;
     colors: string[];
-  };
+  } | null;
   created_at: string;
 }
 
@@ -61,7 +61,16 @@ export const useGameResults = (gameType: string, gameMode: string) => {
       if (error) {
         console.error('Error fetching game results:', error);
       } else {
-        setResults(data || []);
+        // Transform the data to match the expected interface
+        const transformedResults: GameResult[] = (data || []).map(period => ({
+          id: period.id,
+          game_type: period.game_type,
+          game_mode: period.game_mode,
+          period: period.period,
+          result: period.result as { number: number; colors: string[] } | null,
+          created_at: period.created_at || ''
+        }));
+        setResults(transformedResults);
       }
     } catch (error) {
       console.error('Error in fetchResults:', error);

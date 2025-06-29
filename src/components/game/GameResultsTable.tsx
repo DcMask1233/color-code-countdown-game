@@ -12,6 +12,11 @@ interface Props {
 }
 
 export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
+  // Convert duration to game mode
+  const gameMode = duration === 60 ? 'wingo1min' : 
+                   duration === 180 ? 'wingo3min' : 
+                   duration === 300 ? 'wingo5min' : 'wingo1min';
+
   const { 
     results, 
     loading, 
@@ -23,7 +28,7 @@ export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
     goToFirstPage,
     goToLastPage,
     refetch
-  } = useGameResults(gameType, duration);
+  } = useGameResults(gameType, gameMode);
 
   // Set up real-time subscription for new results
   useEffect(() => {
@@ -32,10 +37,10 @@ export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: 'UPDATE',
           schema: 'public',
-          table: 'game_results',
-          filter: `game_type=eq.${gameType.toLowerCase()} AND duration=eq.${duration}`
+          table: 'game_periods',
+          filter: `game_type=eq.${gameType.toLowerCase()} AND game_mode=eq.${gameMode}`
         },
         (payload) => {
           console.log('🔄 New result received:', payload.new);
@@ -47,7 +52,7 @@ export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [gameType, duration, refetch]);
+  }, [gameType, gameMode, refetch]);
 
   const getResultBadge = (colors: string[] | null) => {
     if (!colors || colors.length === 0) return null;
@@ -112,10 +117,10 @@ export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
                   </TableCell>
                   <TableCell>
                     <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-800 font-semibold">
-                      {record.number}
+                      {record.result?.number || 0}
                     </span>
                   </TableCell>
-                  <TableCell>{getResultBadge(record.result_color)}</TableCell>
+                  <TableCell>{getResultBadge(record.result?.colors || null)}</TableCell>
                 </TableRow>
               );
             })}
