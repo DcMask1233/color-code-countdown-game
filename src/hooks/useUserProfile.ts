@@ -15,13 +15,14 @@ export const useUserProfile = () => {
       console.log(`🔄 Fetching user profile for ${userId} (attempt ${retryCount + 1})`);
       const startTime = Date.now();
       
-      const query = supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      const { data, error } = await withTimeout(query, 8000);
+      const { data, error } = await withTimeout(
+        supabase
+          .from('users')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle(),
+        8000
+      );
 
       const fetchTime = Date.now() - startTime;
       console.log(`✅ Profile fetch completed in ${fetchTime}ms`);
