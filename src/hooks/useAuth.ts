@@ -3,99 +3,25 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
+import { useUserProfile } from './useUserProfile';
+import { withTimeout } from '@/utils/authUtils';
+import { AuthState, AuthActions } from '@/types/auth';
 
-interface UserProfile {
-  id: string;
-  balance: number;
-  is_admin: boolean;
-  created_at: string;
-}
-
-export const useAuth = () => {
+export const useAuth = (): AuthState & AuthActions => {
   const [user, setUser] = useState<User | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [authError, setAuthError] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  const {
+    userProfile,
+    setUserProfile,
+    authError,
+    setAuthError,
+    fetchUserProfile,
+    refreshProfile: refreshUserProfile
+  } = useUserProfile();
 
-  // Add timeout for auth operations
-  const withTimeout = <T>(promise: Promise<T>, timeoutMs: number = 10000): Promise<T> => {
-    return Promise.race([
-      promise,
-      new Promise<T>((_, reject) => 
-        setTimeout(() => reject(new Error('Operation timed out')), timeoutMs)
-      )
-    ]);
-  };
-
-  const fetchUserProfile = async (userId: string, retryCount = 0): Promise<UserProfile | null> => {
-    const maxRetries = 2;
-    
-    try {
-      console.log(`🔄 Fetching user profile for ${userId} (attempt ${retryCount + 1})`);
-      const startTime = Date.now();
-      
-      const { data, error } = await withTimeout(
-        supabase
-          .from('users')
-          .select('*')
-          .eq('id', userId)
-          .maybeSingle(),
-        8000
-      );
-
-      const fetchTime = Date.now() - startTime;
-      console.log(`✅ Profile fetch completed in ${fetchTime}ms`);
-
-      if (error) {
-        console.error('Error fetching user profile:', error);
-        
-        // Retry on specific errors
-        if (retryCount < maxRetries && (error.code === 'PGRST301' || error.message.includes('timeout'))) {
-          console.log(`🔄 Retrying profile fetch (${retryCount + 1}/${maxRetries})`);
-          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
-          return fetchUserProfile(userId, retryCount + 1);
-        }
-        
-        setAuthError(`Failed to load profile: ${error.message}`);
-        return null;
-      }
-
-      if (!data) {
-        console.log('🔄 No user profile found, creating default profile');
-        // If no profile exists, return a default one (the trigger should create it)
-        return {
-          id: userId,
-          balance: 1000,
-          is_admin: false,
-          created_at: new Date().toISOString()
-        };
-      }
-
-      const profile: UserProfile = {
-        id: data.id,
-        balance: data.balance || 0,
-        is_admin: data.is_admin || false,
-        created_at: data.created_at || ''
-      };
-
-      console.log('✅ User profile loaded successfully:', profile);
-      return profile;
-    } catch (error) {
-      console.error('Error in fetchUserProfile:', error);
-      
-      if (retryCount < maxRetries) {
-        console.log(`🔄 Retrying profile fetch due to error (${retryCount + 1}/${maxRetries})`);
-        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
-        return fetchUserProfile(userId, retryCount + 1);
-      }
-      
-      setAuthError('Failed to load user profile. Please refresh the page.');
-      return null;
-    }
-  };
-
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string): Promise<boolean> => {
     try {
       setAuthError(null);
       console.log('🔐 Starting sign in process');
@@ -148,7 +74,7 @@ export const useAuth = () => {
     return false;
   };
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string): Promise<boolean> => {
     try {
       setAuthError(null);
       console.log('📝 Starting sign up process');
@@ -191,7 +117,7 @@ export const useAuth = () => {
     return false;
   };
 
-  const signOut = async () => {
+  const signOut = async (): Promise<void> => {
     try {
       console.log('👋 Signing out');
       const { error } = await supabase.auth.signOut();
@@ -209,6 +135,20 @@ export const useAuth = () => {
       });
     } catch (error) {
       console.error('Sign out error:', error);
+    }
+  };
+
+  const refreshProfile = async (): Promise<import('@/types/auth').UserProfile | null> => {
+    if (!user) return null;
+    
+    console.log('🔄 Manual profile refresh requested');
+    setLoading(true);
+    
+    try {
+      const profile = await refreshUserProfile(user.id);
+      return profile;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -298,24 +238,6 @@ export const useAuth = () => {
       subscription.unsubscribe();
     };
   }, []); // Remove userProfile from dependencies to prevent loops
-
-  // Manual refresh function for users
-  const refreshProfile = async () => {
-    if (!user) return null;
-    
-    console.log('🔄 Manual profile refresh requested');
-    setLoading(true);
-    
-    try {
-      const profile = await fetchUserProfile(user.id);
-      if (profile) {
-        setUserProfile(profile);
-      }
-      return profile;
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return {
     user,
