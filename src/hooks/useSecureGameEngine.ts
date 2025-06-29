@@ -39,7 +39,7 @@ export const useSecureGameEngine = (gameType: string, gameMode: string) => {
         p_bet_type: betType,
         p_bet_value: betValue.toString(),
         p_amount: amount
-      });
+      }) as { data: BetResponse[] | null, error: any };
 
       if (error) {
         console.error('Failed to place bet:', error);
@@ -53,7 +53,7 @@ export const useSecureGameEngine = (gameType: string, gameMode: string) => {
 
       // Handle the response array from the RPC function
       if (data && Array.isArray(data) && data.length > 0) {
-        const result = data[0] as BetResponse;
+        const result = data[0];
         if (result.success) {
           toast({
             title: "Success",
