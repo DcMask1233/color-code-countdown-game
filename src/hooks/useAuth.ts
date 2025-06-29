@@ -27,11 +27,8 @@ export const useAuth = (): AuthState & AuthActions => {
       console.log('🔐 Starting sign in process');
 
       const { data, error } = await withTimeout(
-        supabase.auth.signInWithPassword({
-          email,
-          password,
-        }),
-        15000 // 15 second timeout for sign in
+        supabase.auth.signInWithPassword({ email, password }),
+        15000
       );
 
       if (error) {
@@ -48,7 +45,7 @@ export const useAuth = (): AuthState & AuthActions => {
         console.log('✅ Sign in successful, fetching profile');
         setUser(data.user);
         
-        // Fetch profile in background, don't block the UI
+        // Fetch profile in background
         fetchUserProfile(data.user.id).then(profile => {
           if (profile) {
             setUserProfile(profile);
@@ -80,11 +77,8 @@ export const useAuth = (): AuthState & AuthActions => {
       console.log('📝 Starting sign up process');
 
       const { data, error } = await withTimeout(
-        supabase.auth.signUp({
-          email,
-          password,
-        }),
-        15000 // 15 second timeout
+        supabase.auth.signUp({ email, password }),
+        15000
       );
 
       if (error) {
@@ -158,12 +152,10 @@ export const useAuth = (): AuthState & AuthActions => {
     const initializeAuth = async () => {
       try {
         console.log('🚀 Initializing auth system');
-        const startTime = Date.now();
         
-        // Get initial session with timeout
         const { data: { session }, error } = await withTimeout(
           supabase.auth.getSession(),
-          10000 // 10 second timeout
+          10000
         );
 
         if (!mounted) return;
@@ -179,7 +171,6 @@ export const useAuth = (): AuthState & AuthActions => {
           console.log('✅ Initial session found, loading profile');
           setUser(session.user);
           
-          // Fetch profile with error handling
           const profile = await fetchUserProfile(session.user.id);
           if (mounted && profile) {
             setUserProfile(profile);
@@ -188,8 +179,7 @@ export const useAuth = (): AuthState & AuthActions => {
           console.log('ℹ️ No initial session found');
         }
 
-        const initTime = Date.now() - startTime;
-        console.log(`✅ Auth initialization completed in ${initTime}ms`);
+        console.log(`✅ Auth initialization completed`);
       } catch (error) {
         console.error('Error initializing auth:', error);
         if (mounted) {
@@ -202,7 +192,6 @@ export const useAuth = (): AuthState & AuthActions => {
       }
     };
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
@@ -211,7 +200,6 @@ export const useAuth = (): AuthState & AuthActions => {
         
         if (session?.user) {
           setUser(session.user);
-          // Only fetch profile if we don't have it or it's a different user
           if (!userProfile || userProfile.id !== session.user.id) {
             console.log('🔄 Fetching profile for auth state change');
             const profile = await fetchUserProfile(session.user.id);
@@ -230,14 +218,13 @@ export const useAuth = (): AuthState & AuthActions => {
       }
     );
 
-    // Initialize auth
     initializeAuth();
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []); // Remove userProfile from dependencies to prevent loops
+  }, [fetchUserProfile]);
 
   return {
     user,

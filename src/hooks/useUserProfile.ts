@@ -2,21 +2,19 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile } from '@/types/auth';
-import { withTimeout, createDefaultProfile } from '@/utils/authUtils';
+import { withTimeout, createDefaultProfile, withRetry } from '@/utils/authUtils';
 
 export const useUserProfile = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  const fetchUserProfile = useCallback(async (userId: string, retryCount = 0): Promise<UserProfile | null> => {
-    const maxRetries = 2;
-    
+  const fetchUserProfile = useCallback(async (userId: string): Promise<UserProfile | null> => {
     try {
-      console.log(`🔄 Fetching user profile for ${userId} (attempt ${retryCount + 1})`);
+      console.log(`🔄 Fetching user profile for ${userId}`);
       const startTime = Date.now();
       
       const { data, error } = await withTimeout(
-        Promise.resolve(
+        withRetry(() => 
           supabase
             .from('users')
             .select('*')
@@ -31,14 +29,6 @@ export const useUserProfile = () => {
 
       if (error) {
         console.error('Error fetching user profile:', error);
-        
-        // Retry on specific errors
-        if (retryCount < maxRetries && (error.code === 'PGRST301' || error.message.includes('timeout'))) {
-          console.log(`🔄 Retrying profile fetch (${retryCount + 1}/${maxRetries})`);
-          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
-          return fetchUserProfile(userId, retryCount + 1);
-        }
-        
         setAuthError(`Failed to load profile: ${error.message}`);
         return null;
       }
@@ -59,13 +49,6 @@ export const useUserProfile = () => {
       return profile;
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
-      
-      if (retryCount < maxRetries) {
-        console.log(`🔄 Retrying profile fetch due to error (${retryCount + 1}/${maxRetries})`);
-        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
-        return fetchUserProfile(userId, retryCount + 1);
-      }
-      
       setAuthError('Failed to load user profile. Please refresh the page.');
       return null;
     }

@@ -14,3 +14,20 @@ export const createDefaultProfile = (userId: string): import('../types/auth').Us
   is_admin: false,
   created_at: new Date().toISOString()
 });
+
+// Add retry utility for better error handling
+export const withRetry = async <T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  delay: number = 1000
+): Promise<T> => {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (i === maxRetries - 1) throw error;
+      await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+    }
+  }
+  throw new Error('Max retries exceeded');
+};
