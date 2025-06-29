@@ -40,7 +40,7 @@ export const useAuth = () => {
           .from('users')
           .select('*')
           .eq('id', userId)
-          .maybeSingle(), // Use maybeSingle instead of single to avoid errors
+          .maybeSingle(),
         8000 // 8 second timeout
       );
 
