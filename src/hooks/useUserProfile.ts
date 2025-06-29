@@ -20,7 +20,8 @@ export const useUserProfile = () => {
           .from('users')
           .select('*')
           .eq('id', userId)
-          .maybeSingle(),
+          .maybeSingle()
+          .then(result => result), // Execute the query to return a Promise
         8000
       );
 
