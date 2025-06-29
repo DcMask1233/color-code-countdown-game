@@ -16,12 +16,13 @@ export const useUserProfile = () => {
       const startTime = Date.now();
       
       const { data, error } = await withTimeout(
-        supabase
-          .from('users')
-          .select('*')
-          .eq('id', userId)
-          .maybeSingle()
-          .then(result => result), // Execute the query to return a Promise
+        Promise.resolve(
+          supabase
+            .from('users')
+            .select('*')
+            .eq('id', userId)
+            .maybeSingle()
+        ),
         8000
       );
 
