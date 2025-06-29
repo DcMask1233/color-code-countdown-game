@@ -29,7 +29,7 @@ export function useOptimizedGameEngine(gameType: string, gameMode: string) {
   const [isLoading, setIsLoading] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const { toast } = useToast();
-  const { user, refreshUserProfile } = useAuth();
+  const { user, refreshProfile } = useAuth();
 
   const placeBet = useCallback(async (
     betType: "color" | "number",
@@ -49,10 +49,9 @@ export function useOptimizedGameEngine(gameType: string, gameMode: string) {
     setIsLoading(true);
     
     try {
-      const { data, error } = await supabase.rpc('place_bet_with_wallet', {
-        p_game_type: gameType.toLowerCase(),
-        p_game_mode: gameMode,
-        p_period: period,
+      // Use the new secure database structure
+      const { data, error } = await supabase.rpc('place_bet_secure', {
+        p_period_id: parseInt(period), // Assuming period is now an ID
         p_bet_type: betType,
         p_bet_value: betValue.toString(),
         p_amount: amount
@@ -68,7 +67,7 @@ export function useOptimizedGameEngine(gameType: string, gameMode: string) {
         return { success: false, message: error.message };
       }
 
-      if (data && data.length > 0) {
+      if (data && Array.isArray(data) && data.length > 0) {
         const result = data[0];
         if (result.success) {
           toast({
@@ -78,11 +77,11 @@ export function useOptimizedGameEngine(gameType: string, gameMode: string) {
           
           // Refresh user profile and bets
           await Promise.all([
-            refreshUserProfile(),
+            refreshProfile(),
             fetchUserBets()
           ]);
           
-          setRetryCount(0); // Reset retry count on success
+          setRetryCount(0);
           return { 
             success: true, 
             message: "Bet placed successfully",
@@ -102,9 +101,8 @@ export function useOptimizedGameEngine(gameType: string, gameMode: string) {
     } catch (error: any) {
       console.error("Error placing bet:", error);
       
-      // Implement exponential backoff for retries
       if (retryCount < 3) {
-        const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+        const delay = Math.pow(2, retryCount) * 1000;
         setTimeout(() => {
           setRetryCount(prev => prev + 1);
         }, delay);
@@ -125,7 +123,7 @@ export function useOptimizedGameEngine(gameType: string, gameMode: string) {
     } finally {
       setIsLoading(false);
     }
-  }, [user, gameType, gameMode, retryCount, toast, refreshUserProfile]);
+  }, [user, retryCount, toast, refreshProfile]);
 
   const fetchUserBets = useCallback(async () => {
     if (!user) return;
@@ -135,8 +133,6 @@ export function useOptimizedGameEngine(gameType: string, gameMode: string) {
         .from("user_bets")
         .select("*")
         .eq("user_id", user.id)
-        .eq("game_type", gameType.toLowerCase())
-        .eq("game_mode", gameMode)
         .order("created_at", { ascending: false })
         .limit(50);
 
@@ -148,16 +144,16 @@ export function useOptimizedGameEngine(gameType: string, gameMode: string) {
       if (data) {
         const mappedBets: UserBet[] = data.map((bet: any) => ({
           id: bet.id,
-          period: bet.period,
+          period: bet.period_id.toString(),
           betType: bet.bet_type,
           betValue: bet.bet_value,
           amount: bet.amount,
           timestamp: new Date(bet.created_at),
-          result: bet.win === true ? "win" : bet.win === false ? "lose" : undefined,
+          result: bet.result === 'win' ? "win" : bet.result === 'lose' ? "lose" : undefined,
           payout: bet.payout || 0,
-          settled: bet.settled,
-          gameType: bet.game_type,
-          gameMode: bet.game_mode
+          settled: bet.result !== null,
+          gameType: gameType,
+          gameMode: gameMode
         }));
         
         setUserBets(mappedBets);
@@ -185,7 +181,7 @@ export function useOptimizedGameEngine(gameType: string, gameMode: string) {
           (payload) => {
             console.log('🔄 Bet update received:', payload);
             fetchUserBets();
-            refreshUserProfile(); // Refresh balance on bet updates
+            refreshProfile();
           }
         )
         .subscribe();
@@ -194,7 +190,7 @@ export function useOptimizedGameEngine(gameType: string, gameMode: string) {
         supabase.removeChannel(channel);
       };
     }
-  }, [user, gameType, gameMode, fetchUserBets, refreshUserProfile]);
+  }, [user, gameType, gameMode, fetchUserBets, refreshProfile]);
 
   return {
     userBets,

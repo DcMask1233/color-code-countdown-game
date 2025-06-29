@@ -14,6 +14,12 @@ interface UserBet {
   created_at: string;
 }
 
+interface BetResponse {
+  success: boolean;
+  message: string;
+  new_balance: number;
+}
+
 export const useSecureGameEngine = (gameType: string, gameMode: string) => {
   const [userBets, setUserBets] = useState<UserBet[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,8 +51,9 @@ export const useSecureGameEngine = (gameType: string, gameMode: string) => {
         return false;
       }
 
-      if (data && data.length > 0) {
-        const result = data[0];
+      // Handle the response array from the RPC function
+      if (data && Array.isArray(data) && data.length > 0) {
+        const result = data[0] as BetResponse;
         if (result.success) {
           toast({
             title: "Success",
@@ -99,7 +106,19 @@ export const useSecureGameEngine = (gameType: string, gameMode: string) => {
       }
 
       if (data) {
-        setUserBets(data);
+        // Transform the data to match UserBet interface
+        const transformedBets: UserBet[] = data.map((bet: any) => ({
+          id: bet.id,
+          period_id: bet.period_id,
+          bet_type: bet.bet_type as 'color' | 'number',
+          bet_value: bet.bet_value,
+          amount: bet.amount,
+          result: bet.result as 'win' | 'lose' | null,
+          payout: bet.payout || 0,
+          created_at: bet.created_at
+        }));
+        
+        setUserBets(transformedBets);
       }
     } catch (error) {
       console.error('Error fetching user bets:', error);

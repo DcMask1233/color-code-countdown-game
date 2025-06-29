@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,14 +20,14 @@ export const AuthPage = () => {
     setLoading(true);
 
     try {
-      const { error } = isLogin 
+      const success = isLogin 
         ? await signIn(email, password)
         : await signUp(email, password);
 
-      if (error) {
+      if (!success) {
         toast({
           title: "Error",
-          description: error.message,
+          description: isLogin ? "Failed to sign in" : "Failed to create account",
           variant: "destructive"
         });
       } else {

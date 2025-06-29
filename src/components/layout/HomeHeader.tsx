@@ -1,4 +1,3 @@
-
 import { RefreshCcw, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,10 +17,10 @@ export const HomeHeader = ({
   onWithdraw,
   onRefresh
 }: HomeHeaderProps) => {
-  const { signOut, refreshUserProfile } = useAuth();
+  const { signOut, refreshProfile } = useAuth();
 
   const handleRefresh = async () => {
-    await refreshUserProfile();
+    await refreshProfile();
     onRefresh();
   };
 

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -63,18 +62,18 @@ export default function AdminPanel() {
 
   const fetchStats = async () => {
     try {
-      // Fetch various statistics
-      const [usersRes, betsRes, resultsRes, pendingBetsRes] = await Promise.all([
-        supabase.from('profiles').select('*', { count: 'exact', head: true }),
+      // Fetch statistics from the correct tables
+      const [usersRes, betsRes, periodsRes, pendingBetsRes] = await Promise.all([
+        supabase.from('users').select('*', { count: 'exact', head: true }),
         supabase.from('user_bets').select('*', { count: 'exact', head: true }),
-        supabase.from('game_results').select('*', { count: 'exact', head: true }),
-        supabase.from('user_bets').select('*', { count: 'exact', head: true }).eq('settled', false)
+        supabase.from('game_periods').select('*', { count: 'exact', head: true }).not('result', 'is', null),
+        supabase.from('user_bets').select('*', { count: 'exact', head: true }).is('result', null)
       ]);
 
       setStats({
         totalUsers: usersRes.count || 0,
         totalBets: betsRes.count || 0,
-        totalResults: resultsRes.count || 0,
+        totalResults: periodsRes.count || 0,
         pendingBets: pendingBetsRes.count || 0
       });
     } catch (error) {
@@ -117,7 +116,7 @@ export default function AdminPanel() {
         description: `Settlement complete: ${data?.settled_count || 0} bets processed`,
       });
       
-      fetchStats(); // Refresh stats
+      fetchStats();
     } catch (error) {
       console.error("Settlement failed:", error);
       toast({
@@ -146,7 +145,7 @@ export default function AdminPanel() {
         description: `Game engine complete: ${data?.results?.length || 0} results generated`,
       });
       
-      fetchStats(); // Refresh stats
+      fetchStats();
     } catch (error) {
       console.error("Game engine failed:", error);
       toast({
@@ -175,7 +174,7 @@ export default function AdminPanel() {
         description: `Period sync complete: ${data?.fixed_count || 0} bets synchronized`,
       });
       
-      fetchStats(); // Refresh stats
+      fetchStats();
     } catch (error) {
       console.error("Period sync failed:", error);
       toast({
