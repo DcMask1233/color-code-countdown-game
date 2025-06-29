@@ -24,6 +24,12 @@ interface PlaceBetResult {
   newBalance?: number;
 }
 
+interface BetResponse {
+  success: boolean;
+  message: string;
+  new_balance: number;
+}
+
 export function useOptimizedGameEngine(gameType: string, gameMode: string) {
   const [userBets, setUserBets] = useState<UserBet[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -49,13 +55,13 @@ export function useOptimizedGameEngine(gameType: string, gameMode: string) {
     setIsLoading(true);
     
     try {
-      // Use the new secure database structure
-      const { data, error } = await supabase.rpc('place_bet_secure', {
+      // Use the new secure database structure with proper typing
+      const { data, error } = await (supabase.rpc as any)('place_bet_secure', {
         p_period_id: parseInt(period), // Assuming period is now an ID
         p_bet_type: betType,
         p_bet_value: betValue.toString(),
         p_amount: amount
-      });
+      }) as { data: BetResponse[] | null, error: any };
 
       if (error) {
         console.error("Failed to place bet:", error);
@@ -144,8 +150,8 @@ export function useOptimizedGameEngine(gameType: string, gameMode: string) {
       if (data) {
         const mappedBets: UserBet[] = data.map((bet: any) => ({
           id: bet.id,
-          period: bet.period_id.toString(),
-          betType: bet.bet_type,
+          period: bet.period_id?.toString() || '',
+          betType: bet.bet_type as "color" | "number",
           betValue: bet.bet_value,
           amount: bet.amount,
           timestamp: new Date(bet.created_at),

@@ -5,6 +5,12 @@ import { supabase } from '@/integrations/supabase/client';
 
 const USER_BETS_STORAGE_KEY = 'userBets';
 
+interface SyncResult {
+  success: boolean;
+  error?: string;
+  data?: any;
+}
+
 export const useUserBets = () => {
   const [userBets, setUserBets] = useState<UserBet[]>([]);
 
@@ -65,29 +71,31 @@ export const useUserBets = () => {
     );
   }, [userBets]);
 
-  const syncBetsWithDatabase = useCallback(async () => {
+  const syncBetsWithDatabase = useCallback(async (): Promise<SyncResult> => {
     try {
       const { data: dbBets, error } = await supabase
         .from('user_bets')
         .select('*')
-        .eq('settled', true)
+        .eq('result', 'win')
         .order('created_at', { ascending: false })
         .limit(100);
 
       if (error) {
         console.error('Error syncing bets:', error);
-        return;
+        return { success: false, error: error.message };
       }
 
       console.log('📊 Synced bets from database:', dbBets?.length || 0);
-    } catch (error) {
+      return { success: true, data: dbBets };
+    } catch (error: any) {
       console.error('Error syncing bets with database:', error);
+      return { success: false, error: error.message };
     }
   }, []);
 
-  const triggerAutomatedSettlement = useCallback(async () => {
+  const triggerAutomatedSettlement = useCallback(async (): Promise<SyncResult> => {
     try {
-      const { data, error } = await supabase.functions.invoke('automated-game-engine');
+      const { data, error } = await (supabase.functions as any).invoke('automated-game-engine');
       
       if (error) {
         console.error('Error calling automated engine:', error);
@@ -96,15 +104,15 @@ export const useUserBets = () => {
 
       await syncBetsWithDatabase();
       return { success: true, data };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error triggering automated settlement:', error);
       return { success: false, error: error.message };
     }
   }, [syncBetsWithDatabase]);
 
-  const fixPeriodSync = useCallback(async () => {
+  const fixPeriodSync = useCallback(async (): Promise<SyncResult> => {
     try {
-      const { data, error } = await supabase.functions.invoke('fix-period-sync');
+      const { data, error } = await (supabase.functions as any).invoke('fix-period-sync');
       
       if (error) {
         console.error('Error calling period sync fix:', error);
@@ -113,7 +121,7 @@ export const useUserBets = () => {
 
       await syncBetsWithDatabase();
       return { success: true, data };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fixing period sync:', error);
       return { success: false, error: error.message };
     }

@@ -17,6 +17,11 @@ interface UserBet {
   gameMode: string;
 }
 
+interface BetResult {
+  success: boolean;
+  message: string;
+}
+
 export const useBackendGameEngine = (gameType: string, gameMode: string) => {
   const [userBets, setUserBets] = useState<UserBet[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -44,7 +49,6 @@ export const useBackendGameEngine = (gameType: string, gameMode: string) => {
         .from('user_bets')
         .select('*')
         .eq('user_id', userId)
-        .eq('game_type', gameType.toLowerCase())
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -57,16 +61,16 @@ export const useBackendGameEngine = (gameType: string, gameMode: string) => {
       if (data) {
         const mappedBets: UserBet[] = data.map((bet: any) => ({
           id: bet.id,
-          period: bet.period, // Use exactly what backend provides
+          period: bet.period_id?.toString() || '',
           betType: bet.bet_type as "color" | "number",
           betValue: bet.bet_value,
           amount: bet.amount,
           timestamp: new Date(bet.created_at),
-          result: bet.settled ? (bet.win ? "win" : "lose") : undefined,
+          result: bet.result === 'win' ? "win" : bet.result === 'lose' ? "lose" : undefined,
           payout: bet.payout || 0,
-          settled: bet.settled,
-          gameType: bet.game_type,
-          gameMode: bet.game_mode
+          settled: bet.result !== null,
+          gameType: gameType,
+          gameMode: gameMode
         }));
         
         setUserBets(mappedBets);
@@ -97,7 +101,7 @@ export const useBackendGameEngine = (gameType: string, gameMode: string) => {
     try {
       console.log('🎯 Placing bet:', { betType, betValue, amount, period, gameType, gameMode });
 
-      const { data, error } = await supabase.rpc('place_user_bet', {
+      const { data, error } = await (supabase.rpc as any)('place_user_bet', {
         p_user_id: userId,
         p_game_type: gameType.toLowerCase(),
         p_game_mode: gameMode,
@@ -105,7 +109,7 @@ export const useBackendGameEngine = (gameType: string, gameMode: string) => {
         p_bet_type: betType,
         p_bet_value: betValue.toString(),
         p_amount: amount
-      });
+      }) as { data: BetResult[] | null, error: any };
 
       if (error) {
         console.error('❌ Error placing bet:', error);
@@ -117,15 +121,25 @@ export const useBackendGameEngine = (gameType: string, gameMode: string) => {
         return false;
       }
 
-      console.log('✅ Bet placed successfully');
-      toast({
-        title: "Success",
-        description: `Bet placed: ${betType} ${betValue} - ₹${amount}`,
-      });
+      if (data && data.length > 0 && data[0].success) {
+        console.log('✅ Bet placed successfully');
+        toast({
+          title: "Success",
+          description: `Bet placed: ${betType} ${betValue} - ₹${amount}`,
+        });
 
-      // Refresh bets
-      fetchUserBets();
-      return true;
+        // Refresh bets
+        fetchUserBets();
+        return true;
+      } else {
+        const message = data?.[0]?.message || "Failed to place bet";
+        toast({
+          title: "Error",
+          description: message,
+          variant: "destructive"
+        });
+        return false;
+      }
 
     } catch (error) {
       console.error('💥 Error in placeBet:', error);

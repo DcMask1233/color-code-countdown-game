@@ -17,6 +17,11 @@ interface UserBet {
   gameMode: string;
 }
 
+interface BetResult {
+  success: boolean;
+  message: string;
+}
+
 export function useGameEngine(gameType: string, gameMode: string, userId: string) {
   const [userBets, setUserBets] = useState<UserBet[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -40,8 +45,8 @@ export function useGameEngine(gameType: string, gameMode: string, userId: string
     setIsLoading(true);
     
     try {
-      // Use the new secure database function
-      const { data, error } = await supabase.rpc('place_user_bet', {
+      // Use the RPC function with proper typing
+      const { data, error } = await (supabase.rpc as any)('place_user_bet', {
         p_user_id: userId,
         p_game_type: gameType.toLowerCase(),
         p_game_mode: gameMode,
@@ -49,7 +54,7 @@ export function useGameEngine(gameType: string, gameMode: string, userId: string
         p_bet_type: betType,
         p_bet_value: betValue.toString(),
         p_amount: amount
-      });
+      }) as { data: BetResult[] | null, error: any };
 
       if (error) {
         console.error("❌ Failed to place bet:", error);
@@ -61,28 +66,24 @@ export function useGameEngine(gameType: string, gameMode: string, userId: string
         return false;
       }
 
-      if (data && data.length > 0) {
-        const result = data[0];
-        if (result.success) {
-          toast({
-            title: "Success",
-            description: "Bet placed successfully!",
-          });
-          
-          // Refresh bets
-          await fetchUserBets();
-          return true;
-        } else {
-          toast({
-            title: "Error",
-            description: result.message || "Failed to place bet",
-            variant: "destructive"
-          });
-          return false;
-        }
+      if (data && data.length > 0 && data[0].success) {
+        toast({
+          title: "Success",
+          description: "Bet placed successfully!",
+        });
+        
+        // Refresh bets
+        await fetchUserBets();
+        return true;
+      } else {
+        const message = data?.[0]?.message || "Failed to place bet";
+        toast({
+          title: "Error",
+          description: message,
+          variant: "destructive"
+        });
+        return false;
       }
-
-      return false;
     } catch (error) {
       console.error("❌ Error placing bet:", error);
       toast({
@@ -104,8 +105,6 @@ export function useGameEngine(gameType: string, gameMode: string, userId: string
         .from("user_bets")
         .select("*")
         .eq("user_id", userId)
-        .eq("game_type", gameType.toLowerCase())
-        .eq("game_mode", gameMode)
         .order("created_at", { ascending: false })
         .limit(50);
 
@@ -117,16 +116,16 @@ export function useGameEngine(gameType: string, gameMode: string, userId: string
       if (data) {
         const mappedBets: UserBet[] = data.map((bet: any) => ({
           id: bet.id,
-          period: bet.period,
-          betType: bet.bet_type,
+          period: bet.period_id?.toString() || '',
+          betType: bet.bet_type as "color" | "number",
           betValue: bet.bet_value,
           amount: bet.amount,
           timestamp: new Date(bet.created_at),
-          result: bet.win === true ? "win" : bet.win === false ? "lose" : undefined,
+          result: bet.result === 'win' ? "win" : bet.result === 'lose' ? "lose" : undefined,
           payout: bet.payout || 0,
-          settled: bet.settled,
-          gameType: bet.game_type,
-          gameMode: bet.game_mode
+          settled: bet.result !== null,
+          gameType: gameType,
+          gameMode: gameMode
         }));
         
         setUserBets(mappedBets);
