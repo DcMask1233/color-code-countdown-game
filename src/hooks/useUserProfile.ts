@@ -13,8 +13,8 @@ export const useUserProfile = () => {
       console.log(`🔄 Fetching user profile for ${userId}`);
       const startTime = Date.now();
       
-      const queryPromise = () => {
-        return supabase
+      const queryPromise = async () => {
+        return await supabase
           .from('users')
           .select('*')
           .eq('id', userId)
