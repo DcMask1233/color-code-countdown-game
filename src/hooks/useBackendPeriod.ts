@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useBackendPeriod = (duration: number) => {
@@ -8,47 +8,56 @@ export const useBackendPeriod = (duration: number) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchPeriodInfo = async () => {
-      try {
-        const { data, error } = await supabase.rpc('get_current_period_info', {
-          p_duration: duration
-        });
+  const fetchCurrentPeriod = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_current_period_info', {
+        p_duration: duration
+      });
 
-        if (error) {
-          console.error('Error fetching period info:', error);
-          setError('Failed to fetch period information');
-          return;
-        }
-
-        if (data && data.length > 0) {
-          setCurrentPeriod(data[0].period);
-          setTimeLeft(data[0].time_left);
-          setError(null);
-          setIsLoading(false);
-          
-          console.log(`🕐 Backend period info: ${data[0].period}, time left: ${data[0].time_left}s`);
-        }
-      } catch (err) {
-        console.error('Error in fetchPeriodInfo:', err);
-        setError('Failed to fetch period information');
-        setIsLoading(false);
+      if (error) {
+        console.error('Error fetching current period:', error);
+        setError(error.message);
+        return;
       }
-    };
 
-    // Fetch immediately
-    fetchPeriodInfo();
+      if (data && data.length > 0) {
+        const periodData = data[0];
+        setCurrentPeriod(periodData.period);
+        setTimeLeft(periodData.time_left);
+        setError(null);
+      }
+    } catch (err) {
+      console.error('Error in fetchCurrentPeriod:', err);
+      setError('Failed to fetch current period');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [duration]);
 
-    // Update every second
-    const interval = setInterval(fetchPeriodInfo, 1000);
+  useEffect(() => {
+    fetchCurrentPeriod();
+    
+    const interval = setInterval(() => {
+      setTimeLeft(prev => {
+        const newTime = Math.max(0, prev - 1);
+        
+        // Refetch when time is up
+        if (newTime <= 0) {
+          fetchCurrentPeriod();
+        }
+        
+        return newTime;
+      });
+    }, 1000);
 
     return () => clearInterval(interval);
-  }, [duration]);
+  }, [fetchCurrentPeriod]);
 
   return {
     currentPeriod,
     timeLeft,
     isLoading,
-    error
+    error,
+    refreshPeriod: fetchCurrentPeriod
   };
 };

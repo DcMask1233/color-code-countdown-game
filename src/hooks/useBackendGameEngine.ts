@@ -1,195 +1,172 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 interface UserBet {
   id: string;
-  period: string;
-  betType: "color" | "number";
-  betValue: string | number;
+  period_id: number;
+  bet_type: 'color' | 'number';
+  bet_value: string;
   amount: number;
-  timestamp: Date;
-  result?: "win" | "lose";
-  payout?: number;
-  settled: boolean;
-  gameType: string;
-  gameMode: string;
-}
-
-interface BetResult {
-  success: boolean;
-  message: string;
+  result: 'win' | 'lose' | null;
+  payout: number;
+  created_at: string;
 }
 
 export const useBackendGameEngine = (gameType: string, gameMode: string) => {
   const [userBets, setUserBets] = useState<UserBet[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user, refreshProfile } = useAuth();
 
-  // Get current user from localStorage
-  const getCurrentUserId = (): string | null => {
-    const savedUser = localStorage.getItem('colorGameUser');
-    if (savedUser) {
-      const userData = JSON.parse(savedUser);
-      return userData.userId;
-    }
-    return null;
-  };
-
-  // Fetch user bets from backend only
-  const fetchUserBets = async () => {
-    const userId = getCurrentUserId();
-    if (!userId) return;
+  const fetchUserBets = useCallback(async () => {
+    if (!user) return;
 
     try {
-      console.log('📊 Fetching user bets for:', { gameType, gameMode, userId });
-      
       const { data, error } = await supabase
         .from('user_bets')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+        .select(`
+          *,
+          game_periods!inner(game_type, game_mode)
+        `)
+        .eq('game_periods.game_type', gameType.toLowerCase())
+        .eq('game_periods.game_mode', gameMode.toLowerCase())
+        .order('created_at', { ascending: false })
+        .limit(50);
 
       if (error) {
-        console.error('❌ Error fetching user bets:', error);
+        console.error('Failed to fetch user bets:', error);
         return;
       }
 
-      console.log('📈 Fetched bets:', data?.length || 0);
-
       if (data) {
-        const mappedBets: UserBet[] = data.map((bet: any) => ({
+        const transformedBets: UserBet[] = data.map((bet: any) => ({
           id: bet.id,
-          period: bet.period_id?.toString() || '',
-          betType: bet.bet_type as "color" | "number",
-          betValue: bet.bet_value,
+          period_id: bet.period_id,
+          bet_type: bet.bet_type as 'color' | 'number',
+          bet_value: bet.bet_value,
           amount: bet.amount,
-          timestamp: new Date(bet.created_at),
-          result: bet.result === 'win' ? "win" : bet.result === 'lose' ? "lose" : undefined,
+          result: bet.result as 'win' | 'lose' | null,
           payout: bet.payout || 0,
-          settled: bet.result !== null,
-          gameType: gameType,
-          gameMode: gameMode
+          created_at: bet.created_at
         }));
         
-        setUserBets(mappedBets);
+        setUserBets(transformedBets);
       }
     } catch (error) {
-      console.error('💥 Error in fetchUserBets:', error);
+      console.error('Error fetching user bets:', error);
     }
-  };
+  }, [user, gameType, gameMode]);
 
-  // Place bet function
-  const placeBet = async (
-    betType: "color" | "number",
+  const placeBet = useCallback(async (
+    betType: 'color' | 'number',
     betValue: string | number,
     amount: number,
-    period: string
+    periodId: number
   ): Promise<boolean> => {
-    const userId = getCurrentUserId();
-    if (!userId) {
+    if (!user) {
       toast({
         title: "Error",
-        description: "User not found",
+        description: "Please login to place bets",
         variant: "destructive"
       });
       return false;
     }
 
     setIsLoading(true);
+    
     try {
-      console.log('🎯 Placing bet:', { betType, betValue, amount, period, gameType, gameMode });
-
-      const { data, error } = await (supabase.rpc as any)('place_user_bet', {
-        p_user_id: userId,
-        p_game_type: gameType.toLowerCase(),
-        p_game_mode: gameMode,
-        p_period: period,
+      const { data, error } = await supabase.rpc('place_bet_secure', {
+        p_period_id: periodId,
         p_bet_type: betType,
         p_bet_value: betValue.toString(),
         p_amount: amount
-      }) as { data: BetResult[] | null, error: any };
+      });
 
       if (error) {
-        console.error('❌ Error placing bet:', error);
+        console.error('Failed to place bet:', error);
         toast({
           title: "Error",
-          description: error.message,
+          description: error.message || "Failed to place bet. Please try again.",
           variant: "destructive"
         });
         return false;
       }
 
-      if (data && data.length > 0 && data[0].success) {
-        console.log('✅ Bet placed successfully');
-        toast({
-          title: "Success",
-          description: `Bet placed: ${betType} ${betValue} - ₹${amount}`,
-        });
-
-        // Refresh bets
-        fetchUserBets();
-        return true;
-      } else {
-        const message = data?.[0]?.message || "Failed to place bet";
-        toast({
-          title: "Error",
-          description: message,
-          variant: "destructive"
-        });
-        return false;
+      if (data && Array.isArray(data) && data.length > 0) {
+        const result = data[0];
+        if (result.success) {
+          toast({
+            title: "Success",
+            description: "Bet placed successfully!",
+          });
+          
+          // Refresh user profile and bets
+          await Promise.all([
+            refreshProfile(),
+            fetchUserBets()
+          ]);
+          
+          return true;
+        } else {
+          toast({
+            title: "Error",
+            description: result.message || "Failed to place bet",
+            variant: "destructive"
+          });
+          return false;
+        }
       }
 
-    } catch (error) {
-      console.error('💥 Error in placeBet:', error);
+      return false;
+    } catch (error: any) {
+      console.error('Error placing bet:', error);
       toast({
         title: "Error",
-        description: "Failed to place bet",
+        description: "An unexpected error occurred",
         variant: "destructive"
       });
       return false;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, toast, refreshProfile, fetchUserBets]);
 
-  // Subscribe to real-time updates for user bets
   useEffect(() => {
-    const userId = getCurrentUserId();
-    if (!userId) return;
+    if (user && gameType && gameMode) {
+      fetchUserBets();
+      
+      // Set up real-time subscription for bet updates
+      const channel = supabase
+        .channel('user_bets_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'user_bets',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('🔄 Bet update received:', payload);
+            fetchUserBets();
+            refreshProfile();
+          }
+        )
+        .subscribe();
 
-    fetchUserBets();
-
-    const channelName = `backend_user_bets_${gameType}_${gameMode}_${userId}`;
-    console.log('🔔 Setting up realtime subscription:', channelName);
-
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_bets',
-          filter: `user_id=eq.${userId}`
-        },
-        (payload) => {
-          console.log('🔄 Real-time update received:', payload);
-          fetchUserBets();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      console.log('🧹 Cleaning up channel:', channelName);
-      supabase.removeChannel(channel);
-    };
-  }, [gameType, gameMode]);
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [user, gameType, gameMode, fetchUserBets, refreshProfile]);
 
   return {
     userBets,
     placeBet,
-    isLoading
+    isLoading,
+    refreshBets: fetchUserBets
   };
 };
