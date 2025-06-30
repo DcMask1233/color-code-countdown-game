@@ -13,13 +13,12 @@ export const useUserProfile = () => {
       console.log(`🔄 Fetching user profile for ${userId}`);
       const startTime = Date.now();
       
-      const queryPromise = async () => {
-        const result = await supabase
+      const queryPromise = () => {
+        return supabase
           .from('users')
           .select('*')
           .eq('id', userId)
           .maybeSingle();
-        return result;
       };
 
       const { data, error } = await withTimeout(

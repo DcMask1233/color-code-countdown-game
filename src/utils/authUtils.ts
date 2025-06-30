@@ -15,7 +15,7 @@ export const createDefaultProfile = (userId: string): import('../types/auth').Us
   created_at: new Date().toISOString()
 });
 
-// Add retry utility for better error handling
+// Fix retry utility to properly handle async functions
 export const withRetry = async <T>(
   fn: () => Promise<T>,
   maxRetries: number = 3,
