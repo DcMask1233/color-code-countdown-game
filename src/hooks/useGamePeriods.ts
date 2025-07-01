@@ -26,7 +26,8 @@ export const useGamePeriods = (gameType: string, gameMode: string) => {
       if (gameMode === 'Wingo3min') duration = 180;
       if (gameMode === 'Wingo5min') duration = 300;
 
-      const { data, error } = await supabase.rpc('get_current_period_info', {
+      // Use the correct function name that we just created
+      const { data, error } = await supabase.rpc('get_current_game_period', {
         p_duration: duration
       });
 

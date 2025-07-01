@@ -177,6 +177,13 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      get_current_game_period: {
+        Args: { p_duration: number }
+        Returns: {
+          period: string
+          time_left: number
+        }[]
+      }
       get_current_period: {
         Args: { p_duration: number }
         Returns: {
