@@ -1,22 +1,26 @@
-
 import { useAuth } from "@/hooks/useAuth";
 import { MainGame } from "@/components/game/MainGame";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const Index = () => {
   const { user, userProfile, isLoading } = useAuth();
   const navigate = useNavigate();
 
+  const [gameRecords, setGameRecords] = useState([]);
+  const [totalBetAmount, setTotalBetAmount] = useState(0);
+  const [totalDepositAmount, setTotalDepositAmount] = useState(0);
+  const [totalWithdrawAmount, setTotalWithdrawAmount] = useState(0);
+
+  // Redirect to login page if not authenticated
   useEffect(() => {
-    // Redirect to auth if not authenticated
     if (!isLoading && !user) {
       console.log('🔄 User not authenticated, redirecting to auth');
       navigate('/auth');
     }
   }, [user, isLoading, navigate]);
 
-  // Show loading state while checking authentication
+  // Show loading spinner
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -28,18 +32,47 @@ const Index = () => {
     );
   }
 
-  // Don't render anything if not authenticated (will redirect)
+  // If still no user (redirect happening)
   if (!user) {
     return null;
   }
 
-  console.log('🎮 Index rendering MainGame with user:', user.id);
-  console.log('💰 User profile balance:', userProfile?.balance);
+  // Stub functions - replace with real logic as needed
+  const handleBalanceUpdate = (amount: number) => {
+    console.log("Balance update requested:", amount);
+    // You can update Supabase or refetch userProfile here
+  };
+
+  const handleLogout = () => {
+    console.log("Logout clicked");
+    // Implement logout logic if needed
+  };
+
+  const handleGameRecordsUpdate = (records: any[]) => {
+    setGameRecords(records);
+  };
+
+  const handleStatsUpdate = (
+    type: "bet" | "deposit" | "withdraw",
+    amount: number
+  ) => {
+    if (type === "bet") setTotalBetAmount(prev => prev + amount);
+    if (type === "deposit") setTotalDepositAmount(prev => prev + amount);
+    if (type === "withdraw") setTotalWithdrawAmount(prev => prev + amount);
+  };
 
   return (
-    <MainGame 
+    <MainGame
       userId={user.id}
       userBalance={userProfile?.balance || 0}
+      onBalanceUpdate={handleBalanceUpdate}
+      onLogout={handleLogout}
+      gameRecords={gameRecords}
+      onGameRecordsUpdate={handleGameRecordsUpdate}
+      totalBetAmount={totalBetAmount}
+      totalDepositAmount={totalDepositAmount}
+      totalWithdrawAmount={totalWithdrawAmount}
+      onStatsUpdate={handleStatsUpdate}
     />
   );
 };
