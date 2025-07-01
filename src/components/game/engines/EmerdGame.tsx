@@ -1,5 +1,5 @@
 
-import { UnifiedGameEngine } from "./UnifiedGameEngine";
+import { GameEngine } from "./GameEngine";
 
 interface EmerdGameProps {
   userBalance: number;
@@ -9,11 +9,9 @@ interface EmerdGameProps {
 
 export const EmerdGame = ({ userBalance, gameMode, userId }: EmerdGameProps) => {
   return (
-    <UnifiedGameEngine
+    <GameEngine
       gameType="Emerd"
-      userBalance={userBalance}
       gameMode={gameMode}
-      userId={userId}
     />
   );
 };

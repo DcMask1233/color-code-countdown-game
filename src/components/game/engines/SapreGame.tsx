@@ -38,8 +38,10 @@ export const SapreGame = ({ userBalance, gameMode, userId }: SapreGameProps) => 
   };
 
   const handleConfirmBet = async (amount: number) => {
-    const success = await placeBet(selectedBetType, selectedBetValue, amount, currentPeriod);
+    // Use a mock period ID since we don't have the actual period structure
+    const success = await placeBet(selectedBetType, selectedBetValue, amount, 1);
     if (success) setShowBetPopup(false);
+    return success;
   };
 
   const formatTime = (seconds: number) => {

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GameResultsTable } from "./GameResultsTable";
 import { UserBetsTable } from "./UserBetsTable";
 import { useBackendGameEngine } from "@/hooks/useBackendGameEngine";
+import { UserBet as BackendUserBet } from "@/types/UserBet";
 
 interface ModernGameRecordsProps {
   gameType: string;
@@ -26,7 +27,28 @@ export const ModernGameRecords: React.FC<ModernGameRecordsProps> = React.memo(({
   }, [duration]);
 
   // Use backend game engine to get user bets
-  const { userBets } = useBackendGameEngine(gameType, gameMode);
+  const { userBets: backendUserBets } = useBackendGameEngine(gameType, gameMode);
+
+  // Transform backend bets to match UserBetsTable interface
+  const userBets: BackendUserBet[] = useMemo(() => {
+    return backendUserBets.map((bet) => ({
+      id: bet.id,
+      period_id: bet.period_id,
+      period: `${gameType}-${bet.period_id}`,
+      betType: bet.bet_type,
+      bet_type: bet.bet_type,
+      betValue: bet.bet_value,
+      bet_value: bet.bet_value,
+      amount: bet.amount,
+      result: bet.result,
+      payout: bet.payout,
+      timestamp: new Date(bet.created_at),
+      created_at: bet.created_at,
+      gameType: gameType,
+      gameMode: gameMode,
+      settled: bet.result !== null
+    }));
+  }, [backendUserBets, gameType, gameMode]);
 
   // Memoize game display name
   const gameDisplayName = useMemo(() => {

@@ -5,7 +5,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { AuthPage } from "@/components/auth/AuthPage";
 import { MainGame } from "@/components/game/MainGame";
 import { ErrorBoundary } from "@/components/game/ErrorBoundary";
-import AdminLogin from "@/pages/admin/login";
 import AdminPanel from "@/pages/admin/index";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -75,7 +74,6 @@ function App() {
       <Router>
         <Routes>
           {/* Admin Routes */}
-          <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminPanel />} />
           
           {/* Auth Route */}

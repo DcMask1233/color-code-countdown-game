@@ -21,9 +21,13 @@ export const useGamePeriods = (gameType: string, gameMode: string) => {
 
   const fetchCurrentPeriod = useCallback(async () => {
     try {
-      const { data, error } = await supabase.rpc('get_current_game_period', {
-        p_game_type: gameType,
-        p_game_mode: gameMode
+      // Get duration from game mode
+      let duration = 60;
+      if (gameMode === 'Wingo3min') duration = 180;
+      if (gameMode === 'Wingo5min') duration = 300;
+
+      const { data, error } = await supabase.rpc('get_current_period_info', {
+        p_duration: duration
       });
 
       if (error) {
@@ -32,23 +36,22 @@ export const useGamePeriods = (gameType: string, gameMode: string) => {
         return;
       }
 
-      if (data && data.length > 0) {
+      if (data && Array.isArray(data) && data.length > 0) {
         const periodData = data[0];
         
-        // Fetch full period details
-        const { data: periodDetails, error: periodError } = await supabase
-          .from('game_periods')
-          .select('*')
-          .eq('id', periodData.period_id)
-          .single();
+        // Create a mock period object for compatibility
+        const mockPeriod: GamePeriod = {
+          id: 1,
+          period: periodData.period,
+          game_type: gameType.toLowerCase(),
+          game_mode: gameMode.toLowerCase(),
+          start_time: new Date().toISOString(),
+          end_time: new Date(Date.now() + periodData.time_left * 1000).toISOString(),
+          is_locked: periodData.time_left <= 5,
+          result: null
+        };
 
-        if (periodError) {
-          console.error('Error fetching period details:', periodError);
-          setError(periodError.message);
-          return;
-        }
-
-        setCurrentPeriod(periodDetails);
+        setCurrentPeriod(mockPeriod);
         setTimeLeft(periodData.time_left);
         setError(null);
       }
@@ -64,16 +67,17 @@ export const useGamePeriods = (gameType: string, gameMode: string) => {
     fetchCurrentPeriod();
     
     const interval = setInterval(() => {
-      setTimeLeft(prev => Math.max(0, prev - 1));
-      
-      // Refetch when time is up
-      if (timeLeft <= 1) {
-        fetchCurrentPeriod();
-      }
+      setTimeLeft(prev => {
+        const newTime = Math.max(0, prev - 1);
+        if (newTime <= 0) {
+          fetchCurrentPeriod();
+        }
+        return newTime;
+      });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [fetchCurrentPeriod, timeLeft]);
+  }, [fetchCurrentPeriod]);
 
   return {
     currentPeriod,

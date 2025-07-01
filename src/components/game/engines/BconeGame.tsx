@@ -1,5 +1,5 @@
 
-import { UnifiedGameEngine } from "./UnifiedGameEngine";
+import { GameEngine } from "./GameEngine";
 
 interface BconeGameProps {
   userBalance: number;
@@ -9,11 +9,9 @@ interface BconeGameProps {
 
 export const BconeGame = ({ userBalance, gameMode, userId }: BconeGameProps) => {
   return (
-    <UnifiedGameEngine
+    <GameEngine
       gameType="Bcone"
-      userBalance={userBalance}
       gameMode={gameMode}
-      userId={userId}
     />
   );
 };

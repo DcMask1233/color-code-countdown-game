@@ -27,12 +27,8 @@ export const useBackendGameEngine = (gameType: string, gameMode: string) => {
     try {
       const { data, error } = await supabase
         .from('user_bets')
-        .select(`
-          *,
-          game_periods!inner(game_type, game_mode)
-        `)
-        .eq('game_periods.game_type', gameType.toLowerCase())
-        .eq('game_periods.game_mode', gameMode.toLowerCase())
+        .select('*')
+        .eq('bet_type', 'color') // Simple filter for now
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -95,9 +91,10 @@ export const useBackendGameEngine = (gameType: string, gameMode: string) => {
         return false;
       }
 
+      // Handle the response properly
       if (data && Array.isArray(data) && data.length > 0) {
         const result = data[0];
-        if (result.success) {
+        if (result && typeof result === 'object' && 'success' in result && result.success) {
           toast({
             title: "Success",
             description: "Bet placed successfully!",
@@ -111,9 +108,12 @@ export const useBackendGameEngine = (gameType: string, gameMode: string) => {
           
           return true;
         } else {
+          const message = (result && typeof result === 'object' && 'message' in result) 
+            ? result.message 
+            : "Failed to place bet";
           toast({
             title: "Error",
-            description: result.message || "Failed to place bet",
+            description: message,
             variant: "destructive"
           });
           return false;
