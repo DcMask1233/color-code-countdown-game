@@ -13,6 +13,6 @@ export interface UserBet {
   timestamp: Date;
   created_at?: string;
   gameType: string;
-  gameMode?: string;
+  gameMode: string; // Made required to fix the type error
   settled: boolean;
 }

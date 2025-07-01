@@ -15,6 +15,12 @@ interface UserBet {
   created_at: string;
 }
 
+interface BetResponse {
+  success: boolean;
+  message: string;
+  new_balance?: number;
+}
+
 export const useBackendGameEngine = (gameType: string, gameMode: string) => {
   const [userBets, setUserBets] = useState<UserBet[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,7 +34,7 @@ export const useBackendGameEngine = (gameType: string, gameMode: string) => {
       const { data, error } = await supabase
         .from('user_bets')
         .select('*')
-        .eq('bet_type', 'color') // Simple filter for now
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -54,7 +60,7 @@ export const useBackendGameEngine = (gameType: string, gameMode: string) => {
     } catch (error) {
       console.error('Error fetching user bets:', error);
     }
-  }, [user, gameType, gameMode]);
+  }, [user]);
 
   const placeBet = useCallback(async (
     betType: 'color' | 'number',
@@ -79,7 +85,7 @@ export const useBackendGameEngine = (gameType: string, gameMode: string) => {
         p_bet_type: betType,
         p_bet_value: betValue.toString(),
         p_amount: amount
-      });
+      }) as { data: BetResponse[] | null, error: any };
 
       if (error) {
         console.error('Failed to place bet:', error);
@@ -92,9 +98,9 @@ export const useBackendGameEngine = (gameType: string, gameMode: string) => {
       }
 
       // Handle the response properly
-      if (data && Array.isArray(data) && data.length > 0) {
+      if (data && data.length > 0) {
         const result = data[0];
-        if (result && typeof result === 'object' && 'success' in result && result.success) {
+        if (result.success) {
           toast({
             title: "Success",
             description: "Bet placed successfully!",
@@ -108,12 +114,9 @@ export const useBackendGameEngine = (gameType: string, gameMode: string) => {
           
           return true;
         } else {
-          const message = (result && typeof result === 'object' && 'message' in result) 
-            ? result.message 
-            : "Failed to place bet";
           toast({
             title: "Error",
-            description: message,
+            description: result.message || "Failed to place bet",
             variant: "destructive"
           });
           return false;
