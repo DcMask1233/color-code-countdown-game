@@ -110,14 +110,10 @@ export const MainGameContent = ({
 
   // === MY TAB ===
   if (activeBottomTab === "my") {
-    const savedUser = localStorage.getItem("colorGameUser");
-    const mobile = savedUser ? JSON.parse(savedUser)?.mobile : undefined;
-
     return (
       <MySection
         userBalance={userBalance}
         userId={userId}
-        mobile={mobile}
         onLogout={onLogout}
         onNavigateToPromotion={onNavigateToPromotion}
         gameRecords={gameRecords}

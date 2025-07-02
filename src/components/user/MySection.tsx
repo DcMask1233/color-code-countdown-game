@@ -11,7 +11,6 @@ import { useAuth } from "@/hooks/useAuth";
 interface MySectionProps {
   userBalance: number;
   userId: string;
-  mobile?: string;
   onLogout: () => void;
   onNavigateToPromotion: () => void;
   gameRecords: any[];
@@ -20,7 +19,6 @@ interface MySectionProps {
 export const MySection = ({ 
   userBalance, 
   userId, 
-  mobile, 
   onLogout: originalOnLogout, 
   onNavigateToPromotion,
   gameRecords 
@@ -52,9 +50,6 @@ export const MySection = ({
   };
 
   const getUserInitials = () => {
-    if (mobile) {
-      return mobile.slice(-2).toUpperCase();
-    }
     return userId.slice(-2).toUpperCase();
   };
 
@@ -127,10 +122,7 @@ export const MySection = ({
               </AvatarFallback>
             </Avatar>
             <div>
-              <h2 className="text-xl font-semibold">User ID: {userId}</h2>
-              {mobile && (
-                <p className="text-white/80 text-sm mt-1">Mobile: {mobile}</p>
-              )}
+              <h2 className="text-xl font-semibold">User ID: {userId.slice(0, 8)}...</h2>
             </div>
           </div>
           <button className="p-2 hover:bg-white/10 rounded-lg">
