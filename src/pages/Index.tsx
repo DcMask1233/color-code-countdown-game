@@ -25,8 +25,8 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your game...</p>
         </div>
       </div>
     );
@@ -37,10 +37,14 @@ const Index = () => {
     return null;
   }
 
-  // Stub functions - replace with real logic as needed
   const handleBalanceUpdate = (amount: number) => {
     console.log("Balance update requested:", amount);
-    // You can update Supabase or refetch userProfile here
+    // Trigger profile refresh to get updated balance
+    if (userProfile) {
+      // The balance should be updated by the backend functions
+      // We'll refresh the profile to get the latest data
+      window.location.reload(); // Simple refresh for now
+    }
   };
 
   const handleLogout = () => {

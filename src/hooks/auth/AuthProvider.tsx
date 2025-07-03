@@ -11,7 +11,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchUserProfile = async (userId: string) => {
+  const fetchUserProfile = async (userId: string, retryCount = 0) => {
     try {
       console.log('🔄 Fetching user profile for:', userId);
       
@@ -23,6 +23,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error('❌ Error fetching user profile:', error);
+        if (retryCount < 2) {
+          console.log('🔄 Retrying profile fetch...');
+          setTimeout(() => fetchUserProfile(userId, retryCount + 1), 1000);
+          return;
+        }
         toast({
           title: "Profile Error",
           description: "Failed to load user profile. Please refresh the page.",
@@ -35,18 +40,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('✅ User profile loaded:', data);
         setUserProfile(data);
       } else {
-        console.log('⚠️ No profile found, will be created by trigger');
-        // Profile will be created by the database trigger
-        // Retry after a short delay to allow trigger to complete
-        setTimeout(() => fetchUserProfile(userId), 1000);
+        console.log('⚠️ No profile found, trigger should create it');
+        if (retryCount < 3) {
+          setTimeout(() => fetchUserProfile(userId, retryCount + 1), 1000);
+        } else {
+          toast({
+            title: "Profile Setup",
+            description: "Profile creation is taking longer than expected. Please refresh the page.",
+            variant: "destructive"
+          });
+        }
       }
     } catch (error) {
       console.error('❌ Failed to fetch user profile:', error);
-      toast({
-        title: "Profile Error",
-        description: "Failed to load user profile. Please refresh the page.",
-        variant: "destructive"
-      });
+      if (retryCount < 2) {
+        setTimeout(() => fetchUserProfile(userId, retryCount + 1), 1000);
+      } else {
+        toast({
+          title: "Profile Error",
+          description: "Failed to load user profile. Please refresh the page.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
