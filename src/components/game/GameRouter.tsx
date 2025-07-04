@@ -18,16 +18,19 @@ export const GameRouter = ({ gameType, gameMode, userBalance, userId }: GameRout
     userId
   };
 
+  // Create unique key for proper component unmounting/remounting
+  const gameKey = `${gameType}_${gameMode}_${userId}`;
+
   switch (gameType.toLowerCase()) {
     case 'parity':
-      return <ParityGame {...commonProps} />;
+      return <ParityGame key={gameKey} {...commonProps} />;
     case 'sapre':
-      return <SapreGame {...commonProps} />;
+      return <SapreGame key={gameKey} {...commonProps} />;
     case 'bcone':
-      return <BconeGame {...commonProps} />;
+      return <BconeGame key={gameKey} {...commonProps} />;
     case 'emerd':
-      return <EmerdGame {...commonProps} />;
+      return <EmerdGame key={gameKey} {...commonProps} />;
     default:
-      return <ParityGame {...commonProps} />;
+      return <ParityGame key={gameKey} {...commonProps} />;
   }
 };

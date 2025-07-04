@@ -114,9 +114,10 @@ export const useGameResults = (gameType: string, gameMode: string) => {
     setCurrentPage(1);
     fetchResults(1);
 
-    // Subscribe to real-time updates
+    // Subscribe to real-time updates with unique channel name
+    const channelName = `game_results_${gameType}_${gameMode}`;
     const channel = supabase
-      .channel('game_results_changes')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {

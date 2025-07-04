@@ -32,8 +32,9 @@ export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
 
   // Set up real-time subscription for new results
   useEffect(() => {
+    const channelName = `${gameType}_results_realtime_${gameMode}`;
     const channel = supabase
-      .channel(`${gameType}_results_realtime`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {

@@ -141,9 +141,12 @@ export const useBackendGameEngine = (gameType: string, gameMode: string) => {
     if (user && gameType && gameMode) {
       fetchUserBets();
       
+      // Create unique channel name to prevent subscription conflicts
+      const channelName = `user_bets_${gameType}_${gameMode}_${user.id}`;
+      
       // Set up real-time subscription for bet updates
       const channel = supabase
-        .channel('user_bets_changes')
+        .channel(channelName)
         .on(
           'postgres_changes',
           {
@@ -164,7 +167,7 @@ export const useBackendGameEngine = (gameType: string, gameMode: string) => {
         supabase.removeChannel(channel);
       };
     }
-  }, [user, gameType, gameMode, fetchUserBets, refreshProfile]);
+  }, [user, gameType, gameMode]);
 
   return {
     userBets,
