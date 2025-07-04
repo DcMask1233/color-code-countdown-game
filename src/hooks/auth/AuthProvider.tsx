@@ -165,10 +165,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (session?.user) {
           setUser(session.user);
-          // Defer profile fetching to prevent blocking auth state change
-          setTimeout(() => {
-            fetchUserProfile(session.user.id);
-          }, 0);
+          // Only fetch profile if we don't have it yet or user changed
+          if (!userProfile || userProfile.id !== session.user.id) {
+            setTimeout(() => {
+              fetchUserProfile(session.user.id);
+            }, 0);
+          }
         } else {
           setUser(null);
           setUserProfile(null);
