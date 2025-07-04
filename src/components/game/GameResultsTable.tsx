@@ -30,9 +30,9 @@ export const GameResultsTable: React.FC<Props> = ({ gameType, duration }) => {
     refetch
   } = useGameResults(gameType, gameMode);
 
-  // Set up real-time subscription for new results
+  // Set up real-time subscription for new results with unique identifier
   useEffect(() => {
-    const channelName = `${gameType}_results_realtime_${gameMode}`;
+    const channelName = `${gameType}_results_realtime_${gameMode}_${Date.now()}_${Math.random()}`;
     const channel = supabase
       .channel(channelName)
       .on(

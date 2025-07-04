@@ -26,8 +26,11 @@ export const ModernGameRecords: React.FC<ModernGameRecordsProps> = React.memo(({
     return "Wingo1min";
   }, [duration]);
 
-  // Use backend game engine to get user bets
-  const { userBets: backendUserBets } = useBackendGameEngine(gameType, gameMode);
+  // Use backend game engine to get user bets with unique component identifier
+  const { userBets: backendUserBets } = useBackendGameEngine(
+    `${gameType}_records`, // Make this unique per component instance
+    gameMode
+  );
 
   // Transform backend bets to match UserBetsTable interface
   const userBets: UserBet[] = useMemo(() => {
