@@ -9,9 +9,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFetchingProfile, setIsFetchingProfile] = useState(false);
   const { toast } = useToast();
 
   const fetchUserProfile = async (userId: string, retryCount = 0) => {
+    // Prevent duplicate fetches
+    if (isFetchingProfile) {
+      console.log('⚠️ Profile fetch already in progress, skipping');
+      return;
+    }
+
+    setIsFetchingProfile(true);
     try {
       console.log('🔄 Fetching user profile for:', userId);
       
@@ -62,6 +70,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           variant: "destructive"
         });
       }
+    } finally {
+      setIsFetchingProfile(false);
     }
   };
 
@@ -82,11 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { success: false, error: error.message };
       }
 
-      if (data.user) {
-        setUser(data.user);
-        await fetchUserProfile(data.user.id);
-      }
-
+      // Don't manually fetch profile here - let onAuthStateChange handle it
       return { success: true };
     } catch (error: any) {
       return { success: false, error: error.message };
@@ -154,12 +160,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     getSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log('🔄 Auth state changed:', event, session?.user?.id);
         
         if (session?.user) {
           setUser(session.user);
-          await fetchUserProfile(session.user.id);
+          // Defer profile fetching to prevent blocking auth state change
+          setTimeout(() => {
+            fetchUserProfile(session.user.id);
+          }, 0);
         } else {
           setUser(null);
           setUserProfile(null);

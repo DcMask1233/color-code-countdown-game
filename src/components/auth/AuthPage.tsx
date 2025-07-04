@@ -28,16 +28,16 @@ export default function AuthPage() {
         title: "Welcome back!",
         description: "You have successfully signed in.",
       });
-      navigate("/");
+      // Don't navigate immediately - let auth state change handle navigation
+      // The user will be redirected by the useEffect in Index.tsx
     } else {
       toast({
         title: "Sign In Failed",
         description: result.error || "Please check your credentials and try again.",
         variant: "destructive",
       });
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
