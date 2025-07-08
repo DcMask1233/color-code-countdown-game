@@ -139,37 +139,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    const getSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error('❌ Session error:', error);
-      }
-      
-      if (session?.user) {
-        console.log('✅ Session found for user:', session.user.id);
-        setUser(session.user);
-        await fetchUserProfile(session.user.id);
-      } else {
-        console.log('❌ No session found');
-      }
-      
-      setIsLoading(false);
-    };
-
-    getSession();
-
+    let mounted = true;
+    
+    // Set up auth state listener FIRST to catch all events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        if (!mounted) return;
+        
         console.log('🔄 Auth state changed:', event, session?.user?.id);
         
         if (session?.user) {
           setUser(session.user);
           // Only fetch profile if we don't have it yet or user changed
           if (!userProfile || userProfile.id !== session.user.id) {
-            setTimeout(() => {
-              fetchUserProfile(session.user.id);
-            }, 0);
+            fetchUserProfile(session.user.id);
           }
         } else {
           setUser(null);
@@ -180,7 +163,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    return () => subscription.unsubscribe();
+    // Then check for existing session
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+        
+        if (error) {
+          console.error('❌ Session error:', error);
+        }
+        
+        // Only update if onAuthStateChange hasn't already handled this session
+        if (!user && session?.user) {
+          console.log('✅ Initial session found for user:', session.user.id);
+          setUser(session.user);
+          await fetchUserProfile(session.user.id);
+        } else if (!session?.user) {
+          console.log('❌ No initial session found');
+        }
+      } catch (error) {
+        console.error('❌ Failed to get session:', error);
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    initializeAuth();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   return (
