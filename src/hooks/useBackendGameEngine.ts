@@ -22,6 +22,8 @@ interface BetResponse {
 }
 
 export const useBackendGameEngine = (gameType: string, gameMode: string) => {
+  // Normalize game mode to lowercase for consistency
+  const normalizedGameMode = gameMode.toLowerCase();
   const [userBets, setUserBets] = useState<UserBet[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -138,11 +140,11 @@ export const useBackendGameEngine = (gameType: string, gameMode: string) => {
   }, [user, toast, refreshProfile, fetchUserBets]);
 
   useEffect(() => {
-    if (user && gameType && gameMode) {
+    if (user && gameType && normalizedGameMode) {
       fetchUserBets();
       
       // Create unique channel name to prevent subscription conflicts
-      const channelName = `user_bets_${gameType}_${gameMode}_${user.id}`;
+      const channelName = `user_bets_${gameType}_${normalizedGameMode}_${user.id}`;
       
       // Set up real-time subscription for bet updates
       const channel = supabase
@@ -167,7 +169,7 @@ export const useBackendGameEngine = (gameType: string, gameMode: string) => {
         supabase.removeChannel(channel);
       };
     }
-  }, [user, gameType, gameMode]);
+  }, [user, gameType, normalizedGameMode, fetchUserBets, refreshProfile]);
 
   return {
     userBets,

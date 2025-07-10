@@ -50,11 +50,18 @@ export const GameEngine = ({ gameType, gameMode }: GameEngineProps) => {
       return false;
     }
 
+    // Use period ID or create period if needed
+    let periodId = currentPeriod.id;
+    if (periodId === 0) {
+      console.warn('Period ID is 0, the backend will handle period creation');
+      periodId = 1; // Temporary ID, backend handles actual period creation
+    }
+
     const success = await placeBet(
       selectedBetType,
       selectedBetValue,
       amount,
-      currentPeriod.id
+      periodId
     );
     
     if (success) setShowBetPopup(false);

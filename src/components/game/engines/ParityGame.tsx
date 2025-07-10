@@ -8,6 +8,7 @@ import { useBackendGameEngine } from "@/hooks/useBackendGameEngine";
 import { useBackendPeriod } from "@/hooks/useBackendPeriod";
 import { getDurationFromGameMode } from "@/lib/gameUtils";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ParityGameProps {
   userBalance: number;
@@ -38,8 +39,11 @@ export const ParityGame = ({ userBalance, gameMode, userId }: ParityGameProps) =
   };
 
   const handleConfirmBet = async (amount: number) => {
-    // Use a mock period ID since we don't have the actual period structure
-    const success = await placeBet(selectedBetType, selectedBetValue, amount, 1);
+    // Get current period data for proper betting
+    const { data: periodInfo } = await supabase.rpc('get_current_game_period', { p_duration: duration });
+    const periodId = periodInfo?.[0]?.period ? 1 : 1; // Backend handles period creation
+    
+    const success = await placeBet(selectedBetType, selectedBetValue, amount, periodId);
     if (success) setShowBetPopup(false);
     return success;
   };

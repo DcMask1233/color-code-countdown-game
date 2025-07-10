@@ -18,12 +18,12 @@ export const ModernGameRecords: React.FC<ModernGameRecordsProps> = React.memo(({
 }) => {
   const [activeTab, setActiveTab] = useState(`${gameType}-record`);
   
-  // Get the correct game mode from duration
+  // Get the correct game mode from duration - normalized to lowercase
   const gameMode = useMemo(() => {
-    if (duration === 60) return "Wingo1min";
-    if (duration === 180) return "Wingo3min";
-    if (duration === 300) return "Wingo5min";
-    return "Wingo1min";
+    if (duration === 60) return "wingo1min";
+    if (duration === 180) return "wingo3min";
+    if (duration === 300) return "wingo5min";
+    return "wingo1min";
   }, [duration]);
 
   // Use backend game engine to get user bets with unique component identifier

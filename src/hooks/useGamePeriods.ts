@@ -21,39 +21,53 @@ export const useGamePeriods = (gameType: string, gameMode: string) => {
 
   const fetchCurrentPeriod = useCallback(async () => {
     try {
-      // Get duration from game mode
+      // Get duration from game mode - normalize case
       let duration = 60;
-      if (gameMode === 'Wingo3min') duration = 180;
-      if (gameMode === 'Wingo5min') duration = 300;
+      const normalizedGameMode = gameMode.toLowerCase();
+      if (normalizedGameMode === 'wingo3min') duration = 180;
+      if (normalizedGameMode === 'wingo5min') duration = 300;
 
-      // Use the correct function name that we just created
-      const { data, error } = await supabase.rpc('get_current_game_period', {
+      // Get current period info
+      const { data: periodData, error: periodError } = await supabase.rpc('get_current_game_period', {
         p_duration: duration
       });
 
-      if (error) {
-        console.error('Error fetching current period:', error);
-        setError(error.message);
+      if (periodError) {
+        console.error('Error fetching current period:', periodError);
+        setError(periodError.message);
         return;
       }
 
-      if (data && Array.isArray(data) && data.length > 0) {
-        const periodData = data[0];
+      if (periodData && Array.isArray(periodData) && periodData.length > 0) {
+        const current = periodData[0];
         
-        // Create a mock period object for compatibility
-        const mockPeriod: GamePeriod = {
-          id: 1,
-          period: periodData.period,
+        // Try to get existing period from database
+        const { data: dbPeriod, error: dbError } = await supabase
+          .from('game_periods')
+          .select('*')
+          .eq('game_type', gameType.toLowerCase())
+          .eq('game_mode', normalizedGameMode)
+          .eq('period', current.period)
+          .maybeSingle();
+
+        if (dbError) {
+          console.error('Error fetching period from DB:', dbError);
+        }
+
+        // Use real period from DB if exists, otherwise create basic structure
+        const realPeriod: GamePeriod = dbPeriod || {
+          id: 0, // Will be updated when period is created
+          period: current.period,
           game_type: gameType.toLowerCase(),
-          game_mode: gameMode.toLowerCase(),
+          game_mode: normalizedGameMode,
           start_time: new Date().toISOString(),
-          end_time: new Date(Date.now() + periodData.time_left * 1000).toISOString(),
-          is_locked: periodData.time_left <= 5,
+          end_time: new Date(Date.now() + current.time_left * 1000).toISOString(),
+          is_locked: current.time_left <= 5,
           result: null
         };
 
-        setCurrentPeriod(mockPeriod);
-        setTimeLeft(periodData.time_left);
+        setCurrentPeriod(realPeriod);
+        setTimeLeft(current.time_left);
         setError(null);
       }
     } catch (err) {
