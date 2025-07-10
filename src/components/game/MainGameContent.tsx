@@ -5,12 +5,7 @@ import { PromotionSection } from "@/components/layout/PromotionSection";
 import { MySection } from "@/components/user/MySection";
 import { GamePage } from "@/components/game/GamePage";
 import { useToast } from "@/hooks/use-toast";
-
-interface GameRecord {
-  period: string;
-  number: number;
-  color: string[];
-}
+import { GameRecord } from "@/types/Game";
 
 interface MainGameContentProps {
   activeBottomTab: "home" | "wallet" | "promotion" | "my";

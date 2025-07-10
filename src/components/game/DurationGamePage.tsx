@@ -16,26 +16,26 @@ export const DurationGamePage = ({ duration, userBalance, userId, onBackToHome }
   const getDurationTitle = () => {
     switch (duration) {
       case '1min':
-        return 'Wingo1min';
+        return 'wingo1min';
       case '3min':
-        return 'Wingo3min';
+        return 'wingo3min';
       case '5min':
-        return 'Wingo5min';
+        return 'wingo5min';
       default:
-        return 'Wingo';
+        return 'wingo1min';
     }
   };
 
   const getGameMode = () => {
     switch (duration) {
       case '1min':
-        return 'Wingo1min' as const;
+        return 'wingo1min' as const;
       case '3min':
-        return 'Wingo3min' as const;
+        return 'wingo3min' as const;
       case '5min':
-        return 'Wingo5min' as const;
+        return 'wingo5min' as const;
       default:
-        return 'Wingo1min' as const;
+        return 'wingo1min' as const;
     }
   };
 

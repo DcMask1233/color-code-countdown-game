@@ -8,10 +8,12 @@ import { useGamePeriods } from "@/hooks/useGamePeriods";
 import { useBackendGameEngine } from "@/hooks/useBackendGameEngine";
 import { getDurationFromGameMode } from "@/lib/gameUtils";
 import { useAuth } from "@/hooks/useAuth";
+import { GameType, GameMode } from "@/types/Game";
+import { formatTime, isBettingClosed as checkBettingClosed } from "@/utils/gameHelpers";
 
 interface GameEngineProps {
-  gameType: "Parity" | "Sapre" | "Bcone" | "Emerd";
-  gameMode: "Wingo1min" | "Wingo3min" | "Wingo5min";
+  gameType: GameType;
+  gameMode: GameMode;
 }
 
 export const GameEngine = ({ gameType, gameMode }: GameEngineProps) => {
@@ -68,13 +70,7 @@ export const GameEngine = ({ gameType, gameMode }: GameEngineProps) => {
     return success;
   };
 
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60).toString().padStart(2, "0");
-    const s = (seconds % 60).toString().padStart(2, "0");
-    return `${m}:${s}`;
-  };
-
-  const isBettingClosed = timeLeft <= 5 || currentPeriod?.is_locked;
+  const isBettingClosed = checkBettingClosed(timeLeft, currentPeriod?.is_locked);
   const displayBalance = userProfile?.balance || 0;
 
   if (isLoading) return <div className="flex justify-center p-4">Loading game...</div>;

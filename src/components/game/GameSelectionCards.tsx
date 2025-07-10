@@ -7,9 +7,9 @@ interface GameSelectionCardsProps {
 
 export const GameSelectionCards = ({ onGameSelect }: GameSelectionCardsProps) => {
   const durations = [
-    { id: '1min', title: 'Wingo1min', subtitle: '1 Minute Games' },
-    { id: '3min', title: 'Wingo3min', subtitle: '3 Minute Games' },
-    { id: '5min', title: 'Wingo5min', subtitle: '5 Minute Games' }
+    { id: '1min', title: 'wingo1min', subtitle: '1 Minute Games' },
+    { id: '3min', title: 'wingo3min', subtitle: '3 Minute Games' },
+    { id: '5min', title: 'wingo5min', subtitle: '5 Minute Games' }
   ];
 
   return (

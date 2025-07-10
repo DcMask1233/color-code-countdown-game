@@ -1,17 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-
-interface GamePeriod {
-  id: number;
-  period: string;
-  game_type: string;
-  game_mode: string;
-  start_time: string;
-  end_time: string;
-  is_locked: boolean;
-  result?: any;
-}
+import { GamePeriod } from '@/types/Game';
 
 export const useGamePeriods = (gameType: string, gameMode: string) => {
   const [currentPeriod, setCurrentPeriod] = useState<GamePeriod | null>(null);

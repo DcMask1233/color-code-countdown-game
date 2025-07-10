@@ -9,10 +9,12 @@ import { useBackendPeriod } from "@/hooks/useBackendPeriod";
 import { getDurationFromGameMode } from "@/lib/gameUtils";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { GameMode } from "@/types/Game";
+import { formatTime, getPeriodIdForBetting, isBettingClosed as checkBettingClosed } from "@/utils/gameHelpers";
 
 interface SapreGameProps {
   userBalance: number;
-  gameMode: "Wingo1min" | "Wingo3min" | "Wingo5min";
+  gameMode: GameMode;
   userId: string;
 }
 
@@ -39,22 +41,13 @@ export const SapreGame = ({ userBalance, gameMode, userId }: SapreGameProps) => 
   };
 
   const handleConfirmBet = async (amount: number) => {
-    // Get current period data for proper betting  
-    const { data: periodInfo } = await supabase.rpc('get_current_game_period', { p_duration: duration });
-    const periodId = periodInfo?.[0]?.period ? 1 : 1; // Backend handles period creation
-    
+    const periodId = await getPeriodIdForBetting(duration);
     const success = await placeBet(selectedBetType, selectedBetValue, amount, periodId);
     if (success) setShowBetPopup(false);
     return success;
   };
 
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60).toString().padStart(2, "0");
-    const s = (seconds % 60).toString().padStart(2, "0");
-    return `${m}:${s}`;
-  };
-
-  const isBettingClosed = timeLeft <= 5;
+  const isBettingClosed = checkBettingClosed(timeLeft);
   const displayBalance = userProfile?.balance || userBalance;
 
   if (isLoading) return <div className="flex justify-center p-4">Loading...</div>;

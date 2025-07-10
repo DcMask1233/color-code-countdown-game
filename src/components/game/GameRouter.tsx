@@ -3,10 +3,11 @@ import { ParityGame } from "@/components/game/engines/ParityGame";
 import { SapreGame } from "@/components/game/engines/SapreGame";
 import { BconeGame } from "@/components/game/engines/BconeGame";
 import { EmerdGame } from "@/components/game/engines/EmerdGame";
+import { GameMode } from "@/types/Game";
 
 interface GameRouterProps {
   gameType: string;
-  gameMode: "Wingo1min" | "Wingo3min" | "Wingo5min";
+  gameMode: GameMode;
   userBalance: number;
   userId: string;
 }

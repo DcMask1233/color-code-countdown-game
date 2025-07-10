@@ -2,12 +2,7 @@
 import { BottomNavigation, BottomTab } from "@/components/layout/BottomNavigation";
 import { MainGameContent } from "@/components/game/MainGameContent";
 import { useMainGameLogic } from "@/hooks/useMainGameLogic";
-
-interface GameRecord {
-  period: string;
-  number: number;
-  color: string[];
-}
+import { GameRecord } from "@/types/Game";
 
 interface MainGameProps {
   userBalance: number;

@@ -1,11 +1,6 @@
 
 import { useState } from "react";
-
-interface GameRecord {
-  period: string;
-  number: number;
-  color: string[];
-}
+import { GameRecord } from "@/types/Game";
 
 interface UseMainGameLogicProps {
   userBalance: number;

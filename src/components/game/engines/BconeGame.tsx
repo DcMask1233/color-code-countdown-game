@@ -1,9 +1,10 @@
 
 import { GameEngine } from "./GameEngine";
+import { GameMode } from "@/types/Game";
 
 interface BconeGameProps {
   userBalance: number;
-  gameMode: "Wingo1min" | "Wingo3min" | "Wingo5min";
+  gameMode: GameMode;
   userId: string;
 }
 
